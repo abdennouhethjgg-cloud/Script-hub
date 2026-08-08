@@ -268,7 +268,25 @@ local function setupAntiKiki()
     end)
     table.insert(ActiveConnections, attributeWatchConn)
 
-    warn("[EL2B] Anti-Kiki activé")
+    -- Avancé : Hooking de métaméthode pour bloquer Kick()
+    pcall(function()
+        if getrawmetatable then
+            local oldNamecall
+            local mt = getrawmetatable(game)
+            setreadonly(mt, false)
+            oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+                local method = getnamecallmethod()
+                if not checkcaller() and self == LocalPlayer and (method == "Kick" or method == "kick") then
+                    resetCharacterOnKick()
+                    return nil
+                end
+                return oldNamecall(self, ...)
+            end)
+            setreadonly(mt, true)
+        end
+    end)
+
+    warn("[EL2B] Anti-Kiki renforcé activé")
 end
 
 task.spawn(setupAntiKiki)
@@ -575,6 +593,8 @@ local function executeSteal(prompt)
     task.wait(stealDelay)
     if prompt and prompt.Parent and prompt.Enabled and not thisScriptStopped then
         firePromptConnections(prompt, "Triggered")
+        local petName = prompt.ObjectText or "Brainrot"
+        notify("Steal Success", "Vous avez volé : " .. petName, 2)
     end
     isStealing = false
 end
@@ -1040,31 +1060,31 @@ end
 -- THEME & LAYOUT
 -- ==========================================
 local C = {
-    body       = Color3.fromRGB(6, 9, 22),
-    panel      = Color3.fromRGB(10, 14, 30),
-    accent     = Color3.fromRGB(255, 45, 120),
-    accentHi   = Color3.fromRGB(255, 100, 160),
-    deepBlue   = Color3.fromRGB(0, 20, 60),
-    tabBar     = Color3.fromRGB(6, 9, 22),
-    card       = Color3.fromRGB(14, 20, 40),
-    iconBg     = Color3.fromRGB(20, 12, 30),
-    stroke     = Color3.fromRGB(60, 20, 40),
-    strokeDim  = Color3.fromRGB(40, 15, 30),
+    body       = Color3.fromRGB(15, 15, 15), -- GRF Style: Deep Black
+    panel      = Color3.fromRGB(25, 25, 25), -- GRF Style: Dark Grey
+    accent     = Color3.fromRGB(255, 0, 0),   -- GRF Style: Neon Red
+    accentHi   = Color3.fromRGB(255, 80, 80), -- GRF Style: Bright Red
+    deepBlue   = Color3.fromRGB(30, 0, 0),    -- GRF Style: Dark Red
+    tabBar     = Color3.fromRGB(20, 20, 20),
+    card       = Color3.fromRGB(30, 30, 30),
+    iconBg     = Color3.fromRGB(40, 0, 0),
+    stroke     = Color3.fromRGB(60, 60, 60),
+    strokeDim  = Color3.fromRGB(40, 40, 40),
     textBright = Color3.fromRGB(255, 255, 255),
-    textBlue   = Color3.fromRGB(150, 200, 255),
-    textMute   = Color3.fromRGB(200, 100, 150),
-    textDim    = Color3.fromRGB(120, 60, 90),
-    knobOn     = Color3.fromRGB(255, 200, 220),
-    knobOff    = Color3.fromRGB(80, 40, 60),
-    trackOff   = Color3.fromRGB(30, 15, 25),
+    textBlue   = Color3.fromRGB(255, 50, 50),  -- GRF Style: Red Text
+    textMute   = Color3.fromRGB(180, 180, 180),
+    textDim    = Color3.fromRGB(120, 120, 120),
+    knobOn     = Color3.fromRGB(255, 50, 50),
+    knobOff    = Color3.fromRGB(60, 60, 60),
+    trackOff   = Color3.fromRGB(40, 40, 40),
 }
 
 local borderGradientSeq = ColorSequence.new({
-    ColorSequenceKeypoint.new(0,    Color3.fromRGB(50, 100, 255)),
-    ColorSequenceKeypoint.new(0.25, Color3.fromRGB(100, 50, 200)),
-    ColorSequenceKeypoint.new(0.5,  Color3.fromRGB(255, 45, 120)),
-    ColorSequenceKeypoint.new(0.75, Color3.fromRGB(100, 50, 200)),
-    ColorSequenceKeypoint.new(1,    Color3.fromRGB(50, 100, 255)),
+    ColorSequenceKeypoint.new(0,    Color3.fromRGB(255, 0, 0)),
+    ColorSequenceKeypoint.new(0.25, Color3.fromRGB(150, 0, 0)),
+    ColorSequenceKeypoint.new(0.5,  Color3.fromRGB(255, 50, 50)),
+    ColorSequenceKeypoint.new(0.75, Color3.fromRGB(150, 0, 0)),
+    ColorSequenceKeypoint.new(1,    Color3.fromRGB(255, 0, 0)),
 })
 
 local function getDevice()
@@ -1710,7 +1730,7 @@ local BTitle = Instance.new("TextLabel")
 BTitle.Size               = UDim2.new(1, 0, 0, 30)
 BTitle.Position           = UDim2.new(0, 0, 0, 15)
 BTitle.BackgroundTransparency = 1
-BTitle.Text               = '<font color="rgb(255,255,255)">EL2B</font> <font color="rgb(255,45,120)">STEAL</font>'
+	BTitle.Text               = '<font color="rgb(255,255,255)">EL2B</font> <font color="rgb(255,0,0)">STEAL [GRF]</font>'
 BTitle.TextSize           = 20
 BTitle.Font               = Enum.Font.GothamBold
 BTitle.RichText           = true
@@ -1982,8 +2002,9 @@ updatePetList()
 -- ==========================================
 -- ANIMATION D'ENTREE
 -- ==========================================
-task.spawn(function()
-    local target = L.posX
+	task.spawn(function()
+	    notify("EL2B Load", "Script EL2B Steal [GRF Style] activé !", 4)
+	    local target = L.posX
     Win.Position         = UDim2.new(target.X.Scale, target.X.Offset, target.Y.Scale, target.Y.Offset - 40)
     BorderFrame.Position = Win.Position
     Win.Visible = true
