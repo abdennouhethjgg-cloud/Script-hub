@@ -100,6 +100,7 @@ local function saveSettings()
                 AntiLag            = _G.AntiLag,
                 XRayEnabled        = _G.XRayEnabled,
                 AntiKiki           = antiKikiEnabled,
+                JoinNotifications  = _G.JoinNotifications,
             }))
         end
     end)
@@ -124,6 +125,30 @@ else _G.XRayEnabled = false end
 
 if savedSettings.AntiKiki ~= nil then antiKikiEnabled = savedSettings.AntiKiki
 else antiKikiEnabled = true end
+
+if savedSettings.JoinNotifications ~= nil then _G.JoinNotifications = savedSettings.JoinNotifications
+else _G.JoinNotifications = true end
+
+-- ==========================================
+-- NOTIFICATIONS JOUEURS
+-- ==========================================
+local function notify(title, text, duration)
+    pcall(function()
+        StarterGui:SetCore("SendNotification", {
+            Title = title;
+            Text = text;
+            Duration = duration or 5;
+            Button1 = "OK";
+        })
+    end)
+end
+
+local joinConn = Players.PlayerAdded:Connect(function(player)
+    if _G.JoinNotifications then
+        notify("Nouveau Joueur", player.Name .. " a rejoint la partie !", 5)
+    end
+end)
+table.insert(ActiveConnections, joinConn)
 
 -- ==========================================
 -- APPLICATION ANTI-LAG
@@ -1635,6 +1660,10 @@ toggleRow("X-Ray Brainrot", "Rend les brainrots transparents (0.5)", _G.XRayEnab
 end)
 
 sectionHeader("  MISC  ")
+toggleRow("Player Notifications", "Alerte quand un joueur rejoint", _G.JoinNotifications, function(v)
+    _G.JoinNotifications = v
+    saveSettings()
+end)
 toggleRow("Auto Balloon",  "Balloon auto celui qui te vole", false)
 toggleRow("AP ESP",        "Tag les joueurs avec Admin Commands", false)
 
