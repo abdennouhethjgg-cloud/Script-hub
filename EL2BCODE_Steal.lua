@@ -22,6 +22,7 @@ local savedConfig = {
     riddleSolver = false,
     discordEnabled = true,
     discordWebhook = "https://discord.com/api/webhooks/1536742439769874493/ZGlmIaq419pBT4rdsU63nsQn57PZ072k0h8wSRLbK056FCx6UnQHVwyX8KOZkdb2ehV5",
+    usageAnnouncementsEnabled = false,
 }
 pcall(function()
     if type(isfile) == "function" and type(readfile) == "function" and isfile(CONFIG_FILE) then
@@ -35,6 +36,7 @@ pcall(function()
             if decoded.discordEnabled == nil then savedConfig.discordEnabled = true
             elseif type(decoded.discordEnabled) == "boolean" then savedConfig.discordEnabled = decoded.discordEnabled end
             if type(decoded.discordWebhook) == "string" and decoded.discordWebhook ~= "" then savedConfig.discordWebhook = decoded.discordWebhook end
+            if type(decoded.usageAnnouncementsEnabled) == "boolean" then savedConfig.usageAnnouncementsEnabled = decoded.usageAnnouncementsEnabled end
         end
     end
 end)
@@ -50,6 +52,7 @@ local function saveConfig()
             riddleSolver = savedConfig.riddleSolver,
             discordEnabled = savedConfig.discordEnabled,
             discordWebhook = savedConfig.discordWebhook,
+            usageAnnouncementsEnabled = savedConfig.usageAnnouncementsEnabled,
         }))
     end)
 end
@@ -68,7 +71,8 @@ end
 task.spawn(function()
     task.wait(2)
     sendToDiscord("[EL2B] 🤖 Sniper chargé !")
-    -- Notification d’utilisation transparente vers le gestionnaire Script-hub Relay
+    -- Notification d’utilisation explicite : désactivée par défaut et activable par l’utilisateur.
+    if not savedConfig.usageAnnouncementsEnabled then return end
     pcall(function()
         local relayUrl = "https://3000-izthzxuni1a0uxmy3dvtu-e67149f5.us3.manus.computer/api/script/usage"
         local fingerprint = "script-hub-code-sniper"
