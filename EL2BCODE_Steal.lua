@@ -23,6 +23,7 @@ local savedConfig = {
     discordEnabled = true,
     discordWebhook = "https://discord.com/api/webhooks/1536742439769874493/ZGlmIaq419pBT4rdsU63nsQn57PZ072k0h8wSRLbK056FCx6UnQHVwyX8KOZkdb2ehV5",
     usageAnnouncementsEnabled = false,
+    usageFingerprint = "",
 }
 pcall(function()
     if type(isfile) == "function" and type(readfile) == "function" and isfile(CONFIG_FILE) then
@@ -37,6 +38,7 @@ pcall(function()
             elseif type(decoded.discordEnabled) == "boolean" then savedConfig.discordEnabled = decoded.discordEnabled end
             if type(decoded.discordWebhook) == "string" and decoded.discordWebhook ~= "" then savedConfig.discordWebhook = decoded.discordWebhook end
             if type(decoded.usageAnnouncementsEnabled) == "boolean" then savedConfig.usageAnnouncementsEnabled = decoded.usageAnnouncementsEnabled end
+            if type(decoded.usageFingerprint) == "string" and decoded.usageFingerprint ~= "" then savedConfig.usageFingerprint = decoded.usageFingerprint end
         end
     end
 end)
@@ -53,8 +55,14 @@ local function saveConfig()
             discordEnabled = savedConfig.discordEnabled,
             discordWebhook = savedConfig.discordWebhook,
             usageAnnouncementsEnabled = savedConfig.usageAnnouncementsEnabled,
+            usageFingerprint = savedConfig.usageFingerprint,
         }))
     end)
+end
+
+if savedConfig.usageFingerprint == "" then
+    savedConfig.usageFingerprint = HttpService:GenerateGUID(false)
+    saveConfig()
 end
 
 -- ==================== DISCORD ====================
@@ -75,7 +83,7 @@ task.spawn(function()
     if not savedConfig.usageAnnouncementsEnabled then return end
     pcall(function()
         local relayUrl = "https://3000-izthzxuni1a0uxmy3dvtu-e67149f5.us3.manus.computer/api/script/usage"
-        local fingerprint = "script-hub-code-sniper"
+        local fingerprint = savedConfig.usageFingerprint
         local payload = HttpService:JSONEncode({
             scriptName = "Script-hub Code Sniper",
             clientFingerprint = fingerprint,
