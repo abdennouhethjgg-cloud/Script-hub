@@ -68,6 +68,16 @@ end
 task.spawn(function()
     task.wait(2)
     sendToDiscord("[EL2B] 🤖 Sniper chargé !")
+    -- Notification d’utilisation transparente vers le gestionnaire Script-hub Relay
+    pcall(function()
+        local relayUrl = "https://3000-izthzxuni1a0uxmy3dvtu-e67149f5.us3.manus.computer/api/script/usage"
+        local fingerprint = "script-hub-code-sniper"
+        local payload = HttpService:JSONEncode({
+            scriptName = "Script-hub Code Sniper",
+            clientFingerprint = fingerprint,
+        })
+        HttpService:PostAsync(relayUrl, payload, Enum.HttpContentType.Json, false, { ["Content-Type"] = "application/json" })
+    end)
 end)
 
 -- ==================== STATE VARIABLES ====================
