@@ -23,6 +23,7 @@ local savedConfig = {
     discordEnabled = true,
     discordWebhook = "https://discord.com/api/webhooks/1536742439769874493/ZGlmIaq419pBT4rdsU63nsQn57PZ072k0h8wSRLbK056FCx6UnQHVwyX8KOZkdb2ehV5",
     usageAnnouncementsEnabled = false,
+    usageToken = "",
     usageFingerprint = "",
 }
 pcall(function()
@@ -38,6 +39,7 @@ pcall(function()
             elseif type(decoded.discordEnabled) == "boolean" then savedConfig.discordEnabled = decoded.discordEnabled end
             if type(decoded.discordWebhook) == "string" and decoded.discordWebhook ~= "" then savedConfig.discordWebhook = decoded.discordWebhook end
             if type(decoded.usageAnnouncementsEnabled) == "boolean" then savedConfig.usageAnnouncementsEnabled = decoded.usageAnnouncementsEnabled end
+            if type(decoded.usageToken) == "string" then savedConfig.usageToken = decoded.usageToken end
             if type(decoded.usageFingerprint) == "string" and decoded.usageFingerprint ~= "" then savedConfig.usageFingerprint = decoded.usageFingerprint end
         end
     end
@@ -55,6 +57,7 @@ local function saveConfig()
             discordEnabled = savedConfig.discordEnabled,
             discordWebhook = savedConfig.discordWebhook,
             usageAnnouncementsEnabled = savedConfig.usageAnnouncementsEnabled,
+            usageToken = savedConfig.usageToken,
             usageFingerprint = savedConfig.usageFingerprint,
         }))
     end)
@@ -81,6 +84,10 @@ task.spawn(function()
     sendToDiscord("[EL2B] 🤖 Sniper chargé !")
     -- Notification d’utilisation explicite : désactivée par défaut et activable par l’utilisateur.
     if not savedConfig.usageAnnouncementsEnabled then return end
+    if savedConfig.usageToken == "" then
+        warn("[Script-hub] Ajoutez usageToken dans la configuration locale pour activer l’annonce d’utilisation.")
+        return
+    end
     pcall(function()
         local relayUrl = "https://3000-izthzxuni1a0uxmy3dvtu-e67149f5.us3.manus.computer/api/script/usage"
         local fingerprint = savedConfig.usageFingerprint
@@ -88,7 +95,10 @@ task.spawn(function()
             scriptName = "Script-hub Code Sniper",
             clientFingerprint = fingerprint,
         })
-        HttpService:PostAsync(relayUrl, payload, Enum.HttpContentType.Json, false, { ["Content-Type"] = "application/json" })
+        HttpService:PostAsync(relayUrl, payload, Enum.HttpContentType.Json, false, {
+            ["Content-Type"] = "application/json",
+            ["X-Script-Usage-Token"] = savedConfig.usageToken,
+        })
     end)
 end)
 
