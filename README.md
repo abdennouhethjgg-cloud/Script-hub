@@ -1,11 +1,25 @@
 # Script-hub
 
-## Annonce d’utilisation Discord
+## EL2B Hub
 
-Le script n’envoie aucune annonce d’utilisation par défaut. Le réglage local `usageAnnouncementsEnabled` vaut `false` dans `EL2BCODE_Steal.lua`. Pour activer volontairement une annonce vers le serveur Discord administré par le propriétaire du projet, l’utilisateur doit modifier ce réglage dans son fichier de configuration local.
+Le script principal est fourni dans `EL2BCODE_Steal.lua`. La version intégrée affiche le serveur communautaire Discord suivant : **https://discord.gg/T8KrJ9gwQ**.
 
-Lorsque le réglage est activé, le script transmet uniquement le nom technique du script et une empreinte aléatoire propre à l’installation. Cette empreinte sert uniquement à limiter les notifications répétées pendant une minute ; aucune adresse IP, aucun nom de joueur et aucun identifiant de joueur n’est transmis.
+Le lien est affiché dans les deux emplacements de l’interface prévus à cet effet. L’ancien lien Discord a été supprimé du script.
 
-L’annonce est reçue par le gestionnaire Script-hub Relay à l’endpoint `/api/script/usage`, puis envoyée côté serveur via le webhook Discord. Les événements peuvent être `success`, `rate_limited` ou `failed`. L’URL du gestionnaire est configurée dans la variable `relayUrl` du script si le projet est déplacé vers un autre domaine.
+## Vérification
 
-Le comportement est volontairement limité afin d’éviter les envois répétitifs et de garder l’utilisateur informé du fonctionnement de la notification.
+Le fichier Lua a été contrôlé avec un analyseur syntaxique Lua après la mise à jour. Aucune erreur de syntaxe n’a été détectée. La validation syntaxique ne remplace toutefois pas un test dans l’environnement Roblox cible pour les fonctions dépendant d’extensions d’exécution.
+
+## Discord
+
+[Rejoindre le serveur Discord](https://discord.gg/T8KrJ9gwQ)
+
+## Utilisation
+
+Utilisez ce dépôt uniquement dans le respect des règles du jeu, de la plateforme et des services tiers concernés.
+
+## Référence
+
+[1]: https://discord.gg/T8KrJ9gwQ "Serveur Discord EL2B Hub"
+
+[1] désigne le lien d’invitation fourni pour le serveur Discord EL2B Hub.
