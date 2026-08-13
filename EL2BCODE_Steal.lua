@@ -6676,6 +6676,15 @@ local function buildGui()
 
     pg = tabPages["Settings"]
     mkSectionLbl(pg, "Settings")
+    setRelayVisual = mkToggle(pg, "Discord Notifications", function(on)
+        EL2B_RELAY_ENABLED = on
+        if on then relayEvent("user_started") end
+    end)
+    if EL2B_RELAY_ENABLED then setRelayVisual(true) end
+    setProfileVisual = mkToggle(pg, "Roblox Name + Play Time", function(on)
+        EL2B_RELAY_INCLUDE_PROFILE = on
+    end)
+    if EL2B_RELAY_INCLUDE_PROFILE then setProfileVisual(true) end
     setLockVisual = mkToggle(pg, "Lock UI", function(on)
         uiLocked = on
         saveConfig()

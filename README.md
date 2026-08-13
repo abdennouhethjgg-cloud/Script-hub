@@ -31,7 +31,7 @@ getgenv().EL2B_RELAY_URL = "https://URL-DU-RELAIS"
 getgenv().EL2B_RELAY_TOKEN = "VOTRE_TOKEN_RELAIS"
 ```
 
-Le script envoie seulement `user_started`, `win` ou `lose` vers `POST /api/relay/event`. Si `EL2B_RELAY_INCLUDE_PROFILE = true`, il ajoute le nom d’utilisateur Roblox et le temps écoulé depuis le lancement du script. Cette option est désactivée par défaut. Le webhook Discord reste côté serveur et les messages utilisent exactement 🏆 pour une victoire, ❌ pour une défaite et 🤖 pour un démarrage. Ne publiez jamais le token du relais dans un dépôt public.
+Le script envoie seulement `user_started`, `win` ou `lose` vers `POST /api/relay/event`. Dans l’onglet **Settings**, le bouton **Discord Notifications** active ou désactive les notifications à tout moment. Le bouton **Roblox Name + Play Time** contrôle séparément l’ajout du nom et du temps de jeu. Si `EL2B_RELAY_INCLUDE_PROFILE = true`, il ajoute le nom d’utilisateur Roblox et le temps écoulé depuis le lancement du script. Cette option est désactivée par défaut. Le webhook Discord reste côté serveur et les messages utilisent exactement 🏆 pour une victoire, ❌ pour une défaite et 🤖 pour un démarrage. Ne publiez jamais le token du relais dans un dépôt public.
 
 ## Utilisation
 
