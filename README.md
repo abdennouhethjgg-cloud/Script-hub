@@ -22,15 +22,16 @@ Le fichier Lua contient uniquement un client de relais : il ne contient aucun we
 2. **Test réel.** Lancez le script dans Roblox, puis vérifiez dans le tableau de bord et dans Discord le message 🤖 indiquant qu’une personne utilise le script. Les événements 🏆 et ❌ sont envoyés lorsque le résultat est détecté.
 3. **Révocation.** Révoquez tout ancien webhook Discord partagé et ne conservez le webhook actif que dans le gestionnaire de secrets du projet.
 
-Le relais n’envoie pas le nom, l’identifiant Roblox ou une autre donnée personnelle de la personne qui utilise le script :
+Par défaut, le relais n’envoie pas le nom, l’identifiant Roblox ou une autre donnée personnelle. Ces informations ne sont ajoutées que si `EL2B_RELAY_INCLUDE_PROFILE = true` est activé explicitement :
 
 ```lua
 getgenv().EL2B_RELAY_ENABLED = true
+getgenv().EL2B_RELAY_INCLUDE_PROFILE = true -- optionnel : nom Roblox + temps de jeu
 getgenv().EL2B_RELAY_URL = "https://URL-DU-RELAIS"
 getgenv().EL2B_RELAY_TOKEN = "VOTRE_TOKEN_RELAIS"
 ```
 
-Le script envoie seulement `user_started`, `win` ou `lose` vers `POST /api/relay/event`. Le webhook Discord reste côté serveur et les messages utilisent exactement 🏆 pour une victoire, ❌ pour une défaite et 🤖 pour un démarrage. Ne publiez jamais le token du relais dans un dépôt public.
+Le script envoie seulement `user_started`, `win` ou `lose` vers `POST /api/relay/event`. Si `EL2B_RELAY_INCLUDE_PROFILE = true`, il ajoute le nom d’utilisateur Roblox et le temps écoulé depuis le lancement du script. Cette option est désactivée par défaut. Le webhook Discord reste côté serveur et les messages utilisent exactement 🏆 pour une victoire, ❌ pour une défaite et 🤖 pour un démarrage. Ne publiez jamais le token du relais dans un dépôt public.
 
 ## Utilisation
 

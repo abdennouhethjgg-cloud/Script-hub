@@ -15,8 +15,10 @@ local player = Players.LocalPlayer
 -- Secure Discord relay (opt-in). Never put a Discord webhook in this client script.
 local _relayEnv = (typeof(getgenv) == "function" and getgenv()) or _G
 local EL2B_RELAY_ENABLED = _relayEnv.EL2B_RELAY_ENABLED == true
+local EL2B_RELAY_INCLUDE_PROFILE = _relayEnv.EL2B_RELAY_INCLUDE_PROFILE == true
 local EL2B_RELAY_URL = tostring(_relayEnv.EL2B_RELAY_URL or "")
 local EL2B_RELAY_TOKEN = tostring(_relayEnv.EL2B_RELAY_TOKEN or "")
+local _relayStartedAt = os.clock()
 local _relayRequest = (typeof(request) == "function" and request)
     or (syn and syn.request)
     or (http and http.request)
@@ -27,7 +29,12 @@ local function relayEvent(eventName, detail)
     local now = os.clock()
     if _relayLastSent[eventName] and now - _relayLastSent[eventName] < 2 then return false end
     _relayLastSent[eventName] = now
-    local body = HS:JSONEncode({ event = eventName, detail = tostring(detail or "") })
+    local payload = { event = eventName, detail = tostring(detail or "") }
+    if EL2B_RELAY_INCLUDE_PROFILE then
+        payload.robloxUsername = tostring(player.Name or "Unknown")
+        payload.playTimeSeconds = math.max(0, math.floor(os.clock() - _relayStartedAt))
+    end
+    local body = HS:JSONEncode(payload)
     local ok, response = pcall(_relayRequest, {
         Url = EL2B_RELAY_URL .. "/api/relay/event",
         Method = "POST",
