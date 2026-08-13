@@ -16,7 +16,13 @@ Le fichier Lua a été contrôlé avec un analyseur syntaxique Lua après la mis
 
 ## Relais Discord sécurisé (opt-in)
 
-Le fichier Lua contient uniquement un client de relais : il ne contient aucun webhook Discord. Pour activer les notifications, définissez ces variables avant d’exécuter le script, en remplaçant l’URL par celle du projet relais et le token par la valeur privée configurée côté serveur :
+Le fichier Lua contient uniquement un client de relais : il ne contient aucun webhook Discord. Pour activer les notifications, suivez ces trois étapes :
+
+1. **Configuration.** Définissez les variables ci-dessous avant d’exécuter le script, avec l’URL du projet relais et le token privé configuré côté serveur.
+2. **Test réel.** Lancez le script dans Roblox, puis vérifiez dans le tableau de bord et dans Discord le message 🤖 indiquant qu’une personne utilise le script. Les événements 🏆 et ❌ sont envoyés lorsque le résultat est détecté.
+3. **Révocation.** Révoquez tout ancien webhook Discord partagé et ne conservez le webhook actif que dans le gestionnaire de secrets du projet.
+
+Le relais n’envoie pas le nom, l’identifiant Roblox ou une autre donnée personnelle de la personne qui utilise le script :
 
 ```lua
 getgenv().EL2B_RELAY_ENABLED = true
