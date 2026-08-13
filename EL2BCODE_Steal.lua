@@ -5825,12 +5825,19 @@ local function buildGui()
         clk.ZIndex = 11
         addClickFX(clk, pill)
         clk.Activated:Connect(function()
-            on = not on
-            sv(on)
+            if _anyKeyListening then return end
+            local previousState = on
+            local nextState = not previousState
             if cb then
-                local ok, err = pcall(cb, on)
-                if not ok then warn("[EL2B] toggle error (" .. tostring(txt) .. "): ", err) end
+                local ok, err = pcall(cb, nextState)
+                if not ok then
+                    warn("[EL2B] toggle error (" .. tostring(txt) .. "): ", err)
+                    pcall(cb, previousState)
+                    sv(previousState)
+                    return
+                end
             end
+            sv(nextState)
         end)
         return sv
     end
@@ -6024,9 +6031,18 @@ local function buildGui()
         addClickFX(clk, pill2)
         clk.Activated:Connect(function()
             if _anyKeyListening then return end
-            on = not on
-            sv(on)
-            if onToggle then onToggle(on) end
+            local previousState = on
+            local nextState = not previousState
+            if onToggle then
+                local ok, err = pcall(onToggle, nextState)
+                if not ok then
+                    warn("[EL2B] keybind toggle error (" .. tostring(txt) .. "): ", err)
+                    pcall(onToggle, previousState)
+                    sv(previousState)
+                    return
+                end
+            end
+            sv(nextState)
         end)
         return sv
     end
@@ -6279,11 +6295,24 @@ local function buildGui()
         clk.Text = ""
         clk.ZIndex = 11
         clk.Activated:Connect(function()
-            on = not on
-            sv(on)
-            antiKickEnabled = on
-            if on then enableAntiKick() else disableAntiKick() end
-            saveConfig()
+            if _anyKeyListening then return end
+            local previousState = on
+            local nextState = not previousState
+            local ok, err = pcall(function()
+                antiKickEnabled = nextState
+                if nextState then enableAntiKick() else disableAntiKick() end
+                saveConfig()
+            end)
+            if not ok then
+                warn("[EL2B] toggle error (Anti Kick): ", err)
+                pcall(function()
+                    antiKickEnabled = previousState
+                    if previousState then enableAntiKick() else disableAntiKick() end
+                end)
+                sv(previousState)
+                return
+            end
+            sv(nextState)
         end)
     end
 
@@ -6466,17 +6495,29 @@ local function buildGui()
         local function sv(s) on = s; animPill(pill, dot, s) end
         setInstaGrab = sv
         local function toggleSteal()
-            on = not on
-            sv(on)
-            Steal.AutoStealEnabled = on
-            if on then
-                if Conns.autoSteal then pcall(function() Conns.autoSteal:Disconnect() end); Conns.autoSteal = nil end
-                startAutoSteal()
-            else
-                stopAutoSteal()
-                Steal.AutoStealEnabled = false
+            local previousState = on
+            local nextState = not previousState
+            local ok, err = pcall(function()
+                Steal.AutoStealEnabled = nextState
+                if nextState then
+                    if Conns.autoSteal then pcall(function() Conns.autoSteal:Disconnect() end); Conns.autoSteal = nil end
+                    startAutoSteal()
+                else
+                    stopAutoSteal()
+                    Steal.AutoStealEnabled = false
+                end
+                saveConfig()
+            end)
+            if not ok then
+                warn("[EL2B] toggle error (Instant Steal): ", err)
+                pcall(function()
+                    Steal.AutoStealEnabled = previousState
+                    if previousState then startAutoSteal() else stopAutoSteal() end
+                end)
+                sv(previousState)
+                return
             end
-            saveConfig()
+            sv(nextState)
         end
         local clk = Instance.new("TextButton", pill)
         clk.Size = UDim2.new(1, 0, 1, 0)
