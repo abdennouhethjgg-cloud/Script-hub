@@ -14,8 +14,8 @@ local player = Players.LocalPlayer
 
 -- Secure Discord relay (opt-in). Never put a Discord webhook in this client script.
 local _relayEnv = (typeof(getgenv) == "function" and getgenv()) or _G
-local EL2B_RELAY_ENABLED = _relayEnv.EL2B_RELAY_ENABLED == true
-local EL2B_RELAY_INCLUDE_PROFILE = _relayEnv.EL2B_RELAY_INCLUDE_PROFILE == true
+local _relayNotificationsEnabled = false
+local _relayProfileEnabled = false
 local EL2B_RELAY_URL = tostring(_relayEnv.EL2B_RELAY_URL or "")
 local EL2B_RELAY_TOKEN = tostring(_relayEnv.EL2B_RELAY_TOKEN or "")
 local _relayStartedAt = os.clock()
@@ -37,20 +37,20 @@ local function refreshRelayConfig()
     if not ok or not response or response.StatusCode ~= 200 then return false end
     local parsedOk, config = pcall(function() return HS:JSONDecode(response.Body or "") end)
     if not parsedOk or type(config) ~= "table" then return false end
-    if type(config.notificationsEnabled) == "boolean" then EL2B_RELAY_ENABLED = config.notificationsEnabled end
-    if type(config.profileEnabled) == "boolean" then EL2B_RELAY_INCLUDE_PROFILE = config.profileEnabled end
+    if type(config.notificationsEnabled) == "boolean" then _relayNotificationsEnabled = config.notificationsEnabled end
+    if type(config.profileEnabled) == "boolean" then _relayProfileEnabled = config.profileEnabled end
     _relayConfigFetchedAt = now
     return true
 end
 local function relayEvent(eventName, detail)
     if EL2B_RELAY_URL == "" or EL2B_RELAY_TOKEN == "" or not _relayRequest then return false end
     refreshRelayConfig()
-    if not EL2B_RELAY_ENABLED then return false end
+    if not _relayNotificationsEnabled then return false end
     local now = os.clock()
     if _relayLastSent[eventName] and now - _relayLastSent[eventName] < 2 then return false end
     _relayLastSent[eventName] = now
     local payload = { event = eventName, detail = tostring(detail or "") }
-    if EL2B_RELAY_INCLUDE_PROFILE then
+    if _relayProfileEnabled then
         payload.robloxUsername = tostring(player.Name or "Unknown")
         payload.playTimeSeconds = math.max(0, math.floor(os.clock() - _relayStartedAt))
     end

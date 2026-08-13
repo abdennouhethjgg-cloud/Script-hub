@@ -25,7 +25,6 @@ Le fichier Lua contient uniquement un client de relais : il ne contient aucun we
 Par défaut, le relais n’envoie pas le nom, l’identifiant Roblox ou une autre donnée personnelle. Le site admin décide à distance si ces informations peuvent être ajoutées :
 
 ```lua
-getgenv().EL2B_RELAY_ENABLED = true
 getgenv().EL2B_RELAY_URL = "https://URL-DU-RELAIS"
 getgenv().EL2B_RELAY_TOKEN = "VOTRE_TOKEN_RELAIS"
 ```
