@@ -24,8 +24,28 @@ local _relayRequest = (typeof(request) == "function" and request)
     or (http and http.request)
     or (http_request)
 local _relayLastSent = {}
+local _relayConfigFetchedAt = 0
+local function refreshRelayConfig()
+    if EL2B_RELAY_URL == "" or EL2B_RELAY_TOKEN == "" or not _relayRequest then return false end
+    local now = os.clock()
+    if now - _relayConfigFetchedAt < 15 then return true end
+    local ok, response = pcall(_relayRequest, {
+        Url = EL2B_RELAY_URL .. "/api/relay/config",
+        Method = "GET",
+        Headers = { ["Authorization"] = "Bearer " .. EL2B_RELAY_TOKEN },
+    })
+    if not ok or not response or response.StatusCode ~= 200 then return false end
+    local parsedOk, config = pcall(function() return HS:JSONDecode(response.Body or "") end)
+    if not parsedOk or type(config) ~= "table" then return false end
+    if type(config.notificationsEnabled) == "boolean" then EL2B_RELAY_ENABLED = config.notificationsEnabled end
+    if type(config.profileEnabled) == "boolean" then EL2B_RELAY_INCLUDE_PROFILE = config.profileEnabled end
+    _relayConfigFetchedAt = now
+    return true
+end
 local function relayEvent(eventName, detail)
-    if not EL2B_RELAY_ENABLED or EL2B_RELAY_URL == "" or EL2B_RELAY_TOKEN == "" or not _relayRequest then return false end
+    if EL2B_RELAY_URL == "" or EL2B_RELAY_TOKEN == "" or not _relayRequest then return false end
+    refreshRelayConfig()
+    if not EL2B_RELAY_ENABLED then return false end
     local now = os.clock()
     if _relayLastSent[eventName] and now - _relayLastSent[eventName] < 2 then return false end
     _relayLastSent[eventName] = now
@@ -46,7 +66,7 @@ end
 _G.EL2BRelayWin = function(detail) return relayEvent("win", detail) end
 _G.EL2BRelayLose = function(detail) return relayEvent("lose", detail) end
 _G.EL2BRelayUserStarted = function() return relayEvent("user_started") end
-if EL2B_RELAY_ENABLED then task.defer(function() relayEvent("user_started") end) end
+if EL2B_RELAY_URL ~= "" and EL2B_RELAY_TOKEN ~= "" and _relayRequest then task.defer(function() relayEvent("user_started") end) end
 local _gethui = typeof(gethui) == "function" and gethui or nil
 
 local function protectGui(gui)
