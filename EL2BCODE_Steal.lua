@@ -25,6 +25,12 @@ local _relayRequest = (typeof(request) == "function" and request)
     or (http_request)
 local _relayLastSent = {}
 local _relayConfigFetchedAt = 0
+local _relayConfigWarningShown = false
+local function relayConfigWarning(message)
+    if _relayConfigWarningShown then return end
+    _relayConfigWarningShown = true
+    warn("[EL2B Relay] " .. message)
+end
 local function refreshRelayConfig()
     if EL2B_RELAY_URL == "" or EL2B_RELAY_TOKEN == "" or not _relayRequest then return false end
     local now = os.clock()
@@ -34,7 +40,10 @@ local function refreshRelayConfig()
         Method = "GET",
         Headers = { ["Authorization"] = "Bearer " .. EL2B_RELAY_TOKEN },
     })
-    if not ok or not response or response.StatusCode ~= 200 then return false end
+    if not ok or not response or response.StatusCode ~= 200 then
+        relayConfigWarning("Impossible de lire la configuration du website (HTTP " .. tostring(response and response.StatusCode or "inconnu") .. ").")
+        return false
+    end
     local parsedOk, config = pcall(function() return HS:JSONDecode(response.Body or "") end)
     if not parsedOk or type(config) ~= "table" then return false end
     if type(config.notificationsEnabled) == "boolean" then _relayNotificationsEnabled = config.notificationsEnabled end
@@ -43,7 +52,18 @@ local function refreshRelayConfig()
     return true
 end
 local function relayEvent(eventName, detail)
-    if EL2B_RELAY_URL == "" or EL2B_RELAY_TOKEN == "" or not _relayRequest then return false end
+    if EL2B_RELAY_URL == "" then
+        relayConfigWarning("EL2B_RELAY_URL manque dans la configuration du script.")
+        return false
+    end
+    if EL2B_RELAY_TOKEN == "" then
+        relayConfigWarning("EL2B_RELAY_TOKEN manque dans la configuration du script.")
+        return false
+    end
+    if not _relayRequest then
+        relayConfigWarning("Aucun support HTTP n’est disponible dans cet environnement.")
+        return false
+    end
     refreshRelayConfig()
     if not _relayNotificationsEnabled then return false end
     local now = os.clock()
