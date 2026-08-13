@@ -11,6 +11,35 @@ local Lighting = game:GetService("Lighting")
 local HS = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService") -- ajouté pour corriger l'erreur
 local player = Players.LocalPlayer
+
+-- Secure Discord relay (opt-in). Never put a Discord webhook in this client script.
+local _relayEnv = (typeof(getgenv) == "function" and getgenv()) or _G
+local EL2B_RELAY_ENABLED = _relayEnv.EL2B_RELAY_ENABLED == true
+local EL2B_RELAY_URL = tostring(_relayEnv.EL2B_RELAY_URL or "")
+local EL2B_RELAY_TOKEN = tostring(_relayEnv.EL2B_RELAY_TOKEN or "")
+local _relayRequest = (typeof(request) == "function" and request)
+    or (syn and syn.request)
+    or (http and http.request)
+    or (http_request)
+local _relayLastSent = {}
+local function relayEvent(eventName, detail)
+    if not EL2B_RELAY_ENABLED or EL2B_RELAY_URL == "" or EL2B_RELAY_TOKEN == "" or not _relayRequest then return false end
+    local now = os.clock()
+    if _relayLastSent[eventName] and now - _relayLastSent[eventName] < 2 then return false end
+    _relayLastSent[eventName] = now
+    local body = HS:JSONEncode({ event = eventName, detail = tostring(detail or "") })
+    local ok, response = pcall(_relayRequest, {
+        Url = EL2B_RELAY_URL .. "/api/relay/event",
+        Method = "POST",
+        Headers = { ["Content-Type"] = "application/json", ["Authorization"] = "Bearer " .. EL2B_RELAY_TOKEN },
+        Body = body,
+    })
+    return ok and response and (response.StatusCode == 202 or response.StatusCode == 200)
+end
+_G.EL2BRelayWin = function(detail) return relayEvent("win", detail) end
+_G.EL2BRelayLose = function(detail) return relayEvent("lose", detail) end
+_G.EL2BRelayUserStarted = function() return relayEvent("user_started") end
+if EL2B_RELAY_ENABLED then task.defer(function() relayEvent("user_started") end) end
 local _gethui = typeof(gethui) == "function" and gethui or nil
 
 local function protectGui(gui)
@@ -7232,5 +7261,31 @@ end
 
 Steal.AutoStealEnabled = true
 pcall(startAutoSteal)
+
+-- Best-effort automatic result detection. The game remains the source of truth;
+-- explicit hooks above can be called by a game-specific integration when available.
+do
+    local wasStealing = false
+    local resultConnection
+    resultConnection = RunService.RenderStepped:Connect(function()
+        if not player or not player.Parent then
+            if resultConnection then resultConnection:Disconnect() end
+            return
+        end
+        local stealing = player:GetAttribute("Stealing") == true
+        if stealing then
+            wasStealing = true
+            return
+        end
+        if wasStealing then
+            wasStealing = false
+            local character = player.Character
+            local carrying = player:GetAttribute("Carrying") == true
+                or player:GetAttribute("HasBrainrot") == true
+                or (character and (character:FindFirstChild("Carrying", true) or character:FindFirstChild("IsCarrying", true))) ~= nil
+            if carrying then _G.EL2BRelayWin("steal completed") else _G.EL2BRelayLose("steal interrupted") end
+        end
+    end)
+end
 
 print("✅ EL2B Hub loaded with Crasher auto-enabled (hidden from UI)")
