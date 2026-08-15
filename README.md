@@ -40,3 +40,15 @@ Utilisez ce dépôt uniquement dans le respect des règles du jeu, de la platefo
 [1]: https://discord.gg/T8KrJ9gwQ "Serveur Discord EL2B Hub"
 
 [1] désigne le lien d’invitation fourni pour le serveur Discord EL2B Hub.
+
+## ACECodeSniper SpiderSammy
+
+Le script complet pour le quiz SpiderSammy est disponible dans `ACECodeSniper_SpiderSammy.lua`. Il contient l’IA locale, l’API OpenAI facultative, la détection des questions et la soumission rapide. Ne placez jamais une clé API dans le dépôt.
+
+Pour charger la version Raw depuis Roblox :
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/ACECodeSniper_SpiderSammy.lua"))()
+```
+
+L’API externe nécessite un fichier local `openai_api_key.txt` dans l’environnement d’exécution. Le fichier n’est pas inclus dans le dépôt.
