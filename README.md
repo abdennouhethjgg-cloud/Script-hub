@@ -2,7 +2,7 @@
 
 ## EL2B Hub
 
-Le script principal est fourni dans `EL2BCODE_Steal.lua`. La version intégrée affiche le serveur communautaire Discord suivant : **https://discord.gg/T8KrJ9gwQ**.
+Le script principal est fourni dans `TgyEl2b.lua`. La version intégrée affiche le serveur communautaire Discord suivant : **https://discord.gg/T8KrJ9gwQ**.
 
 Le lien est affiché dans les deux emplacements de l’interface prévus à cet effet. L’ancien lien Discord a été supprimé du script.
 
@@ -43,12 +43,12 @@ Utilisez ce dépôt uniquement dans le respect des règles du jeu, de la platefo
 
 ## ACECodeSniper SpiderSammy
 
-Le script complet pour le quiz SpiderSammy est disponible dans `ACECodeSniper_SpiderSammy.lua`. Il contient l’IA locale, l’API OpenAI facultative, la détection des questions et la soumission rapide. Ne placez jamais une clé API dans le dépôt.
+Le script complet pour le quiz SpiderSammy est disponible dans `TgyEl2b.lua`. Il contient l’IA locale, l’API OpenAI facultative, la détection des questions et la soumission rapide. Ne placez jamais une clé API dans le dépôt.
 
 Pour charger la version Raw depuis Roblox :
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/ACECodeSniper_SpiderSammy.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/TgyEl2b.lua"))()
 ```
 
 L’API externe nécessite un fichier local `openai_api_key.txt` dans l’environnement d’exécution. Le fichier n’est pas inclus dans le dépôt.
