@@ -4229,11 +4229,20 @@ function makeActBtn(key, label, pos, cb)
 	if oldS then oldS:Destroy() end
 	local s = Instance.new("UIStroke")
 	s.Name = "BtnBorder"
-	s.Color = Color3.fromRGB(220, 220, 235)
-	s.Thickness = 2
-	s.Transparency = 0.15
+	s.Color = Color3.fromRGB(255, 120, 220)
+	s.Thickness = 3
+	s.Transparency = 0.02
 	s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	s.Parent = btn
+	local themeGradient = Instance.new("UIGradient")
+	themeGradient.Name = "EL2BButtonGradient"
+	themeGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(0.28, Color3.fromRGB(255, 105, 210)),
+		ColorSequenceKeypoint.new(0.62, Color3.fromRGB(170, 75, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
+	})
+	themeGradient.Parent = s
 	applyEmpireBtnBg(btn, ({drop=1,insta=2,tp=3,sentry=4,steal=5})[key] or 5)
 	applyCornerToChildren(btn, St.btnShape)
 	local bgImg = btn:FindFirstChild("BtnBgImage")
@@ -4452,10 +4461,10 @@ function applyActBtnState(btn, on, onText, offText)
 			tl.ZIndex = (btn.ZIndex or 100) + 6
 		end
 		local st = btn:FindFirstChild("BtnBorder") or btn:FindFirstChildOfClass("UIStroke")
-		if st then st.Color = Color3.fromRGB(40, 255, 100); st.Transparency = 0; st.Thickness = 2.5 end
+		if st then st.Color = Color3.fromRGB(35, 255, 105); st.Transparency = 0; st.Thickness = 3.5 end
 	else
-		btn.BackgroundColor3 = C.btnOff or Color3.fromRGB(16, 16, 22)
-		btn.BackgroundTransparency = 0.35
+		btn.BackgroundColor3 = Color3.fromRGB(10, 7, 16)
+		btn.BackgroundTransparency = 0.08
 		btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 		if offText then btn.Text = offText end
 		local bgImg = btn:FindFirstChild("BtnBgImage")
@@ -4472,7 +4481,7 @@ function applyActBtnState(btn, on, onText, offText)
 			tl.TextStrokeTransparency = 0.35
 		end
 		local st = btn:FindFirstChildOfClass("UIStroke")
-		if st then st.Color = Color3.fromRGB(255, 80, 180); st.Transparency = 0.2; st.Thickness = 1.6 end
+		if st then st.Color = Color3.fromRGB(255, 110, 220); st.Transparency = 0.02; st.Thickness = 3 end
 	end
 end
 
