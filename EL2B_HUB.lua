@@ -1,5 +1,5 @@
 --[[
-  Vis Hub — Version corrigée et optimisée
+  EL2B HUB — Version corrigée et optimisée
   Tous les onglets fonctionnels, toutes les erreurs corrigées.
   Script prêt à être exécuté.
 ]]
@@ -4984,4 +4984,4 @@ task.defer(function()
 	end)
 end)
 
-print("[Vis Hub] Chargé et optimisé ! Toutes les fonctionnalités sont prêtes.")
+print("[EL2B HUB] Chargé et optimisé ! Toutes les fonctionnalités sont prêtes.")
