@@ -24,7 +24,7 @@ local PlayerGui = LP:WaitForChild("PlayerGui", 30) or LP:FindFirstChild("PlayerG
 -- Nettoyer les anciennes interfaces
 pcall(function()
 	for _, n in ipairs({
-		"VisHubFullMenu", "VisHubFullMini", "VisHubModeBar", "VisHubActionButtons",
+		"VisHubFullMenu", "VisHubFullMini", "VisHubModeBar", "VisHubActionButtons", "EL2BHelperGui",
 		"VisV2ModeBar", "VisBypassGui", "Per1shccLaggerV2", "VisHubbTP",
 		"VisPanelTP", "VisAutoStealGui", "VisTpBestBtn", "VisStealBarOnly"
 	}) do
@@ -3786,13 +3786,13 @@ ModeGui.DisplayOrder = 2501
 ModeGui.Enabled = false
 ModeGui.Parent = PlayerGui
 
-local ActGui = Instance.new("ScreenGui")
-ActGui.Name = "VisHubActionButtons"
-ActGui.ResetOnSpawn = false
-ActGui.IgnoreGuiInset = true
-ActGui.DisplayOrder = 2500
-ActGui.Enabled = false
-ActGui.Parent = PlayerGui
+local HelperGui = Instance.new("ScreenGui")
+HelperGui.Name = "EL2BHelperGui"
+HelperGui.ResetOnSpawn = false
+HelperGui.IgnoreGuiInset = true
+HelperGui.DisplayOrder = 2500
+HelperGui.Enabled = false
+HelperGui.Parent = PlayerGui
 
 local modeRefs = {}
 local actRefs = {}
@@ -4208,7 +4208,7 @@ function makeActBtn(key, label, pos, cb)
 	holder.BackgroundTransparency = 1
 	holder.Active = true
 	holder.ZIndex = 50
-	holder.Parent = ActGui
+	holder.Parent = HelperGui
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, 0, 1, 0)
 	btn.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
@@ -4597,7 +4597,7 @@ end
 
 _G.VisApplyMobile = function()
 	ModeGui.Enabled = St.mobileBtns == true
-	ActGui.Enabled = St.mobileBtns == true
+	HelperGui.Enabled = St.mobileBtns == true
 	local hasMode = next(modeRefs) ~= nil
 	local hasAct = next(actRefs) ~= nil
 	if not hasMode or not hasAct then rebuildMobile() end
@@ -4681,7 +4681,7 @@ function reapplyAllLogic(reason)
 	end)
 	pcall(function()
 		if ModeGui then ModeGui.Enabled = St.mobileBtns == true end
-		if ActGui then ActGui.Enabled = St.mobileBtns == true end
+		if ActGui then HelperGui.Enabled = St.mobileBtns == true end
 		if _G.VisApplyMobile then pcall(_G.VisApplyMobile) end
 	end)
 end
