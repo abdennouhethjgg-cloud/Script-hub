@@ -52,3 +52,11 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud
 ```
 
 L’API externe nécessite un fichier local `openai_api_key.txt` dans l’environnement d’exécution. Le fichier n’est pas inclus dans le dépôt.
+
+## Vis Hub — version corrigée
+
+Script corrigé et vérifié pour exécution par `loadstring` :
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/vis_hub_fixed.lua"))()
+```
