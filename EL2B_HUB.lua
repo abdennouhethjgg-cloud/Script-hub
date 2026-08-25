@@ -2061,7 +2061,7 @@ topFix.BorderSizePixel = 0
 topFix.Parent = Top
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -80, 1, 0)
+Title.Size = UDim2.new(1, -140, 1, 0)
 Title.Position = UDim2.new(0, 14, 0, 0)
 Title.BackgroundTransparency = 1
 Title.Text = "Free Sell Là Tuất Ngu Lồn"
@@ -2099,6 +2099,55 @@ CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.AutoButtonColor = false
 CloseBtn.Parent = Top
 corner(CloseBtn, 6)
+
+local WebStatus = Instance.new("Frame")
+WebStatus.Name = "WebStatusIndicator"
+WebStatus.Size = UDim2.new(0, 92, 0, 22)
+WebStatus.Position = UDim2.new(1, -126, 0.5, -11)
+WebStatus.BackgroundColor3 = Color3.fromRGB(18, 14, 25)
+WebStatus.BorderSizePixel = 0
+WebStatus.ZIndex = 20
+WebStatus.Parent = Top
+corner(WebStatus, 7)
+local WebStatusStroke = stroke(WebStatus)
+WebStatusStroke.Color = Color3.fromRGB(100, 70, 125)
+WebStatusStroke.Thickness = 1
+WebStatusStroke.Transparency = 0.2
+local WebStatusDot = Instance.new("Frame")
+WebStatusDot.Name = "StatusDot"
+WebStatusDot.Size = UDim2.new(0, 7, 0, 7)
+WebStatusDot.Position = UDim2.new(0, 8, 0.5, -3)
+WebStatusDot.BackgroundColor3 = Color3.fromRGB(130, 120, 145)
+WebStatusDot.BorderSizePixel = 0
+WebStatusDot.ZIndex = 21
+WebStatusDot.Parent = WebStatus
+corner(WebStatusDot, 4)
+local WebStatusText = Instance.new("TextLabel")
+WebStatusText.Name = "StatusText"
+WebStatusText.Size = UDim2.new(1, -22, 1, 0)
+WebStatusText.Position = UDim2.new(0, 20, 0, 0)
+WebStatusText.BackgroundTransparency = 1
+WebStatusText.Text = "WEB OFF"
+WebStatusText.TextColor3 = Color3.fromRGB(155, 145, 165)
+WebStatusText.TextSize = 9
+WebStatusText.Font = Enum.Font.GothamBold
+WebStatusText.TextXAlignment = Enum.TextXAlignment.Left
+WebStatusText.ZIndex = 21
+WebStatusText.Parent = WebStatus
+local function setWebStatusIndicator(state)
+	local colors = {
+		off = { dot = Color3.fromRGB(135, 125, 150), text = Color3.fromRGB(165, 155, 175), border = Color3.fromRGB(100, 70, 125), label = "WEB OFF" },
+		connecting = { dot = Color3.fromRGB(255, 190, 80), text = Color3.fromRGB(255, 210, 120), border = Color3.fromRGB(150, 105, 45), label = "CONNECT…" },
+	online = { dot = Color3.fromRGB(70, 255, 135), text = Color3.fromRGB(130, 255, 170), border = Color3.fromRGB(55, 150, 90), label = "WEB ON" },
+	error = { dot = Color3.fromRGB(255, 85, 110), text = Color3.fromRGB(255, 150, 165), border = Color3.fromRGB(155, 55, 75), label = "OFFLINE" },
+	}
+	local c = colors[state] or colors.off
+	WebStatusDot.BackgroundColor3 = c.dot
+	WebStatusText.TextColor3 = c.text
+	WebStatusText.Text = c.label
+	WebStatusStroke.Color = c.border
+end
+setWebStatusIndicator("off")
 
 local Helper = Instance.new("TextButton")
 Helper.Name = "HelperClose"
@@ -3113,7 +3162,9 @@ end
 
 local function sendWebHeartbeat()
 	local requestFn = getHttpRequest()
+	setWebStatusIndicator("connecting")
 	if type(requestFn) ~= "function" then
+		setWebStatusIndicator("error")
 		warn("[EL2B HUB] Statut web indisponible : cet environnement ne fournit pas de fonction HTTP.")
 		return false
 	end
@@ -3121,6 +3172,7 @@ local function sendWebHeartbeat()
 		return game:GetService("HttpService"):JSONEncode({ json = { installationId = ensureWebStatusId() } })
 	end)
 	if not okEncode then
+		setWebStatusIndicator("error")
 		warn("[EL2B HUB] Statut web indisponible : encodage de la requête impossible.")
 		return false
 	end
@@ -3129,6 +3181,7 @@ local function sendWebHeartbeat()
 		Headers = { ["Content-Type"] = "application/json" }, Body = body,
 	})
 	if not ok or type(response) ~= "table" or (tonumber(response.StatusCode) or 0) < 200 or (tonumber(response.StatusCode) or 0) >= 300 then
+		setWebStatusIndicator("error")
 		warn("[EL2B HUB] Statut web : heartbeat refusé ou serveur indisponible.")
 		return false
 	end
@@ -3137,6 +3190,7 @@ end
 
 local function setWebStatus(on)
 	St.webStatus = on == true
+	if not St.webStatus then setWebStatusIndicator("off") end
 	if not St.webStatus then
 		print("[EL2B HUB] Statut web désactivé : aucune donnée n’est envoyée.")
 	end
@@ -3144,6 +3198,7 @@ local function setWebStatus(on)
 	local token = webStatusLoopToken
 	saveCfg()
 	if not St.webStatus then return end
+	setWebStatusIndicator("connecting")
 	task.spawn(function()
 		while St.webStatus and token == webStatusLoopToken do
 			sendWebHeartbeat()
