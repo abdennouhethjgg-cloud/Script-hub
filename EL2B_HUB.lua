@@ -73,7 +73,7 @@ local St = {
 	},
 	dropMode = 2,
 	instaMode = "V1",
-	mobileBtns = true, guiLock = false,
+	mobileBtns = true, guiLock = false, webStatus = false, webStatusId = nil,
 	showStealBtn = true, showTPPanel = true, showLaggerPanel = false, showSpeedBypassPanel = false,
 	speedBypassLock = false, panelGuiScale = 0.7, panelGuiWidth = 1,
 	laggerPanelLock = false,
@@ -3085,11 +3085,82 @@ info.LayoutOrder = 7
 --  ONGLET SETTINGS
 -- ==============================
 section(pageSet, "* — MOBILE / LOCK", 1)
+
+-- ==============================
+--  WEB STATUS (STRICT OPT-IN)
+-- ==============================
+local WEB_STATUS_ENDPOINT = "https://el2b-status.manus.space/api/trpc/hub.heartbeat"
+local WEB_STATUS_INTERVAL = 30000
+local webStatusLoopToken = 0
+
+local function ensureWebStatusId()
+	if type(St.webStatusId) == "string" and St.webStatusId:match("^[a-f0-9]{32}$") then return St.webStatusId end
+	local HttpService = game:GetService("HttpService")
+	local raw = ""
+	pcall(function() raw = HttpService:GenerateGUID(false):gsub("-", "") end)
+	if #raw < 32 then
+		math.randomseed(os.time() + math.floor(os.clock() * 100000))
+		for _ = 1, 32 - #raw do raw = raw .. string.format("%x", math.random(0, 15)) end
+	end
+	St.webStatusId = raw:sub(1, 32):lower()
+	saveCfg()
+	return St.webStatusId
+end
+
+local function getHttpRequest()
+	return (syn and syn.request) or (http and http.request) or http_request or request
+end
+
+local function sendWebHeartbeat()
+	local requestFn = getHttpRequest()
+	if type(requestFn) ~= "function" then
+		warn("[EL2B HUB] Statut web indisponible : cet environnement ne fournit pas de fonction HTTP.")
+		return false
+	end
+	local okEncode, body = pcall(function()
+		return game:GetService("HttpService"):JSONEncode({ json = { installationId = ensureWebStatusId() } })
+	end)
+	if not okEncode then
+		warn("[EL2B HUB] Statut web indisponible : encodage de la requête impossible.")
+		return false
+	end
+	local ok, response = pcall(requestFn, {
+		Url = WEB_STATUS_ENDPOINT, Method = "POST",
+		Headers = { ["Content-Type"] = "application/json" }, Body = body,
+	})
+	if not ok or type(response) ~= "table" or (tonumber(response.StatusCode) or 0) < 200 or (tonumber(response.StatusCode) or 0) >= 300 then
+		warn("[EL2B HUB] Statut web : heartbeat refusé ou serveur indisponible.")
+		return false
+	end
+	return true
+end
+
+local function setWebStatus(on)
+	St.webStatus = on == true
+	webStatusLoopToken = webStatusLoopToken + 1
+	local token = webStatusLoopToken
+	saveCfg()
+	if not St.webStatus then return end
+	task.spawn(function()
+		while St.webStatus and token == webStatusLoopToken do
+			sendWebHeartbeat()
+			task.wait(WEB_STATUS_INTERVAL / 1000)
+		end
+	end)
+end
+
 toggleNamed(pageSet, "Mobile Buttons", St.mobileBtns, function(on)
 	St.mobileBtns = on
 	if _G.VisApplyMobile then _G.VisApplyMobile() end
 	saveCfg()
 end, 2, "mobileBtns")
+toggleNamed(pageSet, "Statut web (opt-in)", St.webStatus == true, function(on)
+	setWebStatus(on)
+end, 1, "webStatus")
+task.defer(function()
+	if St.webStatus == true then setWebStatus(true) end
+end)
+
 toggleNamed(pageSet, "Show Auto Steal Button", St.showStealBtn ~= false, function(on)
 	St.showStealBtn = on and true or false
 	if _G.VisRefreshStealBtn then pcall(_G.VisRefreshStealBtn) end
