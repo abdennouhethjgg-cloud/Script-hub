@@ -2280,6 +2280,34 @@ function toggle(parent, label, default, cb, order)
 	knob.Parent = track
 	corner(knob, 9)
 	local state = default
+
+	-- Carré arrière visible : halo sombre + contour dégradé, comme sur la maquette mobile.
+	local back = Instance.new("Frame")
+	back.Name = "BtnSquareBack"
+	back.Position = UDim2.new(0, -5, 0, -5)
+	back.Size = UDim2.new(1, 10, 1, 10)
+	back.BackgroundColor3 = Color3.fromRGB(18, 8, 24)
+	back.BorderSizePixel = 0
+	back.ZIndex = 49
+	back.Active = false
+	back.Selectable = false
+	back.Parent = holder
+	local backCorner = Instance.new("UICorner", back)
+	backCorner.CornerRadius = UDim.new(0, 11)
+	local backStroke = Instance.new("UIStroke", back)
+	backStroke.Name = "SquareBackBorder"
+	backStroke.Thickness = 4
+	backStroke.Transparency = 0.05
+	backStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	backStroke.Color = Color3.fromRGB(255, 150, 225)
+	local backGradient = Instance.new("UIGradient", backStroke)
+	backGradient.Name = "SquareBackGradient"
+	backGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(0.35, Color3.fromRGB(255, 105, 205)),
+		ColorSequenceKeypoint.new(0.7, Color3.fromRGB(160, 90, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
+	})
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, 0, 1, 0)
 	btn.BackgroundTransparency = 1
