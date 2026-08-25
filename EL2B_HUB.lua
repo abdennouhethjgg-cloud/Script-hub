@@ -3089,7 +3089,7 @@ section(pageSet, "* — MOBILE / LOCK", 1)
 -- ==============================
 --  WEB STATUS (STRICT OPT-IN)
 -- ==============================
-local WEB_STATUS_ENDPOINT = "https://el2b-status.manus.space/api/trpc/hub.heartbeat"
+local WEB_STATUS_ENDPOINT = "https://el2bstatus-amhrowxg.manus.space/api/trpc/hub.heartbeat"
 local WEB_STATUS_INTERVAL = 30000
 local webStatusLoopToken = 0
 
@@ -3137,6 +3137,9 @@ end
 
 local function setWebStatus(on)
 	St.webStatus = on == true
+	if not St.webStatus then
+		print("[EL2B HUB] Statut web désactivé : aucune donnée n’est envoyée.")
+	end
 	webStatusLoopToken = webStatusLoopToken + 1
 	local token = webStatusLoopToken
 	saveCfg()
