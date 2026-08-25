@@ -3790,8 +3790,9 @@ local HelperGui = Instance.new("ScreenGui")
 HelperGui.Name = "EL2BHelperGui"
 HelperGui.ResetOnSpawn = false
 HelperGui.IgnoreGuiInset = true
-HelperGui.DisplayOrder = 2500
-HelperGui.Enabled = false
+HelperGui.DisplayOrder = 2600
+HelperGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+HelperGui.Enabled = true
 HelperGui.Parent = PlayerGui
 
 local modeRefs = {}
@@ -4597,7 +4598,8 @@ end
 
 _G.VisApplyMobile = function()
 	ModeGui.Enabled = St.mobileBtns == true
-	HelperGui.Enabled = St.mobileBtns == true
+	-- La GUI Helper reste indépendante et visible même si la barre des modes est masquée.
+	HelperGui.Enabled = true
 	local hasMode = next(modeRefs) ~= nil
 	local hasAct = next(actRefs) ~= nil
 	if not hasMode or not hasAct then rebuildMobile() end
@@ -4681,7 +4683,7 @@ function reapplyAllLogic(reason)
 	end)
 	pcall(function()
 		if ModeGui then ModeGui.Enabled = St.mobileBtns == true end
-		if ActGui then HelperGui.Enabled = St.mobileBtns == true end
+		if HelperGui then HelperGui.Enabled = true end
 		if _G.VisApplyMobile then pcall(_G.VisApplyMobile) end
 	end)
 end
