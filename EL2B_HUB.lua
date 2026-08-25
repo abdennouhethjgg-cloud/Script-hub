@@ -73,7 +73,7 @@ local St = {
 	},
 	dropMode = 2,
 	instaMode = "V1",
-	mobileBtns = true, guiLock = false, webStatus = false, webStatusId = nil,
+	mobileBtns = true, guiLock = false, webStatus = false, webStatusId = nil, npcWatcher = false,
 	showStealBtn = true, showTPPanel = true, showLaggerPanel = false, showSpeedBypassPanel = false,
 	speedBypassLock = false, panelGuiScale = 0.7, panelGuiWidth = 1,
 	laggerPanelLock = false,
@@ -3086,6 +3086,91 @@ end
 --  ONGLET ESP
 -- ==============================
 section(pageESP, "* — ESP", 1)
+
+
+-- ==============================
+--  IDLE NPC WATCHER (LOCAL ONLY)
+-- ==============================
+local NPC_IDLE_AFTER = 5
+local npcWatcherToken = 0
+local npcMotion = {}
+local npcWatcherLabel
+
+local function isPlayerCharacter(model)
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr.Character == model then return true end
+	end
+	return false
+end
+
+local function isNpcModel(model)
+	if not model or not model:IsA("Model") or isPlayerCharacter(model) then return false end
+	local hum = model:FindFirstChildOfClass("Humanoid")
+	local root = model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart
+	return hum ~= nil and root ~= nil
+end
+
+local function getIdleNpcCount()
+	local now = tick()
+	local count = 0
+	for _, obj in ipairs(workspace:GetDescendants()) do
+		if isNpcModel(obj) then
+			local root = obj:FindFirstChild("HumanoidRootPart") or obj.PrimaryPart
+			local position = root.Position
+			local state = npcMotion[obj]
+			if not state then
+				npcMotion[obj] = { position = position, lastMove = now }
+			elseif (state.position - position).Magnitude > 0.15 then
+				state.position = position
+				state.lastMove = now
+			elseif now - state.lastMove >= NPC_IDLE_AFTER then
+				count = count + 1
+			end
+		end
+	end
+	for model in pairs(npcMotion) do
+		if not model.Parent then npcMotion[model] = nil end
+	end
+	return count
+end
+
+local function setNpcWatcher(on)
+	St.npcWatcher = on == true
+	npcWatcherToken = npcWatcherToken + 1
+	local token = npcWatcherToken
+	if not St.npcWatcher then
+		if npcWatcherLabel then npcWatcherLabel.Text = "NPC INACTIFS : OFF"; npcWatcherLabel.TextColor3 = C.textDim end
+		saveCfg()
+		return
+	end
+	if npcWatcherLabel then npcWatcherLabel.Text = "NPC INACTIFS : ANALYSE…"; npcWatcherLabel.TextColor3 = Color3.fromRGB(255, 200, 100) end
+	saveCfg()
+	task.spawn(function()
+		while St.npcWatcher and token == npcWatcherToken do
+			local count = getIdleNpcCount()
+			if npcWatcherLabel then
+				npcWatcherLabel.Text = string.format("NPC INACTIFS : %d", count)
+				npcWatcherLabel.TextColor3 = count > 0 and Color3.fromRGB(255, 190, 100) or Color3.fromRGB(110, 240, 155)
+			end
+			task.wait(2)
+		end
+	end)
+end
+
+
+local npcInfo = Instance.new("TextLabel")
+npcInfo.Name = "NpcWatcherStatus"
+npcInfo.Size = UDim2.new(1, -20, 0, 24)
+npcInfo.BackgroundTransparency = 1
+npcInfo.Text = "NPC INACTIFS : OFF"
+npcInfo.TextColor3 = C.textDim
+npcInfo.TextSize = 11
+npcInfo.Font = Enum.Font.GothamSemibold
+npcInfo.TextXAlignment = Enum.TextXAlignment.Left
+npcInfo.LayoutOrder = 1
+npcInfo.Parent = pageESP
+npcWatcherLabel = npcInfo
+toggleNamed(pageESP, "Robots/NPC inactifs (local)", St.npcWatcher == true, setNpcWatcher, 1, "npcWatcher")
 toggleNamed(pageESP, "Player ESP", St.esp, setESP, 2, "esp")
 toggleNamed(pageESP, "Tracker / Tracer", St.tracer, setTracer, 3, "tracer")
 toggleNamed(pageESP, "Anti Lag", St.antiLag, setAntiLag, 4, "antiLag")
@@ -3160,7 +3245,7 @@ local function getHttpRequest()
 	return (syn and syn.request) or (http and http.request) or http_request or request
 end
 
-local function sendWebHeartbeat()
+local function sendWebHeartbeat(idleNpcCount)
 	local requestFn = getHttpRequest()
 	setWebStatusIndicator("connecting")
 	if type(requestFn) ~= "function" then
@@ -3169,7 +3254,7 @@ local function sendWebHeartbeat()
 		return false
 	end
 	local okEncode, body = pcall(function()
-		return game:GetService("HttpService"):JSONEncode({ json = { installationId = ensureWebStatusId() } })
+		return game:GetService("HttpService"):JSONEncode({ json = { installationId = ensureWebStatusId(), idleNpcCount = math.clamp(math.floor(tonumber(idleNpcCount) or 0), 0, 1000) } })
 	end)
 	if not okEncode then
 		setWebStatusIndicator("error")
@@ -3201,7 +3286,8 @@ local function setWebStatus(on)
 	setWebStatusIndicator("connecting")
 	task.spawn(function()
 		while St.webStatus and token == webStatusLoopToken do
-			sendWebHeartbeat()
+			local idleNpcCount = St.npcWatcher and getIdleNpcCount() or 0
+			sendWebHeartbeat(idleNpcCount)
 			task.wait(WEB_STATUS_INTERVAL / 1000)
 		end
 	end)
