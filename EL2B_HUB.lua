@@ -88,7 +88,7 @@ local St = {
 		DestroySentry = Enum.KeyCode.H,
 		AutoSteal = nil,
 	},
-	esp = false, tracer = false, antiLag = false,
+	esp = false, tracer = false, antiLag = false, visualCleaner = false, fovLock = 70,
 	antiKick = true, wallOpacity = 0.12, speedMethod = "Velocity",
 	destroySentry = false,
 	spamLaser = false, spamPaint = false,
@@ -721,6 +721,10 @@ function setAntiKick(on)
 	saveCfg()
 end
 task.defer(enableAntiKick)
+
+task.defer(function()
+	if St.visualCleaner then pcall(function() setVisualCleaner(true) end) end
+end)
 
 -- ==============================
 --  ANTI RAGDOLL (V1 / V2)
@@ -2916,12 +2920,99 @@ hint.Parent = pageKeys
 hint.LayoutOrder = 20
 
 -- ==============================
+--  EL2B HUB VISUAL CLEANER / FOV LOCK
+-- ==============================
+local visualCleanerDescConn = nil
+local visualCleanerRenderConn = nil
+local visualCleanerPreviousFOV = nil
+local visualCleanerBlacklist = {
+	"BlurEffect", "ColorCorrectionEffect", "BloomEffect", "SunRaysEffect",
+	"DepthOfFieldEffect", "Atmosphere", "Sky", "Smoke", "ParticleEmitter",
+	"Beam", "Trail", "Highlight", "SurfaceAppearance", "Fire", "Sparkles",
+	"Explosion", "PointLight", "SpotLight", "SurfaceLight", "Clouds",
+	"PostEffect", "ColorGradingEffect", "ToneMappingEffect", "VignetteEffect",
+	"GodRays", "Glare", "ChromaticAberrationEffect", "DistortionEffect",
+	"LensFlare", "SunFlare", "AmbientOcclusionEffect", "RefractionEffect",
+	"HeatDistortion", "GlitchEffect", "ScreenSpaceReflection", "MotionBlur",
+	"VolumetricLight", "RainEffect", "SnowEffect", "LightningEffect",
+	"NeonGlow", "ContrastCorrection", "ShadowMap", "Bloom", "FogVolume",
+	"WaterEffect", "WindEffect", "PixelateEffect", "FilmGrainEffect",
+	"CRTShader", "NightVisionEffect", "InfraredEffect", "HazeEffect",
+	"ColorBalanceEffect", "DynamicLight", "AmbientEffect", "ScreenDistortion",
+	"ScanlineEffect", "UnderwaterEffect", "ThermalVision", "ShockwaveEffect",
+	"FlashEffect", "ExplosionLight", "VFXPart", "GlitchScreen", "ScreenFlash",
+	"OverlayEffect", "ShadowEffect", "GhostEffect", "FogEmitter", "WindEmitter",
+	"HeatWave", "SunGlow", "ColorOverlay", "VisionDistort", "EchoEffect",
+	"ScreenOverlay", "RenderEffect", "VisualEffect", "LightingEffect",
+	"CameraEffect", "WeatherEffect", "SmokeTrail", "FireTrail", "NeonEffect",
+	"RefractionLayer", "PostProcessingEffect", "VisualNoise", "ScreenNoise",
+}
+
+local function isVisualBlacklisted(obj)
+	for _, className in ipairs(visualCleanerBlacklist) do
+		local ok, matches = pcall(function() return obj:IsA(className) end)
+		if ok and matches then return true end
+	end
+	return false
+end
+
+local function removeVisualEffect(obj)
+	if not obj or not obj.Parent then return end
+	if isVisualBlacklisted(obj) then pcall(function() obj:Destroy() end) end
+end
+
+local function clearVisualEffects()
+	for _, obj in ipairs(Lighting:GetDescendants()) do removeVisualEffect(obj) end
+end
+
+function stopVisualCleaner()
+	if visualCleanerDescConn then
+		pcall(function() visualCleanerDescConn:Disconnect() end)
+		visualCleanerDescConn = nil
+	end
+	if visualCleanerRenderConn then
+		pcall(function() visualCleanerRenderConn:Disconnect() end)
+		visualCleanerRenderConn = nil
+	end
+	if visualCleanerPreviousFOV and workspace.CurrentCamera then
+		workspace.CurrentCamera.FieldOfView = visualCleanerPreviousFOV
+	end
+	visualCleanerPreviousFOV = nil
+end
+
+function startVisualCleaner()
+	stopVisualCleaner()
+	local cam = workspace.CurrentCamera
+	if cam then visualCleanerPreviousFOV = cam.FieldOfView end
+	clearVisualEffects()
+	visualCleanerDescConn = Lighting.DescendantAdded:Connect(function(obj)
+		task.defer(function()
+			if St.visualCleaner then removeVisualEffect(obj) end
+		end)
+	end)
+	visualCleanerRenderConn = RunService.RenderStepped:Connect(function()
+		if not St.visualCleaner then return end
+		local currentCamera = workspace.CurrentCamera
+		if currentCamera and currentCamera.FieldOfView ~= (St.fovLock or 70) then
+			currentCamera.FieldOfView = math.clamp(tonumber(St.fovLock) or 70, 30, 120)
+		end
+	end)
+end
+
+function setVisualCleaner(on)
+	St.visualCleaner = on == true
+	if St.visualCleaner then startVisualCleaner() else stopVisualCleaner() end
+	saveCfg()
+end
+
+-- ==============================
 --  ONGLET ESP
 -- ==============================
 section(pageESP, "* — ESP", 1)
 toggleNamed(pageESP, "Player ESP", St.esp, setESP, 2, "esp")
 toggleNamed(pageESP, "Tracker / Tracer", St.tracer, setTracer, 3, "tracer")
 toggleNamed(pageESP, "Anti Lag", St.antiLag, setAntiLag, 4, "antiLag")
+toggleNamed(pageESP, "Visual Cleaner + FOV 70", St.visualCleaner, setVisualCleaner, 5, "visualCleaner")
 
 -- ==============================
 --  ONGLET SPAM
@@ -3470,6 +3561,7 @@ actionBtn(pageSet, "Reset All Settings", C.danger, function()
 	pcall(function() setESP(false) end)
 	pcall(function() setTracer(false) end)
 	pcall(function() setAntiLag(false) end)
+		pcall(function() setVisualCleaner(false) end)
 	pcall(function() setSpamLaser(false) end)
 	pcall(function() setSpamPaint(false) end)
 	if type(setAutoSteal) == "function" then setAutoSteal(false) end
@@ -3477,7 +3569,7 @@ actionBtn(pageSet, "Reset All Settings", C.danger, function()
 		antiGummy = true, antiRagdoll = false, antiPaint = true, antiBoogie = true,
 		toolAim = true, infJump = true, destroySentry = false, speedOn = true,
 		mobileBtns = true, guiLock = false,
-		esp = false, tracer = false, antiLag = false,
+		esp = false, tracer = false, antiLag = false, visualCleaner = false, fovLock = 70,
 		spamLaser = false, spamPaint = false,
 		autoSteal = false, stealPause = false, showTPPanel = true,
 	}
