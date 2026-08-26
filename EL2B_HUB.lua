@@ -120,12 +120,54 @@ local function EL2BShowUpdateGui()
 	profile.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
 	profile.BorderSizePixel = 0
 	profile.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LP.UserId) .. "&w=150&h=150"
+	profile.ImageTransparency = 1
 	profile.ScaleType = Enum.ScaleType.Crop
 	profile.AutoButtonColor = true
 	profile.Parent = card
 	local profileCorner = Instance.new("UICorner")
 	profileCorner.CornerRadius = UDim.new(1, 0)
 	profileCorner.Parent = profile
+	local avatarFallback = Instance.new("TextLabel")
+	avatarFallback.Name = "AvatarFallback"
+	avatarFallback.Size = UDim2.fromScale(1, 1)
+	avatarFallback.BackgroundTransparency = 1
+	avatarFallback.Font = Enum.Font.GothamBold
+	avatarFallback.Text = "R"
+	avatarFallback.TextColor3 = Color3.fromRGB(255, 255, 255)
+	avatarFallback.TextSize = 17
+	avatarFallback.Visible = false
+	avatarFallback.ZIndex = 2
+	avatarFallback.Parent = profile
+	local avatarLoader = Instance.new("TextLabel")
+	avatarLoader.Name = "AvatarLoader"
+	avatarLoader.Size = UDim2.fromScale(1, 1)
+	avatarLoader.BackgroundTransparency = 1
+	avatarLoader.Font = Enum.Font.GothamBold
+	avatarLoader.Text = "◌"
+	avatarLoader.TextColor3 = Color3.fromRGB(255, 220, 135)
+	avatarLoader.TextSize = 25
+	avatarLoader.ZIndex = 3
+	avatarLoader.Parent = profile
+	local avatarLoaded = false
+	local loaderTween = TS:Create(avatarLoader, TweenInfo.new(0.9, Enum.EasingStyle.Linear, Enum.EasingDirection.In, -1), { Rotation = 360 })
+	loaderTween:Play()
+	local function finishAvatarLoad(loaded)
+		if avatarLoaded then return end
+		avatarLoaded = true
+		pcall(function() loaderTween:Cancel() end)
+		if avatarLoader.Parent then avatarLoader.Visible = false end
+		if loaded then
+			profile.ImageTransparency = 0
+		else
+			avatarFallback.Visible = true
+		end
+	end
+	profile:GetPropertyChangedSignal("IsLoaded"):Connect(function()
+		if profile.IsLoaded then finishAvatarLoad(true) end
+	end)
+	task.delay(8, function()
+		if not avatarLoaded and gui.Parent then finishAvatarLoad(profile.IsLoaded == true) end
+	end)
 	profile.Activated:Connect(function()
 		pcall(function() GuiService:OpenBrowserWindow("https://www.roblox.com/users/" .. tostring(LP.UserId) .. "/profile") end)
 	end)
