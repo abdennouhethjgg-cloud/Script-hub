@@ -30,6 +30,89 @@ local function EL2BReadRemoteStatus()
 	if not decoded or type(data) ~= "table" or type(data.enabled) ~= "boolean" then return nil end
 	return data.enabled
 end
+local function EL2BShowUpdateGui()
+	local existing = PlayerGui:FindFirstChild("EL2BUpdateGui") or CoreGui:FindFirstChild("EL2BUpdateGui")
+	if existing then return end
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "EL2BUpdateGui"
+	gui.ResetOnSpawn = false
+	gui.IgnoreGuiInset = true
+	gui.DisplayOrder = 100000
+	gui.Parent = PlayerGui
+	local card = Instance.new("Frame")
+	card.Name = "UpdateCard"
+	card.AnchorPoint = Vector2.new(1, 0)
+	card.Position = UDim2.new(1, -18, 0, 76)
+	card.Size = UDim2.new(1, -36, 0, 126)
+	card.BackgroundColor3 = Color3.fromRGB(18, 15, 27)
+	card.BackgroundTransparency = 0.04
+	card.Parent = gui
+	local sizeConstraint = Instance.new("UISizeConstraint")
+	sizeConstraint.MinSize = Vector2.new(240, 126)
+	sizeConstraint.MaxSize = Vector2.new(310, 126)
+	sizeConstraint.Parent = card
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 14)
+	corner.Parent = card
+	local outline = Instance.new("UIStroke")
+	outline.Color = Color3.fromRGB(255, 20, 147)
+	outline.Transparency = 0.18
+	outline.Thickness = 1.5
+	outline.Parent = card
+	local title = Instance.new("TextLabel")
+	title.BackgroundTransparency = 1
+	title.Position = UDim2.fromOffset(18, 14)
+	title.Size = UDim2.new(1, -72, 0, 24)
+	title.Font = Enum.Font.GothamBold
+	title.Text = "EL2B HUB · MISE À JOUR"
+	title.TextColor3 = Color3.fromRGB(255, 255, 255)
+	title.TextSize = 15
+	title.TextXAlignment = Enum.TextXAlignment.Left
+	title.Parent = card
+	local copy = Instance.new("TextLabel")
+	copy.BackgroundTransparency = 1
+	copy.Position = UDim2.fromOffset(18, 42)
+	copy.Size = UDim2.new(1, -78, 0, 44)
+	copy.Font = Enum.Font.Gotham
+	copy.Text = "Le script est temporairement arrêté.\nUne mise à jour est en cours."
+	copy.TextColor3 = Color3.fromRGB(190, 176, 201)
+	copy.TextSize = 12
+	copy.TextWrapped = true
+	copy.TextXAlignment = Enum.TextXAlignment.Left
+	copy.TextYAlignment = Enum.TextYAlignment.Top
+	copy.Parent = card
+	local profile = Instance.new("TextButton")
+	profile.Name = "RobloxProfileButton"
+	profile.AnchorPoint = Vector2.new(1, 1)
+	profile.Position = UDim2.new(1, -16, 1, -16)
+	profile.Size = UDim2.fromOffset(42, 42)
+	profile.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
+	profile.BorderSizePixel = 0
+	profile.Font = Enum.Font.GothamBold
+	profile.Text = "R"
+	profile.TextColor3 = Color3.fromRGB(255, 255, 255)
+	profile.TextSize = 17
+	profile.AutoButtonColor = true
+	profile.Parent = card
+	local profileCorner = Instance.new("UICorner")
+	profileCorner.CornerRadius = UDim.new(1, 0)
+	profileCorner.Parent = profile
+	profile.Activated:Connect(function()
+		pcall(function() GuiService:OpenBrowserWindow("https://www.roblox.com/users/" .. tostring(LP.UserId) .. "/profile") end)
+	end)
+	local close = Instance.new("TextButton")
+	close.Name = "CloseButton"
+	close.AnchorPoint = Vector2.new(1, 0)
+	close.Position = UDim2.new(1, -10, 0, 8)
+	close.Size = UDim2.fromOffset(26, 26)
+	close.BackgroundTransparency = 1
+	close.Font = Enum.Font.GothamBold
+	close.Text = "×"
+	close.TextColor3 = Color3.fromRGB(220, 208, 226)
+	close.TextSize = 20
+	close.Parent = card
+	close.Activated:Connect(function() gui:Destroy() end)
+end
 local function EL2BStopLocally()
 	if EL2B_STOPPED then return end
 	EL2B_STOPPED = true
@@ -38,6 +121,7 @@ local function EL2BStopLocally()
 		local gui = PlayerGui:FindFirstChild(name) or CoreGui:FindFirstChild(name)
 		if gui then pcall(function() gui:Destroy() end) end
 	end
+	EL2BShowUpdateGui()
 	warn("EL2B HUB arrêté par le contrôle administrateur.")
 end
 local remoteEnabled = EL2BReadRemoteStatus()
@@ -56,7 +140,7 @@ pcall(function()
 	for _, n in ipairs({
 		"VisHubFullMenu", "VisHubFullMini", "VisHubModeBar", "VisHubActionButtons", "EL2BHelperGui",
 		"VisV2ModeBar", "VisBypassGui", "Per1shccLaggerV2", "VisHubbTP",
-		"VisPanelTP", "VisAutoStealGui", "VisTpBestBtn", "VisStealBarOnly", "EL2BProfileGui"
+		"VisPanelTP", "VisAutoStealGui", "VisTpBestBtn", "VisStealBarOnly", "EL2BProfileGui", "EL2BUpdateGui"
 	}) do
 		local g = PlayerGui:FindFirstChild(n)
 		if g then g:Destroy() end
