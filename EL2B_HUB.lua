@@ -38,6 +38,8 @@ local function EL2BShowUpdateGui()
 	local gameInfoOk, gameInfo = pcall(function() return MarketplaceService:GetProductInfo(game.PlaceId) end)
 	if gameInfoOk and type(gameInfo) == "table" and type(gameInfo.Name) == "string" and gameInfo.Name ~= "" then gameName = gameInfo.Name end
 	gameName = string.sub(gameName, 1, 42)
+	local isOnline = LP.Parent == Players
+	local statusText = isOnline and "EN LIGNE · ONLINE" or "HORS LIGNE · OFFLINE"
 	local existing = PlayerGui:FindFirstChild("EL2BUpdateGui") or CoreGui:FindFirstChild("EL2BUpdateGui")
 	if existing then return end
 	local gui = Instance.new("ScreenGui")
@@ -48,15 +50,15 @@ local function EL2BShowUpdateGui()
 	gui.Parent = PlayerGui
 	local card = Instance.new("Frame")
 	card.Name = "UpdateCard"
-	card.AnchorPoint = Vector2.new(1, 0)
-	card.Position = UDim2.new(1, -18, 0, 76)
-	card.Size = UDim2.new(1, -36, 0, 148)
+	card.AnchorPoint = Vector2.new(0.5, 0.5)
+	card.Position = UDim2.fromScale(0.5, 0.5)
+	card.Size = UDim2.new(1, -36, 0, 196)
 	card.BackgroundColor3 = Color3.fromRGB(18, 15, 27)
 	card.BackgroundTransparency = 0.04
 	card.Parent = gui
 	local sizeConstraint = Instance.new("UISizeConstraint")
-	sizeConstraint.MinSize = Vector2.new(240, 148)
-	sizeConstraint.MaxSize = Vector2.new(310, 148)
+	sizeConstraint.MinSize = Vector2.new(240, 196)
+	sizeConstraint.MaxSize = Vector2.new(340, 196)
 	sizeConstraint.Parent = card
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 14)
@@ -71,7 +73,7 @@ local function EL2BShowUpdateGui()
 	title.Position = UDim2.fromOffset(18, 14)
 	title.Size = UDim2.new(1, -72, 0, 24)
 	title.Font = Enum.Font.GothamBold
-	title.Text = "EL2B HUB · MISE À JOUR"
+	title.Text = "EL2B HUB · MISE À JOUR / UPDATE"
 	title.TextColor3 = Color3.fromRGB(255, 255, 255)
 	title.TextSize = 15
 	title.TextXAlignment = Enum.TextXAlignment.Left
@@ -79,9 +81,9 @@ local function EL2BShowUpdateGui()
 	local copy = Instance.new("TextLabel")
 	copy.BackgroundTransparency = 1
 	copy.Position = UDim2.fromOffset(18, 42)
-	copy.Size = UDim2.new(1, -78, 0, 32)
+	copy.Size = UDim2.new(1, -78, 0, 44)
 	copy.Font = Enum.Font.Gotham
-	copy.Text = "Le script est temporairement arrêté.\nUne mise à jour est en cours."
+	copy.Text = "Le script est temporairement arrêté.\nThe script is temporarily stopped.\nMise à jour en cours · Update in progress."
 	copy.TextColor3 = Color3.fromRGB(190, 176, 201)
 	copy.TextSize = 12
 	copy.TextWrapped = true
@@ -91,7 +93,7 @@ local function EL2BShowUpdateGui()
 	local member = Instance.new("TextLabel")
 	member.Name = "PublicName"
 	member.BackgroundTransparency = 1
-	member.Position = UDim2.fromOffset(64, 77)
+	member.Position = UDim2.fromOffset(64, 102)
 	member.Size = UDim2.new(1, -142, 0, 18)
 	member.Font = Enum.Font.GothamBold
 	member.Text = "Profil Roblox : " .. publicName
@@ -103,7 +105,7 @@ local function EL2BShowUpdateGui()
 	local gameLabel = Instance.new("TextLabel")
 	gameLabel.Name = "CurrentGame"
 	gameLabel.BackgroundTransparency = 1
-	gameLabel.Position = UDim2.fromOffset(64, 97)
+	gameLabel.Position = UDim2.fromOffset(64, 122)
 	gameLabel.Size = UDim2.new(1, -142, 0, 18)
 	gameLabel.Font = Enum.Font.Gotham
 	gameLabel.Text = "Jeu : " .. gameName
@@ -114,7 +116,7 @@ local function EL2BShowUpdateGui()
 	gameLabel.Parent = card
 	local gameIcon = Instance.new("ImageLabel")
 	gameIcon.Name = "CurrentGameIcon"
-	gameIcon.Position = UDim2.fromOffset(18, 77)
+	gameIcon.Position = UDim2.fromOffset(18, 102)
 	gameIcon.Size = UDim2.fromOffset(34, 34)
 	gameIcon.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
 	gameIcon.BorderSizePixel = 0
@@ -169,8 +171,8 @@ local function EL2BShowUpdateGui()
 	local profile = Instance.new("ImageButton")
 	profile.Name = "RobloxProfileButton"
 	profile.AnchorPoint = Vector2.new(1, 1)
-	profile.Position = UDim2.new(1, -16, 1, -16)
-	profile.Size = UDim2.fromOffset(42, 42)
+	profile.Position = UDim2.new(1, -22, 1, -18)
+	profile.Size = UDim2.fromOffset(56, 56)
 	profile.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
 	profile.BorderSizePixel = 0
 	profile.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LP.UserId) .. "&w=150&h=150"
@@ -188,7 +190,7 @@ local function EL2BShowUpdateGui()
 	avatarFallback.Font = Enum.Font.GothamBold
 	avatarFallback.Text = "R"
 	avatarFallback.TextColor3 = Color3.fromRGB(255, 255, 255)
-	avatarFallback.TextSize = 17
+	avatarFallback.TextSize = 21
 	avatarFallback.Visible = false
 	avatarFallback.ZIndex = 2
 	avatarFallback.Parent = profile
@@ -199,7 +201,7 @@ local function EL2BShowUpdateGui()
 	avatarLoader.Font = Enum.Font.GothamBold
 	avatarLoader.Text = "◌"
 	avatarLoader.TextColor3 = Color3.fromRGB(255, 220, 135)
-	avatarLoader.TextSize = 25
+	avatarLoader.TextSize = 31
 	avatarLoader.ZIndex = 3
 	avatarLoader.Parent = profile
 	local avatarLoaded = false
@@ -225,6 +227,33 @@ local function EL2BShowUpdateGui()
 	profile.Activated:Connect(function()
 		pcall(function() GuiService:OpenBrowserWindow("https://www.roblox.com/users/" .. tostring(LP.UserId) .. "/profile") end)
 	end)
+	local statusDot = Instance.new("Frame")
+	statusDot.Name = "OnlineStatusDot"
+	statusDot.AnchorPoint = Vector2.new(1, 1)
+	statusDot.Position = UDim2.new(1, -16, 1, -13)
+	statusDot.Size = UDim2.fromOffset(16, 16)
+	statusDot.BackgroundColor3 = isOnline and Color3.fromRGB(65, 230, 125) or Color3.fromRGB(235, 75, 95)
+	statusDot.BorderSizePixel = 0
+	statusDot.ZIndex = 4
+	statusDot.Parent = card
+	local statusDotCorner = Instance.new("UICorner")
+	statusDotCorner.CornerRadius = UDim.new(1, 0)
+	statusDotCorner.Parent = statusDot
+	local statusRing = Instance.new("UIStroke")
+	statusRing.Color = Color3.fromRGB(18, 15, 27)
+	statusRing.Thickness = 3
+	statusRing.Parent = statusDot
+	local statusLabel = Instance.new("TextLabel")
+	statusLabel.Name = "OnlineStatus"
+	statusLabel.BackgroundTransparency = 1
+	statusLabel.Position = UDim2.fromOffset(64, 146)
+	statusLabel.Size = UDim2.new(1, -152, 0, 18)
+	statusLabel.Font = Enum.Font.GothamBold
+	statusLabel.Text = statusText
+	statusLabel.TextColor3 = isOnline and Color3.fromRGB(110, 240, 160) or Color3.fromRGB(255, 120, 135)
+	statusLabel.TextSize = 11
+	statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+	statusLabel.Parent = card
 	local close = Instance.new("TextButton")
 	close.Name = "CloseButton"
 	close.AnchorPoint = Vector2.new(1, 0)
