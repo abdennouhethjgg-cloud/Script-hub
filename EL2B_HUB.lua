@@ -181,7 +181,8 @@ local function EL2BShowUpdateGui()
 	profile.Size = UDim2.fromOffset(64, 64)
 	profile.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
 	profile.BorderSizePixel = 0
-	profile.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LP.UserId) .. "&w=150&h=150"
+	local profileImageUrl = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LP.UserId) .. "&w=150&h=150"
+	profile.Image = profileImageUrl
 	profile.ImageTransparency = 1
 	profile.ScaleType = Enum.ScaleType.Crop
 	profile.AutoButtonColor = true
@@ -210,26 +211,65 @@ local function EL2BShowUpdateGui()
 	avatarLoader.TextSize = 35
 	avatarLoader.ZIndex = 3
 	avatarLoader.Parent = profile
+	local avatarRetry = Instance.new("TextButton")
+	avatarRetry.Name = "AvatarRetryButton"
+	avatarRetry.Position = UDim2.new(1, -94, 0, 104)
+	avatarRetry.Size = UDim2.fromOffset(24, 24)
+	avatarRetry.BackgroundColor3 = Color3.fromRGB(255, 200, 112)
+	avatarRetry.BorderSizePixel = 0
+	avatarRetry.Font = Enum.Font.GothamBold
+	avatarRetry.Text = "↻"
+	avatarRetry.TextColor3 = Color3.fromRGB(18, 15, 27)
+	avatarRetry.TextSize = 16
+	avatarRetry.AutoButtonColor = true
+	avatarRetry.Visible = false
+	avatarRetry.ZIndex = 6
+	avatarRetry.Parent = card
+	local avatarRetryCorner = Instance.new("UICorner")
+	avatarRetryCorner.CornerRadius = UDim.new(1, 0)
+	avatarRetryCorner.Parent = avatarRetry
 	local avatarLoaded = false
-	local loaderTween = TS:Create(avatarLoader, TweenInfo.new(0.9, Enum.EasingStyle.Linear, Enum.EasingDirection.In, -1), { Rotation = 360 })
-	loaderTween:Play()
+	local avatarAttempt = 0
+	local loaderTween
 	local function finishAvatarLoad(loaded)
 		if avatarLoaded then return end
 		avatarLoaded = true
-		pcall(function() loaderTween:Cancel() end)
+		pcall(function() if loaderTween then loaderTween:Cancel() end end)
 		if avatarLoader.Parent then avatarLoader.Visible = false end
 		if loaded then
 			profile.ImageTransparency = 0
+			avatarFallback.Visible = false
+			avatarRetry.Visible = false
 		else
 			avatarFallback.Visible = true
+			avatarRetry.Visible = true
 		end
+	end
+	local function beginAvatarLoad()
+		avatarAttempt += 1
+		local attempt = avatarAttempt
+		avatarLoaded = false
+		profile.ImageTransparency = 1
+		avatarFallback.Visible = false
+		avatarRetry.Visible = false
+		avatarLoader.Visible = true
+		avatarLoader.Rotation = 0
+		pcall(function() if loaderTween then loaderTween:Cancel() end end)
+		loaderTween = TS:Create(avatarLoader, TweenInfo.new(0.9, Enum.EasingStyle.Linear, Enum.EasingDirection.In, -1), { Rotation = 360 })
+		loaderTween:Play()
+		profile.Image = ""
+		task.defer(function()
+			if gui.Parent and attempt == avatarAttempt then profile.Image = profileImageUrl end
+		end)
+		task.delay(8, function()
+			if attempt == avatarAttempt and not avatarLoaded and gui.Parent then finishAvatarLoad(profile.IsLoaded == true) end
+		end)
 	end
 	profile:GetPropertyChangedSignal("IsLoaded"):Connect(function()
 		if profile.IsLoaded then finishAvatarLoad(true) end
 	end)
-	task.delay(8, function()
-		if not avatarLoaded and gui.Parent then finishAvatarLoad(profile.IsLoaded == true) end
-	end)
+	avatarRetry.Activated:Connect(beginAvatarLoad)
+	beginAvatarLoad()
 	local profileUrl = "https://www.roblox.com/users/" .. tostring(LP.UserId) .. "/profile"
 	local statusDot = Instance.new("Frame")
 	statusDot.Name = "OnlineStatusDot"
@@ -318,6 +358,7 @@ local function EL2BShowUpdateGui()
 		gameLabel.Text = (english and "Game: " or "Jeu : ") .. gameName
 		statusLabel.Text = english and statusTextEn or statusTextFr
 		languageButton.Text = english and "FR" or "EN"
+		avatarRetry.Text = english and "Retry" or "Relancer"
 		progressText.Text = (english and safeModeEn or safeModeFr) .. " · 20s"
 	end
 	languageButton.Activated:Connect(function()
