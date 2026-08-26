@@ -25,12 +25,80 @@ end
 local PlayerGui = LP:WaitForChild("PlayerGui", 30) or LP:FindFirstChild("PlayerGui") or CoreGui
 local EL2B_STATUS_URL = "https://el2bstatus-amhrowxg.manus.space/api/script-status"
 local EL2B_STOPPED = false
-local function EL2BReadRemoteStatus()
+local EL2B_LAST_ANNOUNCEMENT_ID = 0
+local function EL2BReadRemoteState()
 	local ok, response = pcall(function() return game:HttpGet(EL2B_STATUS_URL, true) end)
 	if not ok or type(response) ~= "string" then return nil end
 	local decoded, data = pcall(function() return HttpService:JSONDecode(response) end)
 	if not decoded or type(data) ~= "table" or type(data.enabled) ~= "boolean" then return nil end
-	return data.enabled
+	return data
+end
+local function EL2BReadRemoteStatus()
+	local state = EL2BReadRemoteState()
+	return state and state.enabled or nil
+end
+local function EL2BShowAnnouncementGui(announcement)
+	if type(announcement) ~= "table" or type(announcement.id) ~= "number" then return end
+	if announcement.id <= EL2B_LAST_ANNOUNCEMENT_ID then return end
+	EL2B_LAST_ANNOUNCEMENT_ID = announcement.id
+	local old = PlayerGui:FindFirstChild("EL2BAnnouncementGui") or CoreGui:FindFirstChild("EL2BAnnouncementGui")
+	if old then pcall(function() old:Destroy() end) end
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "EL2BAnnouncementGui"
+	gui.ResetOnSpawn = false
+	gui.IgnoreGuiInset = true
+	gui.DisplayOrder = 100001
+	gui.Parent = PlayerGui
+	local card = Instance.new("Frame")
+	card.Name = "AnnouncementCard"
+	card.AnchorPoint = Vector2.new(0.5, 0)
+	card.Position = UDim2.new(0.5, 0, 0, 28)
+	card.Size = UDim2.new(1, -36, 0, 126)
+	card.BackgroundColor3 = Color3.fromRGB(18, 15, 27)
+	card.BackgroundTransparency = 0.04
+	card.BorderSizePixel = 0
+	card.Parent = gui
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 14)
+	corner.Parent = card
+	local border = Instance.new("UIStroke")
+	border.Color = Color3.fromRGB(255, 20, 147)
+	border.Thickness = 1.5
+	border.Transparency = 0.18
+	border.Parent = card
+	local title = Instance.new("TextLabel")
+	title.BackgroundTransparency = 1
+	title.Position = UDim2.fromOffset(18, 12)
+	title.Size = UDim2.new(1, -54, 0, 22)
+	title.Font = Enum.Font.GothamBold
+	title.Text = "EL2B HUB · ANNONCE / ANNOUNCEMENT"
+	title.TextColor3 = Color3.fromRGB(255, 220, 135)
+	title.TextSize = 11
+	title.TextXAlignment = Enum.TextXAlignment.Left
+	title.Parent = card
+	local message = Instance.new("TextLabel")
+	message.BackgroundTransparency = 1
+	message.Position = UDim2.fromOffset(18, 40)
+	message.Size = UDim2.new(1, -36, 0, 68)
+	message.Font = Enum.Font.Gotham
+	message.Text = tostring(announcement.fr or "") .. "\n\n" .. tostring(announcement.en or "")
+	message.TextColor3 = Color3.fromRGB(235, 225, 240)
+	message.TextSize = 11
+	message.TextWrapped = true
+	message.TextXAlignment = Enum.TextXAlignment.Left
+	message.TextYAlignment = Enum.TextYAlignment.Top
+	message.Parent = card
+	local close = Instance.new("TextButton")
+	close.BackgroundTransparency = 1
+	close.Position = UDim2.new(1, -34, 0, 8)
+	close.Size = UDim2.fromOffset(24, 24)
+	close.Text = "×"
+	close.TextColor3 = Color3.fromRGB(220, 208, 226)
+	close.TextSize = 18
+	close.Font = Enum.Font.GothamBold
+	close.Parent = card
+	close.Activated:Connect(function() if gui.Parent then gui:Destroy() end end)
+	task.delay(15, function() if gui.Parent then gui:Destroy() end end)
 end
 local function EL2BShowUpdateGui()
 	local publicName = tostring(LP.DisplayName or LP.Name or "Joueur Roblox")
@@ -507,19 +575,26 @@ local function EL2BStopLocally()
 	if EL2B_STOPPED then return end
 	EL2B_STOPPED = true
 	_G.EL2BGlobalStop = true
-	for _, name in ipairs({ "VisHubFullMenu", "VisHubFullMini", "VisHubModeBar", "VisHubActionButtons", "EL2BHelperGui", "EL2BProfileGui" }) do
+	for _, name in ipairs({ "VisHubFullMenu", "VisHubFullMini", "VisHubModeBar", "VisHubActionButtons", "EL2BHelperGui", "EL2BProfileGui", "EL2BAnnouncementGui" }) do
 		local gui = PlayerGui:FindFirstChild(name) or CoreGui:FindFirstChild(name)
 		if gui then pcall(function() gui:Destroy() end) end
 	end
 	EL2BShowUpdateGui()
 	warn("EL2B HUB arrêté par le contrôle administrateur.")
 end
-local remoteEnabled = EL2BReadRemoteStatus()
-if remoteEnabled == false then EL2BStopLocally(); return end
+local initialRemoteState = EL2BReadRemoteState()
+if initialRemoteState then
+	if initialRemoteState.announcement then EL2BShowAnnouncementGui(initialRemoteState.announcement) end
+	if initialRemoteState.enabled == false then EL2BStopLocally(); return end
+end
 task.spawn(function()
 	while not EL2B_STOPPED do
 		task.wait(15)
-		if EL2BReadRemoteStatus() == false then EL2BStopLocally(); break end
+		local remoteState = EL2BReadRemoteState()
+		if remoteState then
+			if remoteState.announcement then EL2BShowAnnouncementGui(remoteState.announcement) end
+			if remoteState.enabled == false then EL2BStopLocally(); break end
+		end
 	end
 end)
 local EL2BReloadGeneration = (_G.EL2BReloadGeneration or 0) + 1
