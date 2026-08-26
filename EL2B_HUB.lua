@@ -113,10 +113,12 @@ if type(setAutoSteal) ~= "function" then
 	end
 end
 
--- Sauvegarde / chargement
-local CFG = "VisAllgear.json"
+-- Profil local EL2B HUB : compatible avec les anciennes configurations VisHub.
+local PROFILE_VERSION = 1
+local CFG = "EL2B_HUB_Profile.json"
+local LEGACY_CFG = "VisAllgear.json"
 function saveCfg()
-	local d = {}
+	local d = { _profileVersion = PROFILE_VERSION }
 	for k, v in pairs(St) do
 		if type(k) == "string" and k ~= "_saveBase" and k ~= "_savePet" and k ~= "saveBase" and k ~= "savePet" then
 			local sv = _serializeValue(v)
@@ -165,14 +167,19 @@ function _serializeValue(v, depth)
 end
 
 function loadCfg()
+	local loadedFile = nil
 	local ok, data = pcall(function()
-		if isfile and readfile and isfile(CFG) then
-			return HttpService:JSONDecode(readfile(CFG))
+		if type(isfile) ~= "function" or type(readfile) ~= "function" then return nil end
+		if isfile(CFG) then
+			loadedFile = CFG
+		elseif isfile(LEGACY_CFG) then
+			loadedFile = LEGACY_CFG
 		end
+		if loadedFile then return HttpService:JSONDecode(readfile(loadedFile)) end
 	end)
 	if not (ok and type(data) == "table") then return false end
 	for k, v in pairs(data) do
-		if type(k) == "string" and k ~= "modes" and k ~= "keys" then
+		if type(k) == "string" and k ~= "modes" and k ~= "keys" and k ~= "_profileVersion" then
 			St[k] = v
 		end
 	end
@@ -205,6 +212,7 @@ function loadCfg()
 	St.stealBarScale = tonumber(St.stealBarScale) or 1
 	if St.showStealBtn == nil then St.showStealBtn = true end
 	autoStealRadius = St.stealRadius
+	if loadedFile == LEGACY_CFG then pcall(saveCfg) end
 	return true
 end
 loadCfg()
@@ -3761,7 +3769,7 @@ actionBtn(pageSet, "Reset Mobile Positions", C.accent, function()
 	if _G.VisResetMobilePos then _G.VisResetMobilePos() end
 	saveCfg()
 end, 33)
-actionBtn(pageSet, "Reset All Settings", C.danger, function()
+actionBtn(pageSet, "Reset Profile", C.danger, function()
 	pcall(function() setAntiGummy(true) end)
 	pcall(function() setAntiRagdoll(false) end)
 	pcall(function() setAntiPaint(true) end)
@@ -3829,9 +3837,9 @@ actionBtn(pageSet, "Reset All Settings", C.danger, function()
 	applyMenuScale()
 	if _G.VisSyncAutoSteal then pcall(_G.VisSyncAutoSteal) end
 	saveCfg()
-	showToast("RESET ALL ✓ Free Sell Là Tuất Ngu Lồn")
+	showToast("PROFILE RESET ✓")
 end, 34)
-actionBtn(pageSet, "Save Now", C.accent, function()
+actionBtn(pageSet, "Save Profile", C.accent, function()
 	pcall(function()
 		if Main then
 			St._mainPos = {Main.Position.X.Scale, Main.Position.X.Offset, Main.Position.Y.Scale, Main.Position.Y.Offset}
