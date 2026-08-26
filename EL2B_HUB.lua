@@ -3648,8 +3648,13 @@ section(pageSet, "* — MOBILE / LOCK", 1)
 --  WEB STATUS (STRICT OPT-IN)
 -- ==============================
 local WEB_STATUS_ENDPOINT = "https://el2bstatus-amhrowxg.manus.space/api/trpc/hub.heartbeat"
+local DIAGNOSTIC_ENDPOINT = "https://el2bstatus-amhrowxg.manus.space/api/script-diagnostic"
+local SCRIPT_VERSION = "EL2B-2026.08-safe-diagnostics"
 local WEB_STATUS_INTERVAL = 30000
+local DIAGNOSTIC_INTERVAL = 300000
 local webStatusLoopToken = 0
+local lastDiagnosticAt = 0
+local lastDiagnosticPlaceId = nil
 
 local function ensureWebStatusId()
 	if type(St.webStatusId) == "string" and St.webStatusId:match("^[a-f0-9]{32}$") then return St.webStatusId end
@@ -3697,6 +3702,35 @@ local function sendWebHeartbeat(idleNpcCount)
 	return true
 end
 
+local function sendSafeDiagnostic(eventName)
+	if not St.webStatus then return false end
+	local now = os.clock()
+	if now - lastDiagnosticAt < DIAGNOSTIC_INTERVAL and eventName ~= "game_change" then return false end
+	local requestFn = getHttpRequest()
+	if type(requestFn) ~= "function" then return false end
+	local placeId = tonumber(game.PlaceId) or 0
+	if placeId <= 0 then return false end
+	local gameName = tostring(game.Name or "Roblox game"):gsub("[%c]", ""):sub(1, 80)
+	local okEncode, body = pcall(function()
+		return game:GetService("HttpService"):JSONEncode({
+			installationId = ensureWebStatusId(), event = eventName,
+			scriptVersion = SCRIPT_VERSION, placeId = placeId,
+			gameName = gameName, httpAvailable = true,
+		})
+	end)
+	if not okEncode then return false end
+	local ok, response = pcall(requestFn, {
+		Url = DIAGNOSTIC_ENDPOINT, Method = "POST",
+		Headers = { ["Content-Type"] = "application/json" }, Body = body,
+	})
+	if ok and type(response) == "table" and (tonumber(response.StatusCode) or 0) >= 200 and (tonumber(response.StatusCode) or 0) < 300 then
+		lastDiagnosticAt = now
+		lastDiagnosticPlaceId = placeId
+		return true
+	end
+	return false
+end
+
 local function setWebStatus(on)
 	St.webStatus = on == true
 	if not St.webStatus then setWebStatusIndicator("off") end
@@ -3709,9 +3743,11 @@ local function setWebStatus(on)
 	if not St.webStatus then return end
 	setWebStatusIndicator("connecting")
 	task.spawn(function()
+		sendSafeDiagnostic("startup")
 		while St.webStatus and token == webStatusLoopToken and EL2BReloadGeneration == _G.EL2BReloadGeneration do
 			local idleNpcCount = St.npcWatcher and getIdleNpcCount() or 0
 			sendWebHeartbeat(idleNpcCount)
+			if lastDiagnosticPlaceId ~= tonumber(game.PlaceId) then sendSafeDiagnostic("game_change") end
 			task.wait(WEB_STATUS_INTERVAL / 1000)
 		end
 	end)
