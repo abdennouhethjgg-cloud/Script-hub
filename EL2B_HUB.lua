@@ -91,8 +91,8 @@ local function EL2BShowUpdateGui()
 	local member = Instance.new("TextLabel")
 	member.Name = "PublicName"
 	member.BackgroundTransparency = 1
-	member.Position = UDim2.fromOffset(18, 77)
-	member.Size = UDim2.new(1, -78, 0, 18)
+	member.Position = UDim2.fromOffset(64, 77)
+	member.Size = UDim2.new(1, -142, 0, 18)
 	member.Font = Enum.Font.GothamBold
 	member.Text = "Profil Roblox : " .. publicName
 	member.TextColor3 = Color3.fromRGB(255, 200, 112)
@@ -103,8 +103,8 @@ local function EL2BShowUpdateGui()
 	local gameLabel = Instance.new("TextLabel")
 	gameLabel.Name = "CurrentGame"
 	gameLabel.BackgroundTransparency = 1
-	gameLabel.Position = UDim2.fromOffset(18, 97)
-	gameLabel.Size = UDim2.new(1, -78, 0, 18)
+	gameLabel.Position = UDim2.fromOffset(64, 97)
+	gameLabel.Size = UDim2.new(1, -142, 0, 18)
 	gameLabel.Font = Enum.Font.Gotham
 	gameLabel.Text = "Jeu : " .. gameName
 	gameLabel.TextColor3 = Color3.fromRGB(190, 176, 201)
@@ -112,6 +112,60 @@ local function EL2BShowUpdateGui()
 	gameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 	gameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	gameLabel.Parent = card
+	local gameIcon = Instance.new("ImageLabel")
+	gameIcon.Name = "CurrentGameIcon"
+	gameIcon.Position = UDim2.fromOffset(18, 77)
+	gameIcon.Size = UDim2.fromOffset(34, 34)
+	gameIcon.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
+	gameIcon.BorderSizePixel = 0
+	gameIcon.Image = "rbxthumb://type=GameIcon&id=" .. tostring(game.PlaceId) .. "&w=150&h=150"
+	gameIcon.ImageTransparency = 1
+	gameIcon.ScaleType = Enum.ScaleType.Crop
+	gameIcon.Parent = card
+	local gameIconCorner = Instance.new("UICorner")
+	gameIconCorner.CornerRadius = UDim.new(0, 9)
+	gameIconCorner.Parent = gameIcon
+	local gameIconFallback = Instance.new("TextLabel")
+	gameIconFallback.Name = "GameIconFallback"
+	gameIconFallback.Size = UDim2.fromScale(1, 1)
+	gameIconFallback.BackgroundTransparency = 1
+	gameIconFallback.Font = Enum.Font.GothamBold
+	gameIconFallback.Text = "G"
+	gameIconFallback.TextColor3 = Color3.fromRGB(255, 255, 255)
+	gameIconFallback.TextSize = 15
+	gameIconFallback.Visible = false
+	gameIconFallback.ZIndex = 2
+	gameIconFallback.Parent = gameIcon
+	local gameIconLoader = Instance.new("TextLabel")
+	gameIconLoader.Name = "GameIconLoader"
+	gameIconLoader.Size = UDim2.fromScale(1, 1)
+	gameIconLoader.BackgroundTransparency = 1
+	gameIconLoader.Font = Enum.Font.GothamBold
+	gameIconLoader.Text = "◌"
+	gameIconLoader.TextColor3 = Color3.fromRGB(255, 220, 135)
+	gameIconLoader.TextSize = 21
+	gameIconLoader.ZIndex = 3
+	gameIconLoader.Parent = gameIcon
+	local gameIconLoaded = false
+	local gameIconTween = TS:Create(gameIconLoader, TweenInfo.new(0.9, Enum.EasingStyle.Linear, Enum.EasingDirection.In, -1), { Rotation = 360 })
+	gameIconTween:Play()
+	local function finishGameIconLoad(loaded)
+		if gameIconLoaded then return end
+		gameIconLoaded = true
+		pcall(function() gameIconTween:Cancel() end)
+		if gameIconLoader.Parent then gameIconLoader.Visible = false end
+		if loaded then
+			gameIcon.ImageTransparency = 0
+		else
+			gameIconFallback.Visible = true
+		end
+	end
+	gameIcon:GetPropertyChangedSignal("IsLoaded"):Connect(function()
+		if gameIcon.IsLoaded then finishGameIconLoad(true) end
+	end)
+	task.delay(8, function()
+		if not gameIconLoaded and gui.Parent then finishGameIconLoad(gameIcon.IsLoaded == true) end
+	end)
 	local profile = Instance.new("ImageButton")
 	profile.Name = "RobloxProfileButton"
 	profile.AnchorPoint = Vector2.new(1, 1)
