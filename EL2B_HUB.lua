@@ -603,6 +603,7 @@ local St = {
 		infJumpMode = "hold",
 		buttonVolume = 0.22,
 		soundsEnabled = true,
+		soundTheme = "Neon",
 	}
 _G.VisState = St
 
@@ -2507,9 +2508,17 @@ local MW, MH = 310, 380
 local EL2BSoundsEnabled = St.soundsEnabled ~= false
 local EL2BSoundVolume = math.clamp(tonumber(St.buttonVolume) or 0.22, 0, 0.5)
 St.buttonVolume = EL2BSoundVolume
-local EL2B_BUTTON_SOUND_ID = "rbxassetid://12221967"
-local EL2B_SUCCESS_SOUND_ID = "rbxassetid://6504971383"
-local EL2B_ERROR_SOUND_ID = "rbxassetid://130840811"
+local EL2B_SOUND_THEMES = {
+	Neon = { label = "NÉON", click = "rbxassetid://12221967", success = "rbxassetid://6504971383", error = "rbxassetid://130840811" },
+	Soft = { label = "DOUX", click = "rbxassetid://12221967", success = "rbxassetid://7383525713", error = "rbxassetid://130840811" },
+	Minimal = { label = "MINIMAL", click = "rbxassetid://12221967", success = "rbxassetid://12221967", error = "rbxassetid://130840811" },
+}
+local EL2B_SOUND_THEME_ORDER = { "Neon", "Soft", "Minimal" }
+local EL2BSoundTheme = table.find(EL2B_SOUND_THEME_ORDER, St.soundTheme) and St.soundTheme or "Neon"
+St.soundTheme = EL2BSoundTheme
+local function getEL2BSoundTheme()
+	return EL2B_SOUND_THEMES[EL2BSoundTheme] or EL2B_SOUND_THEMES.Neon
+end
 local function playEL2BSound(name, soundId, playbackSpeed, volumeScale)
 	if not EL2BSoundsEnabled then return end
 	pcall(function()
@@ -2526,13 +2535,13 @@ local function playEL2BSound(name, soundId, playbackSpeed, volumeScale)
 	end)
 end
 local function playEL2BButtonSound()
-	playEL2BSound("EL2BButtonClick", EL2B_BUTTON_SOUND_ID, 1.08, 1)
+	playEL2BSound("EL2BButtonClick", getEL2BSoundTheme().click, 1.08, 1)
 end
 local function playEL2BSuccessSound()
-	playEL2BSound("EL2BActionSuccess", EL2B_SUCCESS_SOUND_ID, 1.05, 0.9)
+	playEL2BSound("EL2BActionSuccess", getEL2BSoundTheme().success, 1.05, 0.9)
 end
 local function playEL2BErrorSound()
-	playEL2BSound("EL2BActionError", EL2B_ERROR_SOUND_ID, 0.92, 0.65)
+	playEL2BSound("EL2BActionError", getEL2BSoundTheme().error, 0.92, 0.65)
 end
 
 local Main = Instance.new("Frame")
@@ -2643,6 +2652,31 @@ UIS.InputEnded:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 		volDragging = false
 	end
+end)
+
+local soundThemeButton = Instance.new("TextButton")
+soundThemeButton.Name = "SoundThemeSelector"
+soundThemeButton.Size = UDim2.new(0, 100, 0, 22)
+soundThemeButton.Position = UDim2.new(1, -148, 0, 70)
+soundThemeButton.BackgroundColor3 = Color3.fromRGB(18, 14, 25)
+soundThemeButton.BackgroundTransparency = 0.12
+soundThemeButton.BorderSizePixel = 0
+soundThemeButton.Font = Enum.Font.GothamBold
+soundThemeButton.Text = "SON : " .. getEL2BSoundTheme().label
+soundThemeButton.TextColor3 = Color3.fromRGB(190, 176, 201)
+soundThemeButton.TextSize = 8
+soundThemeButton.AutoButtonColor = true
+soundThemeButton.ZIndex = 25
+soundThemeButton.Parent = Main
+corner(soundThemeButton, 7)
+local soundThemeIndex = table.find(EL2B_SOUND_THEME_ORDER, EL2BSoundTheme) or 1
+soundThemeButton.Activated:Connect(function()
+	soundThemeIndex = soundThemeIndex % #EL2B_SOUND_THEME_ORDER + 1
+	EL2BSoundTheme = EL2B_SOUND_THEME_ORDER[soundThemeIndex]
+	St.soundTheme = EL2BSoundTheme
+	soundThemeButton.Text = "SON : " .. getEL2BSoundTheme().label
+	saveCfg()
+	playEL2BSuccessSound()
 end)
 
 local menuScaleObj = Instance.new("UIScale")
