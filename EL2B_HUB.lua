@@ -39,10 +39,13 @@ local function EL2BShowUpdateGui()
 	if gameInfoOk and type(gameInfo) == "table" and type(gameInfo.Name) == "string" and gameInfo.Name ~= "" then gameName = gameInfo.Name end
 	gameName = string.sub(gameName, 1, 42)
 	local isOnline = LP.Parent == Players
-	local statusText = isOnline and "EN LIGNE · ONLINE" or "HORS LIGNE · OFFLINE"
+	local statusTextFr = isOnline and "EN LIGNE" or "HORS LIGNE"
+	local statusTextEn = isOnline and "ONLINE" or "OFFLINE"
 	local gameLower = string.lower(gameName)
 	local isStealABrainrot = string.find(gameLower, "steal a brainrot", 1, true) ~= nil
-	local safeModeText = isStealABrainrot and "Steal a Brainrot · mode sûr / safe mode" or "Mode sûr EL2B / EL2B safe mode"
+	local safeModeFr = isStealABrainrot and "Steal a Brainrot · mode sûr" or "Mode sûr EL2B"
+	local safeModeEn = isStealABrainrot and "Steal a Brainrot · safe mode" or "EL2B safe mode"
+	local currentLanguage = "fr"
 	local existing = PlayerGui:FindFirstChild("EL2BUpdateGui") or CoreGui:FindFirstChild("EL2BUpdateGui")
 	if existing then return end
 	local gui = Instance.new("ScreenGui")
@@ -74,9 +77,9 @@ local function EL2BShowUpdateGui()
 	local title = Instance.new("TextLabel")
 	title.BackgroundTransparency = 1
 	title.Position = UDim2.fromOffset(18, 14)
-	title.Size = UDim2.new(1, -72, 0, 24)
+	title.Size = UDim2.new(1, -112, 0, 24)
 	title.Font = Enum.Font.GothamBold
-	title.Text = "EL2B HUB · MISE À JOUR / UPDATE"
+	title.Text = "EL2B HUB · MISE À JOUR"
 	title.TextColor3 = Color3.fromRGB(255, 255, 255)
 	title.TextSize = 15
 	title.TextXAlignment = Enum.TextXAlignment.Left
@@ -86,7 +89,7 @@ local function EL2BShowUpdateGui()
 	copy.Position = UDim2.fromOffset(18, 42)
 	copy.Size = UDim2.new(1, -78, 0, 44)
 	copy.Font = Enum.Font.Gotham
-	copy.Text = "Le script est temporairement arrêté.\nThe script is temporarily stopped.\nMise à jour en cours · Update in progress."
+	copy.Text = "Le script est temporairement arrêté.\nUne mise à jour est en cours."
 	copy.TextColor3 = Color3.fromRGB(190, 176, 201)
 	copy.TextSize = 12
 	copy.TextWrapped = true
@@ -227,9 +230,7 @@ local function EL2BShowUpdateGui()
 	task.delay(8, function()
 		if not avatarLoaded and gui.Parent then finishAvatarLoad(profile.IsLoaded == true) end
 	end)
-	profile.Activated:Connect(function()
-		pcall(function() GuiService:OpenBrowserWindow("https://www.roblox.com/users/" .. tostring(LP.UserId) .. "/profile") end)
-	end)
+	local profileUrl = "https://www.roblox.com/users/" .. tostring(LP.UserId) .. "/profile"
 	local statusDot = Instance.new("Frame")
 	statusDot.Name = "OnlineStatusDot"
 	statusDot.AnchorPoint = Vector2.new(1, 1)
@@ -252,7 +253,7 @@ local function EL2BShowUpdateGui()
 	statusLabel.Position = UDim2.fromOffset(64, 146)
 	statusLabel.Size = UDim2.new(1, -154, 0, 18)
 	statusLabel.Font = Enum.Font.GothamBold
-	statusLabel.Text = statusText
+	statusLabel.Text = statusTextFr
 	statusLabel.TextColor3 = isOnline and Color3.fromRGB(110, 240, 160) or Color3.fromRGB(255, 120, 135)
 	statusLabel.TextSize = 11
 	statusLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -293,14 +294,53 @@ local function EL2BShowUpdateGui()
 	progressText.TextYAlignment = Enum.TextYAlignment.Top
 	progressText.ZIndex = 2
 	progressText.Parent = card
+	local languageButton = Instance.new("TextButton")
+	languageButton.Name = "LanguageButton"
+	languageButton.Position = UDim2.new(1, -66, 0, 12)
+	languageButton.Size = UDim2.fromOffset(44, 28)
+	languageButton.BackgroundColor3 = Color3.fromRGB(75, 45, 95)
+	languageButton.BorderSizePixel = 0
+	languageButton.Font = Enum.Font.GothamBold
+	languageButton.Text = "EN"
+	languageButton.TextColor3 = Color3.fromRGB(255, 220, 135)
+	languageButton.TextSize = 11
+	languageButton.AutoButtonColor = true
+	languageButton.ZIndex = 5
+	languageButton.Parent = card
+	local languageCorner = Instance.new("UICorner")
+	languageCorner.CornerRadius = UDim.new(0, 8)
+	languageCorner.Parent = languageButton
+	local function applyLanguage()
+		local english = currentLanguage == "en"
+		title.Text = english and "EL2B HUB · UPDATE" or "EL2B HUB · MISE À JOUR"
+		copy.Text = english and "The script is temporarily stopped.\nAn update is in progress." or "Le script est temporairement arrêté.\nUne mise à jour est en cours."
+		member.Text = (english and "Roblox profile: " or "Profil Roblox : ") .. publicName
+		gameLabel.Text = (english and "Game: " or "Jeu : ") .. gameName
+		statusLabel.Text = english and statusTextEn or statusTextFr
+		languageButton.Text = english and "FR" or "EN"
+		progressText.Text = (english and safeModeEn or safeModeFr) .. " · 20s"
+	end
+	languageButton.Activated:Connect(function()
+		currentLanguage = currentLanguage == "fr" and "en" or "fr"
+		applyLanguage()
+	end)
+	profile.Activated:Connect(function()
+		local opened = pcall(function() GuiService:OpenBrowserWindow(profileUrl) end)
+		if opened then
+			progressText.Text = currentLanguage == "en" and "Profile opened in browser." or "Profil ouvert dans le navigateur."
+		else
+			progressText.Text = currentLanguage == "en" and "Open the profile from Roblox." or "Ouvre le profil depuis Roblox."
+		end
+	end)
+	applyLanguage()
 	task.spawn(function()
 		local duration = 20
 		local endsAt = time() + duration
 		local messages = {
-			"Vérification du statut EL2B · Checking EL2B status...",
-			"Profil local préparé · Preparing local profile...",
-			"Nom et icône du jeu lus localement · Reading local game metadata...",
-			"Diagnostic autorisé uniquement · Allowed diagnostics only...",
+			{ fr = "Vérification du statut EL2B", en = "Checking EL2B status" },
+			{ fr = "Profil local préparé", en = "Preparing local profile" },
+			{ fr = "Nom et icône du jeu lus localement", en = "Reading local game metadata" },
+			{ fr = "Diagnostic autorisé uniquement", en = "Allowed diagnostics only" },
 		}
 		local lastSecond = -1
 		while gui.Parent do
@@ -311,9 +351,10 @@ local function EL2BShowUpdateGui()
 				lastSecond = remaining
 				if remaining > 0 then
 					local index = math.clamp(math.floor((duration - remaining) / 5) + 1, 1, #messages)
-					progressText.Text = messages[index] .. " " .. tostring(remaining) .. "s"
+					local message = messages[index]
+					progressText.Text = (currentLanguage == "en" and message.en or message.fr) .. " · " .. tostring(remaining) .. "s"
 				else
-					progressText.Text = "Mise à jour vérifiée · Toujours en pause / Update checked · Still paused\nAucune donnée sensible envoyée / No sensitive data sent"
+					progressText.Text = currentLanguage == "en" and "Update checked · Still paused · No sensitive data sent" or "Mise à jour vérifiée · Toujours en pause · Aucune donnée sensible envoyée"
 				end
 			end
 			if remaining <= 0 then break end
