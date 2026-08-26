@@ -57,7 +57,7 @@ local function EL2BShowAnnouncementGui(announcement)
 	card.Name = "AnnouncementCard"
 	card.AnchorPoint = Vector2.new(0.5, 0)
 	card.Position = UDim2.new(0.5, 0, 0, 28)
-	card.Size = UDim2.new(1, -36, 0, 126)
+	card.Size = UDim2.new(1, -36, 0, 148)
 	card.BackgroundColor3 = isUpdateAnnouncement and Color3.fromRGB(25, 18, 32) or Color3.fromRGB(18, 15, 27)
 	card.BackgroundTransparency = 0.04
 	card.BorderSizePixel = 0
@@ -83,7 +83,7 @@ local function EL2BShowAnnouncementGui(announcement)
 	local message = Instance.new("TextLabel")
 	message.BackgroundTransparency = 1
 	message.Position = UDim2.fromOffset(18, 40)
-	message.Size = UDim2.new(1, -36, 0, 68)
+	message.Size = UDim2.new(1, -36, 0, 56)
 	message.Font = Enum.Font.Gotham
 	message.Text = tostring(announcement.fr or "") .. "\n\n" .. tostring(announcement.en or "")
 	message.TextColor3 = Color3.fromRGB(235, 225, 240)
@@ -92,6 +92,40 @@ local function EL2BShowAnnouncementGui(announcement)
 	message.TextXAlignment = Enum.TextXAlignment.Left
 	message.TextYAlignment = Enum.TextYAlignment.Top
 	message.Parent = card
+	local countdown = Instance.new("TextLabel")
+	countdown.Name = "AnnouncementCountdown"
+	countdown.BackgroundTransparency = 1
+	countdown.Position = UDim2.fromOffset(18, 105)
+	countdown.Size = UDim2.new(1, -36, 0, 22)
+	countdown.Font = Enum.Font.GothamBold
+	countdown.TextColor3 = isUpdateAnnouncement and Color3.fromRGB(255, 214, 125) or Color3.fromRGB(224, 176, 224)
+	countdown.TextSize = 10
+	countdown.TextXAlignment = Enum.TextXAlignment.Left
+	countdown.Parent = card
+	local expiryMs = 0
+	if type(announcement.expiresAt) == "string" then
+		pcall(function() expiryMs = DateTime.fromIsoDate(announcement.expiresAt).UnixTimestampMillis end)
+	end
+	local function updateCountdown()
+		if expiryMs <= 0 then
+			countdown.Text = "Durée limitée / Limited duration"
+			return false
+		end
+		local remaining = math.max(0, math.ceil((expiryMs - DateTime.now().UnixTimestampMillis) / 1000))
+		local minutes = math.floor(remaining / 60)
+		local seconds = remaining % 60
+		countdown.Text = "Temps restant / Time remaining : " .. string.format("%02d:%02d", minutes, seconds)
+		if remaining <= 0 then
+			countdown.Text = "Annonce expirée / Announcement expired"
+			task.delay(1, function() if gui.Parent then gui:Destroy() end end)
+			return false
+		end
+		return true
+	end
+	updateCountdown()
+	task.spawn(function()
+		while gui.Parent and updateCountdown() do task.wait(1) end
+	end)
 	local close = Instance.new("TextButton")
 	close.BackgroundTransparency = 1
 	close.Position = UDim2.new(1, -34, 0, 8)
