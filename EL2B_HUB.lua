@@ -12,6 +12,7 @@ local RS = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
+local GuiService = game:GetService("GuiService")
 local CoreGui = game:GetService("CoreGui")
 
 local LP = Players.LocalPlayer
@@ -28,7 +29,7 @@ pcall(function()
 	for _, n in ipairs({
 		"VisHubFullMenu", "VisHubFullMini", "VisHubModeBar", "VisHubActionButtons", "EL2BHelperGui",
 		"VisV2ModeBar", "VisBypassGui", "Per1shccLaggerV2", "VisHubbTP",
-		"VisPanelTP", "VisAutoStealGui", "VisTpBestBtn", "VisStealBarOnly"
+		"VisPanelTP", "VisAutoStealGui", "VisTpBestBtn", "VisStealBarOnly", "EL2BProfileGui"
 	}) do
 		local g = PlayerGui:FindFirstChild(n)
 		if g then g:Destroy() end
@@ -82,7 +83,7 @@ local St = {
 	btnShape = "Square",
 	btnScale = 0.75,
 	menuScale = 1.0,
-	btnSizes = { mode = 50, drop = 50, insta = 50, tp = 50, sentry = 50, steal = 50 },
+	btnSizes = { mode = 50, drop = 50, insta = 50, tp = 50, sentry = 50, steal = 50, profile = 50 },
 	keys = {
 		Drop = Enum.KeyCode.X,
 		TPDown = Enum.KeyCode.F,
@@ -3787,7 +3788,7 @@ actionBtn(pageSet, "Reset Profile", C.danger, function()
 	St.btnShape = "Square"
 	St.btnScale = 0.75
 	St.menuScale = 1
-	St.btnSizes = { mode = 50, drop = 50, insta = 50, tp = 50, sentry = 50, steal = 50 }
+	St.btnSizes = { mode = 50, drop = 50, insta = 50, tp = 50, sentry = 50, steal = 50, profile = 50 }
 	St._btnPos = nil
 	St._modeBarPos = nil
 	St._miniPos = nil
@@ -4449,7 +4450,8 @@ function makeActBtn(key, label, pos, cb)
 	btn.Modal = false
 	btn.ZIndex = 100
 	btn.Parent = holder
-	applyCorner(btn, St.btnShape)
+			applyCorner(btn, key == "profile" and "Round" or St.btnShape)
+
 	local oldS = btn:FindFirstChildOfClass("UIStroke")
 	if oldS then oldS:Destroy() end
 	local s = Instance.new("UIStroke")
@@ -4469,7 +4471,8 @@ function makeActBtn(key, label, pos, cb)
 	})
 	themeGradient.Parent = s
 	applyEmpireBtnBg(btn, ({drop=1,insta=2,tp=3,sentry=4,steal=5})[key] or 5)
-	applyCornerToChildren(btn, St.btnShape)
+			applyCornerToChildren(btn, key == "profile" and "Round" or St.btnShape)
+
 	local bgImg = btn:FindFirstChild("BtnBgImage")
 	if bgImg then
 		bgImg.Active = false
@@ -4602,6 +4605,145 @@ function restorePos(holder, key, defaultPos)
 	end
 end
 
+local profileGui = nil
+local profileCard = nil
+local profileVisible = false
+
+local function getProfileBottomOffset()
+	local safeBottom = 0
+	pcall(function()
+		local _, bottomRight = GuiService:GetGuiInset()
+		safeBottom = tonumber(bottomRight.Y) or 0
+	end)
+	-- Le bouton PROFILE et la barre de modes occupent la zone inférieure.
+	return math.max(270, 118 + 166 + 24 + safeBottom)
+end
+
+local function updateRobloxProfileLayout()
+	if not profileCard then return end
+	local camera = workspace.CurrentCamera
+	local viewportWidth = camera and camera.ViewportSize.X or 420
+	profileCard.Size = UDim2.new(0, math.min(280, math.max(244, viewportWidth - 36)), 0, 166)
+	profileCard.Position = UDim2.new(0, 18, 1, -getProfileBottomOffset())
+end
+
+local function closeRobloxProfile()
+	profileVisible = false
+	if profileCard then profileCard.Visible = false end
+end
+
+local function showRobloxProfile()
+	if not profileGui then
+		profileGui = Instance.new("ScreenGui")
+		profileGui.Name = "EL2BProfileGui"
+		profileGui.ResetOnSpawn = false
+		profileGui.IgnoreGuiInset = true
+		profileGui.DisplayOrder = 130
+		profileGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+		profileGui.Parent = PlayerGui
+
+		profileCard = Instance.new("Frame")
+		profileCard.Name = "ProfileCard"
+		profileCard.Size = UDim2.new(0, 280, 0, 166)
+		profileCard.Position = UDim2.new(0, 18, 1, -270)
+		profileCard.BackgroundColor3 = Color3.fromRGB(18, 14, 28)
+		profileCard.BackgroundTransparency = 0.04
+		profileCard.BorderSizePixel = 0
+		profileCard.ZIndex = 200
+		profileCard.Parent = profileGui
+		profileCard.Visible = false
+		local camera = workspace.CurrentCamera
+		if camera then
+			camera:GetPropertyChangedSignal("ViewportSize"):Connect(updateRobloxProfileLayout)
+		end
+		corner(profileCard, 16)
+		stroke(profileCard, Color3.fromRGB(255, 100, 220))
+
+		local title = Instance.new("TextLabel")
+		title.Name = "Title"
+		title.BackgroundTransparency = 1
+		title.Position = UDim2.new(0, 76, 0, 12)
+		title.Size = UDim2.new(1, -112, 0, 22)
+		title.Text = "ROBLOX PROFILE"
+		title.TextColor3 = Color3.fromRGB(255, 125, 220)
+		title.TextSize = 13
+		title.Font = Enum.Font.GothamBold
+		title.TextXAlignment = Enum.TextXAlignment.Left
+		title.ZIndex = 202
+		title.Parent = profileCard
+
+		local avatar = Instance.new("ImageLabel")
+		avatar.Name = "Avatar"
+		avatar.Size = UDim2.new(0, 54, 0, 54)
+		avatar.Position = UDim2.new(0, 14, 0, 14)
+		avatar.BackgroundColor3 = Color3.fromRGB(40, 26, 52)
+		avatar.BorderSizePixel = 0
+		avatar.ZIndex = 202
+		avatar.Parent = profileCard
+		corner(avatar, 27)
+		local avatarStroke = Instance.new("UIStroke", avatar)
+		avatarStroke.Color = Color3.fromRGB(180, 75, 255)
+		avatarStroke.Thickness = 2
+
+		local details = Instance.new("TextLabel")
+		details.Name = "Details"
+		details.BackgroundTransparency = 1
+		details.Position = UDim2.new(0, 76, 0, 38)
+		details.Size = UDim2.new(1, -92, 0, 76)
+		details.TextColor3 = Color3.fromRGB(235, 235, 245)
+		details.TextSize = 12
+		details.Font = Enum.Font.Gotham
+		details.TextXAlignment = Enum.TextXAlignment.Left
+		details.TextYAlignment = Enum.TextYAlignment.Top
+		details.TextWrapped = true
+		details.ZIndex = 202
+		details.Parent = profileCard
+
+		local close = Instance.new("TextButton")
+		close.Name = "Close"
+		close.Size = UDim2.new(0, 28, 0, 28)
+		close.Position = UDim2.new(1, -38, 0, 8)
+		close.BackgroundColor3 = Color3.fromRGB(50, 26, 55)
+		close.Text = "×"
+		close.TextColor3 = Color3.fromRGB(255, 255, 255)
+		close.TextSize = 18
+		close.Font = Enum.Font.GothamBold
+		close.AutoButtonColor = true
+		close.ZIndex = 203
+		close.Parent = profileCard
+		corner(close, 14)
+		close.Activated:Connect(closeRobloxProfile)
+
+		local hint = Instance.new("TextLabel")
+		hint.Name = "Hint"
+		hint.BackgroundTransparency = 1
+		hint.Position = UDim2.new(0, 14, 1, -30)
+		hint.Size = UDim2.new(1, -28, 0, 20)
+		hint.Text = "Profil local • aucune donnée envoyée"
+		hint.TextColor3 = C.textDim
+		hint.TextSize = 10
+		hint.Font = Enum.Font.Gotham
+		hint.TextXAlignment = Enum.TextXAlignment.Left
+		hint.ZIndex = 202
+		hint.Parent = profileCard
+	end
+
+	updateRobloxProfileLayout()
+	local avatar = profileCard:FindFirstChild("Avatar")
+	local details = profileCard:FindFirstChild("Details")
+	if avatar then
+		local ok, image = pcall(function()
+			return Players:GetUserThumbnailAsync(LP.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+		end)
+		if ok and type(image) == "string" then avatar.Image = image end
+	end
+	if details then
+		details.Text = string.format("Nom : %s\nUsername : @%s\nUserId : %d", LP.DisplayName, LP.Name, LP.UserId)
+	end
+	profileVisible = true
+	profileCard.Visible = true
+end
+
 function rebuildMobile()
 	for _, e in pairs(modeRefs) do if e.holder then e.holder:Destroy() end end
 	for _, e in pairs(actRefs) do if e.holder then e.holder:Destroy() end end
@@ -4641,6 +4783,7 @@ function rebuildMobile()
 			pcall(ToggleRefs.autoSteal.setVisual, St.autoSteal == true)
 		end
 	end)
+	makeActBtn("profile", "PROFILE", UDim2.new(0, 18, 1, -118), showRobloxProfile)
 	for key, e in pairs(actRefs) do
 		if e.holder then restorePos(e.holder, "A_" .. key) end
 	end
@@ -4795,8 +4938,10 @@ _G.VisUpdateMobileVisuals = function()
 			local sz = math.max(28, math.floor(base * (St.btnScale or 1)))
 			e.holder.Size = UDim2.new(0, sz, 0, sz)
 			e.btn.TextSize = math.clamp(math.floor(sz * 0.22), 10, 16)
-			applyCorner(e.btn, St.btnShape or "Round")
-			applyCornerToChildren(e.btn, St.btnShape or "Round")
+							local shape = key == "profile" and "Round" or (St.btnShape or "Round")
+				applyCorner(e.btn, shape)
+				applyCornerToChildren(e.btn, shape)
+
 			local s = e.btn:FindFirstChild("BtnBorder") or e.btn:FindFirstChildOfClass("UIStroke")
 			if not s then
 				s = Instance.new("UIStroke")
