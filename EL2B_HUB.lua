@@ -54,15 +54,58 @@ local function EL2BShowUpdateGui()
 	gui.IgnoreGuiInset = true
 	gui.DisplayOrder = 100000
 	gui.Parent = PlayerGui
-	local card = Instance.new("Frame")
-	card.Name = "UpdateCard"
-	card.AnchorPoint = Vector2.new(0.5, 0.5)
-	card.Position = UDim2.fromScale(0.5, 0.5)
-	card.Size = UDim2.new(1, -36, 0, 220)
-	card.BackgroundColor3 = Color3.fromRGB(18, 15, 27)
-	card.BackgroundTransparency = 0.04
-	card.Parent = gui
-	local sizeConstraint = Instance.new("UISizeConstraint")
+  local card = Instance.new("Frame")
+  card.Name = "UpdateCard"
+  card.AnchorPoint = Vector2.new(0.5, 0.5)
+  card.Position = UDim2.fromScale(0.5, 0.5)
+  card.Size = UDim2.new(1, -36, 0, 220)
+  card.BackgroundColor3 = Color3.fromRGB(18, 15, 27)
+  card.BackgroundTransparency = 0.04
+  card.Parent = gui
+  local halo = Instance.new("Frame")
+  halo.Name = "UpdateHalo"
+  halo.AnchorPoint = Vector2.new(0.5, 0.5)
+  halo.Position = UDim2.fromScale(0.5, 0.5)
+  halo.Size = UDim2.new(1, -26, 0, 230)
+  halo.BackgroundTransparency = 1
+  halo.BorderSizePixel = 0
+  halo.ZIndex = 0
+  halo.Parent = gui
+  local haloCorner = Instance.new("UICorner")
+  haloCorner.CornerRadius = UDim.new(0, 17)
+  haloCorner.Parent = halo
+  local haloStroke = Instance.new("UIStroke")
+  haloStroke.Color = Color3.fromRGB(255, 20, 147)
+  haloStroke.Thickness = 4
+  haloStroke.Transparency = 0.68
+  haloStroke.Parent = halo
+  task.spawn(function()
+    while halo.Parent do
+      local brighten = TS:Create(haloStroke, TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Transparency = 0.42 })
+      brighten:Play()
+      brighten.Completed:Wait()
+      if not halo.Parent then break end
+      local soften = TS:Create(haloStroke, TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Transparency = 0.74 })
+      soften:Play()
+      soften.Completed:Wait()
+    end
+  end)
+  local gameBackdrop = Instance.new("ImageLabel")
+  gameBackdrop.Name = "GameBackdrop"
+  gameBackdrop.Size = UDim2.fromScale(1, 1)
+  gameBackdrop.BackgroundColor3 = Color3.fromRGB(42, 18, 58)
+  gameBackdrop.BackgroundTransparency = 0.12
+  gameBackdrop.BorderSizePixel = 0
+  gameBackdrop.Image = "rbxthumb://type=GameIcon&id=" .. tostring(game.PlaceId) .. "&w=512&h=512"
+  gameBackdrop.ImageColor3 = Color3.fromRGB(150, 90, 170)
+  gameBackdrop.ImageTransparency = 0.82
+  gameBackdrop.ScaleType = Enum.ScaleType.Crop
+  gameBackdrop.ZIndex = 0
+  gameBackdrop.Parent = card
+  local backdropCorner = Instance.new("UICorner")
+  backdropCorner.CornerRadius = UDim.new(0, 14)
+  backdropCorner.Parent = gameBackdrop
+  local sizeConstraint = Instance.new("UISizeConstraint")
 	sizeConstraint.MinSize = Vector2.new(240, 220)
 	sizeConstraint.MaxSize = Vector2.new(340, 220)
 	sizeConstraint.Parent = card
