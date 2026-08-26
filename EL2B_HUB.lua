@@ -598,10 +598,12 @@ local St = {
 	spamLaser = false, spamPaint = false,
 	counterLaser = false, counterBoogie = false, counterSwapBody = false,
 	equipOnDrop = false,
-	stealVer = "V1", stealRadius = 60, stealPause = false, stealPausePct = 75,
-	autoSteal = false,
-	infJumpMode = "hold",
-}
+		stealVer = "V1", stealRadius = 60, stealPause = false, stealPausePct = 75,
+		autoSteal = false,
+		infJumpMode = "hold",
+		buttonVolume = 0.22,
+		soundsEnabled = true,
+	}
 _G.VisState = St
 
 -- Fallback sûr lorsque le module Auto Steal externe n'est pas chargé.
@@ -2502,7 +2504,9 @@ Gui.DisplayOrder = 200
 Gui.Parent = PlayerGui
 
 local MW, MH = 310, 380
-local EL2BSoundsEnabled = true
+local EL2BSoundsEnabled = St.soundsEnabled ~= false
+local EL2BSoundVolume = math.clamp(tonumber(St.buttonVolume) or 0.22, 0, 0.5)
+St.buttonVolume = EL2BSoundVolume
 local EL2B_BUTTON_SOUND_ID = "rbxassetid://6026984224"
 local function playEL2BButtonSound()
 	if not EL2BSoundsEnabled then return end
@@ -2510,7 +2514,7 @@ local function playEL2BButtonSound()
 		local sound = Instance.new("Sound")
 		sound.Name = "EL2BButtonClick"
 		sound.SoundId = EL2B_BUTTON_SOUND_ID
-		sound.Volume = 0.22
+		sound.Volume = EL2BSoundVolume
 		sound.RollOffMaxDistance = 0
 		sound.Parent = SoundService
 		SoundService:PlayLocalSound(sound)
@@ -2541,13 +2545,92 @@ soundToggle.Text = "♪"
 soundToggle.TextColor3 = Color3.fromRGB(255, 220, 135)
 soundToggle.TextSize = 15
 soundToggle.AutoButtonColor = true
-soundToggle.ZIndex = 10
+soundToggle.ZIndex = 25
 soundToggle.Parent = Main
 corner(soundToggle, 7)
 soundToggle.Activated:Connect(function()
 	EL2BSoundsEnabled = not EL2BSoundsEnabled
+	St.soundsEnabled = EL2BSoundsEnabled
 	soundToggle.Text = EL2BSoundsEnabled and "♪" or "×"
 	soundToggle.TextColor3 = EL2BSoundsEnabled and Color3.fromRGB(255, 220, 135) or Color3.fromRGB(190, 176, 201)
+	saveCfg()
+end)
+soundToggle.Text = EL2BSoundsEnabled and "♪" or "×"
+soundToggle.TextColor3 = EL2BSoundsEnabled and Color3.fromRGB(255, 220, 135) or Color3.fromRGB(190, 176, 201)
+
+local volFrame = Instance.new("Frame")
+volFrame.Name = "VolumeControl"
+volFrame.Size = UDim2.new(0, 100, 0, 22)
+volFrame.Position = UDim2.new(1, -148, 0, 42)
+volFrame.BackgroundColor3 = Color3.fromRGB(18, 14, 25)
+volFrame.BackgroundTransparency = 0.12
+volFrame.BorderSizePixel = 0
+volFrame.ZIndex = 25
+volFrame.Parent = Main
+corner(volFrame, 7)
+local volStroke = stroke(volFrame)
+volStroke.Color = Color3.fromRGB(100, 70, 125)
+volStroke.Thickness = 1
+volStroke.Transparency = 0.2
+local volTrack = Instance.new("Frame")
+volTrack.Name = "Track"
+volTrack.Size = UDim2.new(1, -16, 0, 4)
+volTrack.Position = UDim2.new(0, 8, 0.5, -2)
+volTrack.BackgroundColor3 = Color3.fromRGB(40, 32, 48)
+volTrack.BorderSizePixel = 0
+volTrack.ZIndex = 11
+volTrack.Parent = volFrame
+corner(volTrack, 2)
+local volFill = Instance.new("Frame")
+volFill.Name = "Fill"
+volFill.Size = UDim2.fromScale(St.buttonVolume / 0.5, 1)
+volFill.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
+volFill.BorderSizePixel = 0
+volFill.ZIndex = 12
+volFill.Parent = volTrack
+corner(volFill, 2)
+local volLabel = Instance.new("TextLabel")
+volLabel.Name = "Label"
+volLabel.Size = UDim2.new(0, 30, 0, 14)
+volLabel.Position = UDim2.new(0.5, -15, 1, 2)
+volLabel.BackgroundTransparency = 1
+volLabel.Text = math.floor((St.buttonVolume / 0.5) * 100) .. "%"
+volLabel.TextColor3 = Color3.fromRGB(190, 176, 201)
+volLabel.TextSize = 8
+volLabel.Font = Enum.Font.GothamBold
+volLabel.ZIndex = 10
+volLabel.Parent = volFrame
+local volBtn = Instance.new("TextButton")
+volBtn.Name = "Trigger"
+volBtn.Size = UDim2.fromScale(1, 1)
+volBtn.BackgroundTransparency = 1
+volBtn.Text = ""
+volBtn.ZIndex = 15
+volBtn.Parent = volFrame
+local function updateVol(input)
+	local pos = math.clamp((input.Position.X - volTrack.AbsolutePosition.X) / volTrack.AbsoluteSize.X, 0, 1)
+	EL2BSoundVolume = pos * 0.5
+	St.buttonVolume = EL2BSoundVolume
+	volFill.Size = UDim2.fromScale(pos, 1)
+	volLabel.Text = math.floor(pos * 100) .. "%"
+	saveCfg()
+end
+local volDragging = false
+volBtn.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		volDragging = true
+		updateVol(input)
+	end
+end)
+UIS.InputChanged:Connect(function(input)
+	if volDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		updateVol(input)
+	end
+end)
+UIS.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		volDragging = false
+	end
 end)
 
 local menuScaleObj = Instance.new("UIScale")
