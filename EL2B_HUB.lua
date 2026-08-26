@@ -5272,6 +5272,134 @@ if not _G._VisOverheadLoop then
 end
 
 -- ==============================
+--  EL2B HUB RELOAD BUTTON (SAFE)
+-- ==============================
+do
+	local playerGui = LP:FindFirstChildOfClass("PlayerGui") or LP:WaitForChild("PlayerGui")
+	local old = playerGui:FindFirstChild("EL2BReloadGui")
+	if old then pcall(function() old:Destroy() end) end
+
+	local reloadGui = Instance.new("ScreenGui")
+	reloadGui.Name = "EL2BReloadGui"
+	reloadGui.ResetOnSpawn = false
+	reloadGui.IgnoreGuiInset = true
+	reloadGui.DisplayOrder = 2700
+	reloadGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	reloadGui.Parent = playerGui
+
+	local button = Instance.new("TextButton")
+	button.Name = "ReloadButton"
+	button.Size = UDim2.new(0, 142, 0, 38)
+	button.Position = UDim2.new(0, 18, 0, 106)
+	button.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+	button.BorderSizePixel = 0
+	button.Text = "RELOAD\
+EL2B HUB"
+	button.TextColor3 = Color3.fromRGB(255, 255, 255)
+	button.TextSize = 13
+	button.Font = Enum.Font.GothamBold
+	button.TextWrapped = true
+	button.AutoButtonColor = false
+	button.Active = true
+	button.Selectable = true
+	button.ZIndex = 100
+	button.Parent = reloadGui
+	applyCorner(button, "Box")
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Name = "ReloadBorder"
+	stroke.Thickness = 2
+	stroke.Color = Color3.fromRGB(255, 105, 210)
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Parent = button
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(0.45, Color3.fromRGB(255, 105, 210)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(170, 75, 255)),
+	})
+	gradient.Parent = stroke
+
+	local busy = false
+	local function setState(text, color)
+		button.Text = text
+		button.BackgroundColor3 = color
+	end
+
+	local function cleanupOwnInterfaces()
+		local names = {
+			"VisHubFullMenu", "VisHubFullMini", "VisHubModeBar", "VisV2ModeBar",
+			"EL2BHelperGui", "VisStealBarOnly", "VisOverheadInfo",
+		}
+		for _, container in ipairs({playerGui, game:GetService("CoreGui")}) do
+			pcall(function()
+				for _, name in ipairs(names) do
+					local gui = container:FindFirstChild(name)
+					if gui and gui ~= reloadGui then gui:Destroy() end
+				end
+			end)
+		end
+	end
+
+	local dragging, dragStart, startPos, dragInput = false, nil, nil, nil
+	button.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = button.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then dragging = false end
+			end)
+		end
+	end)
+	button.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+	end)
+	UIS.InputChanged:Connect(function(input)
+		if dragging and input == dragInput and dragStart and startPos then
+			local delta = input.Position - dragStart
+			if delta.Magnitude > 4 then
+				button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+			end
+		end
+	end)
+
+	button.Activated:Connect(function()
+		if busy then return end
+		busy = true
+		setState("CLEANING...", Color3.fromRGB(80, 52, 105))
+		task.spawn(function()
+			cleanupOwnInterfaces()
+			task.wait(0.35)
+			if type(loadstring) ~= "function" then
+				setState("LOADSTRING OFF", Color3.fromRGB(145, 55, 75))
+				warn("EL2B HUB: loadstring is unavailable in this environment")
+				busy = false
+				return
+			end
+			local ok, err = pcall(function()
+				local http = game:GetService("HttpService")
+				if type(game.HttpGet) ~= "function" then error("HttpGet unavailable") end
+				local source = game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/EL2B_HUB.lua")
+				local chunk = loadstring(source)
+				if type(chunk) ~= "function" then error("loadstring returned no function") end
+				chunk()
+			end)
+			if ok then
+				setState("RELOADED", Color3.fromRGB(40, 135, 80))
+			else
+				setState("RELOAD ERROR", Color3.fromRGB(145, 55, 75))
+				warn("EL2B HUB reload error: " .. tostring(err))
+			end
+			task.wait(1.6)
+			if button and button.Parent then setState("RELOAD\
+EL2B HUB", Color3.fromRGB(12, 12, 16)) end
+			busy = false
+		end)
+	end)
+end
+
+-- ==============================
 --  INIT DES PANELS EXTERNES (TP, LAGGER, BYPASS)
 -- ==============================
 _G.VisSetLaggerPanel = function(on)
