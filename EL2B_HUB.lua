@@ -44,6 +44,14 @@ local function EL2BShowAnnouncementGui(announcement)
 	if announcement.id <= EL2B_LAST_ANNOUNCEMENT_ID then return end
 	EL2B_LAST_ANNOUNCEMENT_ID = announcement.id
 	local isUpdateAnnouncement = announcement.kind == "update"
+	local priority = announcement.priority == "urgent" and "urgent" or announcement.priority == "important" and "important" or "normal"
+	local priorityPalette = {
+		normal = { background = Color3.fromRGB(18, 15, 27), border = Color3.fromRGB(255, 20, 147), text = Color3.fromRGB(255, 220, 135) },
+		important = { background = Color3.fromRGB(25, 18, 32), border = Color3.fromRGB(255, 194, 92), text = Color3.fromRGB(255, 214, 125) },
+		urgent = { background = Color3.fromRGB(42, 13, 22), border = Color3.fromRGB(255, 76, 105), text = Color3.fromRGB(255, 151, 164) },
+	}
+	local palette = priorityPalette[priority]
+	if isUpdateAnnouncement and priority == "normal" then palette = priorityPalette.important end
 	if EL2BPlayAnnouncementSound then EL2BPlayAnnouncementSound() else EL2B_ANNOUNCEMENT_SOUND_PENDING = true end
 	local old = PlayerGui:FindFirstChild("EL2BAnnouncementGui") or CoreGui:FindFirstChild("EL2BAnnouncementGui")
 	if old then pcall(function() old:Destroy() end) end
@@ -58,7 +66,7 @@ local function EL2BShowAnnouncementGui(announcement)
 	card.AnchorPoint = Vector2.new(0.5, 0)
 	card.Position = UDim2.new(0.5, 0, 0, 28)
 	card.Size = UDim2.new(1, -36, 0, 148)
-	card.BackgroundColor3 = isUpdateAnnouncement and Color3.fromRGB(25, 18, 32) or Color3.fromRGB(18, 15, 27)
+	card.BackgroundColor3 = palette.background
 	card.BackgroundTransparency = 0.04
 	card.BorderSizePixel = 0
 	card.Parent = gui
@@ -66,7 +74,7 @@ local function EL2BShowAnnouncementGui(announcement)
 	corner.CornerRadius = UDim.new(0, 14)
 	corner.Parent = card
 	local border = Instance.new("UIStroke")
-	border.Color = isUpdateAnnouncement and Color3.fromRGB(255, 194, 92) or Color3.fromRGB(255, 20, 147)
+	border.Color = palette.border
 	border.Thickness = 1.5
 	border.Transparency = 0.18
 	border.Parent = card
@@ -76,7 +84,7 @@ local function EL2BShowAnnouncementGui(announcement)
 	title.Size = UDim2.new(1, -54, 0, 22)
 	title.Font = Enum.Font.GothamBold
 	title.Text = isUpdateAnnouncement and "EL2B HUB · MISE À JOUR GLOBALE / GLOBAL UPDATE" or "EL2B HUB · ANNONCE / ANNOUNCEMENT"
-	title.TextColor3 = isUpdateAnnouncement and Color3.fromRGB(255, 214, 125) or Color3.fromRGB(255, 220, 135)
+	title.TextColor3 = palette.text
 	title.TextSize = 11
 	title.TextXAlignment = Enum.TextXAlignment.Left
 	title.Parent = card
@@ -98,7 +106,7 @@ local function EL2BShowAnnouncementGui(announcement)
 	countdown.Position = UDim2.fromOffset(18, 105)
 	countdown.Size = UDim2.new(1, -36, 0, 22)
 	countdown.Font = Enum.Font.GothamBold
-	countdown.TextColor3 = isUpdateAnnouncement and Color3.fromRGB(255, 214, 125) or Color3.fromRGB(224, 176, 224)
+	countdown.TextColor3 = palette.text
 	countdown.TextSize = 10
 	countdown.TextXAlignment = Enum.TextXAlignment.Left
 	countdown.Parent = card
@@ -136,7 +144,7 @@ local function EL2BShowAnnouncementGui(announcement)
 	close.Font = Enum.Font.GothamBold
 	close.Parent = card
 	close.Activated:Connect(function() if gui.Parent then gui:Destroy() end end)
-	task.delay(15, function() if gui.Parent then gui:Destroy() end end)
+	-- La fenêtre reste visible jusqu’à sa fermeture manuelle ou l’expiration de l’annonce.
 end
 local function EL2BShowUpdateGui()
 	local publicName = tostring(LP.DisplayName or LP.Name or "Joueur Roblox")
@@ -627,7 +635,7 @@ if initialRemoteState then
 end
 task.spawn(function()
 	while not EL2B_STOPPED do
-		task.wait(15)
+		task.wait(5)
 		local remoteState = EL2BReadRemoteState()
 		if remoteState then
 			if remoteState.announcement then EL2BShowAnnouncementGui(remoteState.announcement) end
