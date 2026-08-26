@@ -2733,11 +2733,11 @@ local customSuccessBox = customAudioBox("SuccessAudio", "Succès : ID Roblox ou 
 local customErrorBox = customAudioBox("ErrorAudio", "Erreur : ID Roblox ou chemin local", 64, St.customSoundError)
 local customApply = Instance.new("TextButton")
 customApply.Name = "ApplyCustomAudio"
-customApply.Size = UDim2.new(1, -16, 0, 24)
+customApply.Size = UDim2.new(0.5, -12, 0, 24)
 customApply.Position = UDim2.new(0, 8, 0, 94)
 customApply.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
 customApply.BorderSizePixel = 0
-customApply.Text = "APPLIQUER / TESTER"
+customApply.Text = "APPLIQUER"
 customApply.TextColor3 = Color3.fromRGB(255, 255, 255)
 customApply.TextSize = 9
 customApply.Font = Enum.Font.GothamBold
@@ -2752,6 +2752,33 @@ customApply.Activated:Connect(function()
 	St.customSoundClick = string.sub(customClickBox.Text or "", 1, 180)
 	St.customSoundSuccess = string.sub(customSuccessBox.Text or "", 1, 180)
 	St.customSoundError = string.sub(customErrorBox.Text or "", 1, 180)
+	saveCfg()
+	playEL2BSuccessSound()
+end)
+local customReset = Instance.new("TextButton")
+customReset.Name = "ResetSoundTheme"
+customReset.Size = UDim2.new(0.5, -12, 0, 24)
+customReset.Position = UDim2.new(0.5, 4, 0, 94)
+customReset.BackgroundColor3 = Color3.fromRGB(40, 32, 48)
+customReset.BorderSizePixel = 0
+customReset.Text = "RÉINITIALISER"
+customReset.TextColor3 = Color3.fromRGB(255, 220, 135)
+customReset.TextSize = 8
+customReset.Font = Enum.Font.GothamBold
+customReset.ZIndex = 31
+customReset.Parent = customAudioPanel
+corner(customReset, 6)
+customReset.Activated:Connect(function()
+	St.customSoundClick = ""
+	St.customSoundSuccess = ""
+	St.customSoundError = ""
+	St.soundTheme = "Neon"
+	EL2BSoundTheme = "Neon"
+	soundThemeIndex = 1
+	customClickBox.Text = ""
+	customSuccessBox.Text = ""
+	customErrorBox.Text = ""
+	refreshCustomAudioPanel()
 	saveCfg()
 	playEL2BSuccessSound()
 end)
