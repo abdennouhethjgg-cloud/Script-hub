@@ -20,6 +20,8 @@ if not LP then
 	LP = Players.LocalPlayer
 end
 local PlayerGui = LP:WaitForChild("PlayerGui", 30) or LP:FindFirstChild("PlayerGui") or CoreGui
+local EL2BReloadGeneration = (_G.EL2BReloadGeneration or 0) + 1
+_G.EL2BReloadGeneration = EL2BReloadGeneration
 
 -- Nettoyer les anciennes interfaces
 pcall(function()
@@ -3146,7 +3148,7 @@ local function setNpcWatcher(on)
 	if npcWatcherLabel then npcWatcherLabel.Text = "NPC INACTIFS : ANALYSE…"; npcWatcherLabel.TextColor3 = Color3.fromRGB(255, 200, 100) end
 	saveCfg()
 	task.spawn(function()
-		while St.npcWatcher and token == npcWatcherToken do
+		while St.npcWatcher and token == npcWatcherToken and EL2BReloadGeneration == _G.EL2BReloadGeneration do
 			local count = getIdleNpcCount()
 			if npcWatcherLabel then
 				npcWatcherLabel.Text = string.format("NPC INACTIFS : %d", count)
@@ -3285,7 +3287,7 @@ local function setWebStatus(on)
 	if not St.webStatus then return end
 	setWebStatusIndicator("connecting")
 	task.spawn(function()
-		while St.webStatus and token == webStatusLoopToken do
+		while St.webStatus and token == webStatusLoopToken and EL2BReloadGeneration == _G.EL2BReloadGeneration do
 			local idleNpcCount = St.npcWatcher and getIdleNpcCount() or 0
 			sendWebHeartbeat(idleNpcCount)
 			task.wait(WEB_STATUS_INTERVAL / 1000)
