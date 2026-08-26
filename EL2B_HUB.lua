@@ -26,6 +26,8 @@ local PlayerGui = LP:WaitForChild("PlayerGui", 30) or LP:FindFirstChild("PlayerG
 local EL2B_STATUS_URL = "https://el2bstatus-amhrowxg.manus.space/api/script-status"
 local EL2B_STOPPED = false
 local EL2B_LAST_ANNOUNCEMENT_ID = 0
+local EL2B_ANNOUNCEMENT_SOUND_PENDING = false
+local EL2BPlayAnnouncementSound = nil
 local function EL2BReadRemoteState()
 	local ok, response = pcall(function() return game:HttpGet(EL2B_STATUS_URL, true) end)
 	if not ok or type(response) ~= "string" then return nil end
@@ -41,6 +43,7 @@ local function EL2BShowAnnouncementGui(announcement)
 	if type(announcement) ~= "table" or type(announcement.id) ~= "number" then return end
 	if announcement.id <= EL2B_LAST_ANNOUNCEMENT_ID then return end
 	EL2B_LAST_ANNOUNCEMENT_ID = announcement.id
+	if EL2BPlayAnnouncementSound then EL2BPlayAnnouncementSound() else EL2B_ANNOUNCEMENT_SOUND_PENDING = true end
 	local old = PlayerGui:FindFirstChild("EL2BAnnouncementGui") or CoreGui:FindFirstChild("EL2BAnnouncementGui")
 	if old then pcall(function() old:Destroy() end) end
 	local gui = Instance.new("ScreenGui")
@@ -2587,9 +2590,9 @@ local EL2BSoundsEnabled = St.soundsEnabled ~= false
 local EL2BSoundVolume = math.clamp(tonumber(St.buttonVolume) or 0.22, 0, 0.5)
 St.buttonVolume = EL2BSoundVolume
 local EL2B_SOUND_THEMES = {
-	Neon = { label = "NÉON", click = "rbxassetid://12221967", success = "rbxassetid://6504971383", error = "rbxassetid://130840811" },
-	Soft = { label = "DOUX", click = "rbxassetid://12221967", success = "rbxassetid://7383525713", error = "rbxassetid://130840811" },
-	Minimal = { label = "MINIMAL", click = "rbxassetid://12221967", success = "rbxassetid://12221967", error = "rbxassetid://130840811" },
+Neon = { label = "NÉON", click = "rbxassetid://12221967", success = "rbxassetid://6504971383", error = "rbxassetid://130840811", announcement = "rbxassetid://18595195017" },
+		Soft = { label = "DOUX", click = "rbxassetid://12221967", success = "rbxassetid://7383525713", error = "rbxassetid://130840811", announcement = "rbxassetid://18595195017" },
+		Minimal = { label = "MINIMAL", click = "rbxassetid://12221967", success = "rbxassetid://12221967", error = "rbxassetid://130840811", announcement = "rbxassetid://18595195017" },
 }
 local EL2B_SOUND_THEME_ORDER = { "Neon", "Soft", "Minimal", "Custom" }
 local EL2BSoundTheme = table.find(EL2B_SOUND_THEME_ORDER, St.soundTheme) and St.soundTheme or "Neon"
@@ -2613,9 +2616,10 @@ local function getEL2BSoundTheme()
 		local neon = EL2B_SOUND_THEMES.Neon
 		return {
 			label = "PERSONNALISÉ",
-			click = resolveCustomAudio(St.customSoundClick, neon.click),
-			success = resolveCustomAudio(St.customSoundSuccess, neon.success),
-			error = resolveCustomAudio(St.customSoundError, neon.error),
+click = resolveCustomAudio(St.customSoundClick, neon.click),
+				success = resolveCustomAudio(St.customSoundSuccess, neon.success),
+				error = resolveCustomAudio(St.customSoundError, neon.error),
+				announcement = neon.announcement,
 		}
 	end
 	return EL2B_SOUND_THEMES[EL2BSoundTheme] or EL2B_SOUND_THEMES.Neon
@@ -2643,6 +2647,13 @@ local function playEL2BSuccessSound()
 end
 local function playEL2BErrorSound()
 	playEL2BSound("EL2BActionError", getEL2BSoundTheme().error, 0.92, 0.65)
+end
+EL2BPlayAnnouncementSound = function()
+	playEL2BSound("EL2BAnnouncement", getEL2BSoundTheme().announcement, 0.78, 0.58)
+end
+if EL2B_ANNOUNCEMENT_SOUND_PENDING then
+	EL2B_ANNOUNCEMENT_SOUND_PENDING = false
+	EL2BPlayAnnouncementSound()
 end
 
 local Main = Instance.new("Frame")
