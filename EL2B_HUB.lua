@@ -604,6 +604,9 @@ local St = {
 		buttonVolume = 0.22,
 		soundsEnabled = true,
 		soundTheme = "Neon",
+		customSoundClick = "",
+		customSoundSuccess = "",
+		customSoundError = "",
 	}
 _G.VisState = St
 
@@ -2513,10 +2516,33 @@ local EL2B_SOUND_THEMES = {
 	Soft = { label = "DOUX", click = "rbxassetid://12221967", success = "rbxassetid://7383525713", error = "rbxassetid://130840811" },
 	Minimal = { label = "MINIMAL", click = "rbxassetid://12221967", success = "rbxassetid://12221967", error = "rbxassetid://130840811" },
 }
-local EL2B_SOUND_THEME_ORDER = { "Neon", "Soft", "Minimal" }
+local EL2B_SOUND_THEME_ORDER = { "Neon", "Soft", "Minimal", "Custom" }
 local EL2BSoundTheme = table.find(EL2B_SOUND_THEME_ORDER, St.soundTheme) and St.soundTheme or "Neon"
 St.soundTheme = EL2BSoundTheme
+local function resolveCustomAudio(value, fallback)
+	value = tostring(value or "")
+	if value == "" then return fallback end
+	if string.match(value, "^rbxassetid://%d+$") then return value end
+	if string.match(value, "^%d+$") then return "rbxassetid://" .. value end
+	for _, resolverName in ipairs({ "getcustomasset", "getsynasset" }) do
+		local resolver = _G[resolverName]
+		if type(resolver) == "function" then
+			local ok, asset = pcall(resolver, value)
+			if ok and type(asset) == "string" and asset ~= "" then return asset end
+		end
+	end
+	return fallback
+end
 local function getEL2BSoundTheme()
+	if EL2BSoundTheme == "Custom" then
+		local neon = EL2B_SOUND_THEMES.Neon
+		return {
+			label = "PERSONNALISÉ",
+			click = resolveCustomAudio(St.customSoundClick, neon.click),
+			success = resolveCustomAudio(St.customSoundSuccess, neon.success),
+			error = resolveCustomAudio(St.customSoundError, neon.error),
+		}
+	end
 	return EL2B_SOUND_THEMES[EL2BSoundTheme] or EL2B_SOUND_THEMES.Neon
 end
 local function playEL2BSound(name, soundId, playbackSpeed, volumeScale)
@@ -2670,11 +2696,70 @@ soundThemeButton.ZIndex = 25
 soundThemeButton.Parent = Main
 corner(soundThemeButton, 7)
 local soundThemeIndex = table.find(EL2B_SOUND_THEME_ORDER, EL2BSoundTheme) or 1
+local customAudioPanel = Instance.new("Frame")
+customAudioPanel.Name = "CustomAudioPanel"
+customAudioPanel.Size = UDim2.new(0, 214, 0, 126)
+customAudioPanel.Position = UDim2.new(0, 82, 0, 98)
+customAudioPanel.BackgroundColor3 = Color3.fromRGB(18, 14, 25)
+customAudioPanel.BackgroundTransparency = 0.04
+customAudioPanel.BorderSizePixel = 0
+customAudioPanel.ZIndex = 30
+customAudioPanel.Visible = EL2BSoundTheme == "Custom"
+customAudioPanel.Parent = Main
+corner(customAudioPanel, 9)
+local function customAudioBox(name, placeholder, y, value)
+	local box = Instance.new("TextBox")
+	box.Name = name
+	box.Size = UDim2.new(1, -16, 0, 24)
+	box.Position = UDim2.new(0, 8, 0, y)
+	box.BackgroundColor3 = Color3.fromRGB(40, 32, 48)
+	box.BackgroundTransparency = 0.12
+	box.BorderSizePixel = 0
+	box.ClearTextOnFocus = false
+	box.Font = Enum.Font.Gotham
+	box.PlaceholderText = placeholder
+	box.Text = tostring(value or "")
+	box.TextColor3 = Color3.fromRGB(235, 225, 240)
+	box.PlaceholderColor3 = Color3.fromRGB(145, 130, 160)
+	box.TextSize = 9
+	box.TextXAlignment = Enum.TextXAlignment.Left
+	box.ZIndex = 31
+	box.Parent = customAudioPanel
+	corner(box, 6)
+	return box
+end
+local customClickBox = customAudioBox("ClickAudio", "Clic : ID Roblox ou chemin local", 8, St.customSoundClick)
+local customSuccessBox = customAudioBox("SuccessAudio", "Succès : ID Roblox ou chemin local", 36, St.customSoundSuccess)
+local customErrorBox = customAudioBox("ErrorAudio", "Erreur : ID Roblox ou chemin local", 64, St.customSoundError)
+local customApply = Instance.new("TextButton")
+customApply.Name = "ApplyCustomAudio"
+customApply.Size = UDim2.new(1, -16, 0, 24)
+customApply.Position = UDim2.new(0, 8, 0, 94)
+customApply.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
+customApply.BorderSizePixel = 0
+customApply.Text = "APPLIQUER / TESTER"
+customApply.TextColor3 = Color3.fromRGB(255, 255, 255)
+customApply.TextSize = 9
+customApply.Font = Enum.Font.GothamBold
+customApply.ZIndex = 31
+customApply.Parent = customAudioPanel
+corner(customApply, 6)
+local function refreshCustomAudioPanel()
+	customAudioPanel.Visible = EL2BSoundTheme == "Custom"
+	soundThemeButton.Text = "SON : " .. getEL2BSoundTheme().label
+end
+customApply.Activated:Connect(function()
+	St.customSoundClick = string.sub(customClickBox.Text or "", 1, 180)
+	St.customSoundSuccess = string.sub(customSuccessBox.Text or "", 1, 180)
+	St.customSoundError = string.sub(customErrorBox.Text or "", 1, 180)
+	saveCfg()
+	playEL2BSuccessSound()
+end)
 soundThemeButton.Activated:Connect(function()
 	soundThemeIndex = soundThemeIndex % #EL2B_SOUND_THEME_ORDER + 1
 	EL2BSoundTheme = EL2B_SOUND_THEME_ORDER[soundThemeIndex]
 	St.soundTheme = EL2BSoundTheme
-	soundThemeButton.Text = "SON : " .. getEL2BSoundTheme().label
+	refreshCustomAudioPanel()
 	saveCfg()
 	playEL2BSuccessSound()
 end)
