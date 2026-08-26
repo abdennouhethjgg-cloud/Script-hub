@@ -15,6 +15,7 @@ local HttpService = game:GetService("HttpService")
 local GuiService = game:GetService("GuiService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local CoreGui = game:GetService("CoreGui")
+local SoundService = game:GetService("SoundService")
 
 local LP = Players.LocalPlayer
 if not LP then
@@ -2501,6 +2502,23 @@ Gui.DisplayOrder = 200
 Gui.Parent = PlayerGui
 
 local MW, MH = 310, 380
+local EL2BSoundsEnabled = true
+local EL2B_BUTTON_SOUND_ID = "rbxassetid://6026984224"
+local function playEL2BButtonSound()
+	if not EL2BSoundsEnabled then return end
+	pcall(function()
+		local sound = Instance.new("Sound")
+		sound.Name = "EL2BButtonClick"
+		sound.SoundId = EL2B_BUTTON_SOUND_ID
+		sound.Volume = 0.22
+		sound.RollOffMaxDistance = 0
+		sound.Parent = SoundService
+		SoundService:PlayLocalSound(sound)
+		sound.Ended:Connect(function() sound:Destroy() end)
+		task.delay(2, function() if sound.Parent then sound:Destroy() end end)
+	end)
+end
+
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Size = UDim2.new(0, MW, 0, MH)
@@ -2510,6 +2528,27 @@ Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
 Main.Active = true
 Main.Parent = Gui
+
+local soundToggle = Instance.new("TextButton")
+soundToggle.Name = "ButtonSoundToggle"
+soundToggle.Position = UDim2.new(1, -42, 0, 12)
+soundToggle.Size = UDim2.fromOffset(28, 24)
+soundToggle.BackgroundColor3 = Color3.fromRGB(46, 25, 58)
+soundToggle.BackgroundTransparency = 0.12
+soundToggle.BorderSizePixel = 0
+soundToggle.Font = Enum.Font.GothamBold
+soundToggle.Text = "♪"
+soundToggle.TextColor3 = Color3.fromRGB(255, 220, 135)
+soundToggle.TextSize = 15
+soundToggle.AutoButtonColor = true
+soundToggle.ZIndex = 10
+soundToggle.Parent = Main
+corner(soundToggle, 7)
+soundToggle.Activated:Connect(function()
+	EL2BSoundsEnabled = not EL2BSoundsEnabled
+	soundToggle.Text = EL2BSoundsEnabled and "♪" or "×"
+	soundToggle.TextColor3 = EL2BSoundsEnabled and Color3.fromRGB(255, 220, 135) or Color3.fromRGB(190, 176, 201)
+end)
 
 local menuScaleObj = Instance.new("UIScale")
 menuScaleObj.Name = "VisMenuScale"
@@ -6155,6 +6194,22 @@ _G.VisSetSpeedBypassLock = function(on)
 	end)
 	saveCfg()
 end
+
+local function bindEL2BButtonSound(button)
+	if not button:IsA("GuiButton") or button:GetAttribute("EL2BSoundBound") then return end
+	button:SetAttribute("EL2BSoundBound", true)
+	button.Activated:Connect(playEL2BButtonSound)
+end
+
+local function bindEL2BRoot(root)
+	if not root:IsA("ScreenGui") then return end
+	local owned = root.Name == "VisHubFullMenu" or root.Name == "VisHubMini" or root.Name == "VisHubModes" or root.Name == "EL2BUpdateGui" or root.Name == "VisHubHelper" or root.Name == "EL2BProfileGui"
+	if not owned then return end
+	for _, descendant in ipairs(root:GetDescendants()) do bindEL2BButtonSound(descendant) end
+	root.DescendantAdded:Connect(bindEL2BButtonSound)
+end
+for _, root in ipairs(PlayerGui:GetChildren()) do bindEL2BRoot(root) end
+PlayerGui.ChildAdded:Connect(bindEL2BRoot)
 
 task.defer(function()
 	task.wait(0.2)
