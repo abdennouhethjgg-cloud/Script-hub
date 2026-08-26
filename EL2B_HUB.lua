@@ -79,15 +79,59 @@ local function EL2BShowUpdateGui()
   haloStroke.Thickness = 4
   haloStroke.Transparency = 0.68
   haloStroke.Parent = halo
+  local reducedMotion = false
+  pcall(function()
+    reducedMotion = game:GetService("UserGameSettings").ReducedMotionEnabled == true
+  end)
+  local haloAnimationEnabled = not reducedMotion
+  local haloToggle = Instance.new("TextButton")
+  haloToggle.Name = "HaloAnimationToggle"
+  haloToggle.AnchorPoint = Vector2.new(1, 0)
+  haloToggle.Position = UDim2.new(1, -18, 0, 14)
+  haloToggle.Size = UDim2.fromOffset(30, 24)
+  haloToggle.BackgroundColor3 = Color3.fromRGB(46, 25, 58)
+  haloToggle.BackgroundTransparency = 0.12
+  haloToggle.BorderSizePixel = 0
+  haloToggle.Font = Enum.Font.GothamBold
+  haloToggle.Text = haloAnimationEnabled and "◌" or "×"
+  haloToggle.TextColor3 = Color3.fromRGB(255, 220, 135)
+  haloToggle.TextSize = 15
+  haloToggle.AutoButtonColor = true
+  haloToggle.ZIndex = 6
+  haloToggle.Parent = card
+  local haloToggleCorner = Instance.new("UICorner")
+  haloToggleCorner.CornerRadius = UDim.new(0, 7)
+  haloToggleCorner.Parent = haloToggle
+  local function refreshHaloAnimation()
+    haloToggle.Text = haloAnimationEnabled and "◌" or "×"
+    haloToggle.TextColor3 = haloAnimationEnabled and Color3.fromRGB(255, 220, 135) or Color3.fromRGB(190, 176, 201)
+    if not haloAnimationEnabled then
+      haloStroke.Transparency = 0.82
+    end
+  end
+  haloToggle.Activated:Connect(function()
+    haloAnimationEnabled = not haloAnimationEnabled
+    refreshHaloAnimation()
+  end)
+  refreshHaloAnimation()
   task.spawn(function()
     while halo.Parent do
-      local brighten = TS:Create(haloStroke, TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Transparency = 0.42 })
-      brighten:Play()
-      brighten.Completed:Wait()
-      if not halo.Parent then break end
-      local soften = TS:Create(haloStroke, TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Transparency = 0.74 })
-      soften:Play()
-      soften.Completed:Wait()
+      if not haloAnimationEnabled then
+        task.wait(0.25)
+      else
+        local brighten = TS:Create(haloStroke, TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Transparency = 0.42 })
+        brighten:Play()
+        brighten.Completed:Wait()
+        if not halo.Parent then break end
+        if not haloAnimationEnabled then
+          pcall(function() brighten:Cancel() end)
+          haloStroke.Transparency = 0.82
+        else
+          local soften = TS:Create(haloStroke, TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Transparency = 0.74 })
+          soften:Play()
+          soften.Completed:Wait()
+        end
+      end
     end
   end)
   local gameBackdrop = Instance.new("ImageLabel")
