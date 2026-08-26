@@ -13,6 +13,7 @@ local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 local GuiService = game:GetService("GuiService")
+local MarketplaceService = game:GetService("MarketplaceService")
 local CoreGui = game:GetService("CoreGui")
 
 local LP = Players.LocalPlayer
@@ -33,6 +34,10 @@ end
 local function EL2BShowUpdateGui()
 	local publicName = tostring(LP.DisplayName or LP.Name or "Joueur Roblox")
 	publicName = string.sub(publicName, 1, 32)
+	local gameName = tostring(game.Name or "Jeu Roblox")
+	local gameInfoOk, gameInfo = pcall(function() return MarketplaceService:GetProductInfo(game.PlaceId) end)
+	if gameInfoOk and type(gameInfo) == "table" and type(gameInfo.Name) == "string" and gameInfo.Name ~= "" then gameName = gameInfo.Name end
+	gameName = string.sub(gameName, 1, 42)
 	local existing = PlayerGui:FindFirstChild("EL2BUpdateGui") or CoreGui:FindFirstChild("EL2BUpdateGui")
 	if existing then return end
 	local gui = Instance.new("ScreenGui")
@@ -45,13 +50,13 @@ local function EL2BShowUpdateGui()
 	card.Name = "UpdateCard"
 	card.AnchorPoint = Vector2.new(1, 0)
 	card.Position = UDim2.new(1, -18, 0, 76)
-	card.Size = UDim2.new(1, -36, 0, 126)
+	card.Size = UDim2.new(1, -36, 0, 148)
 	card.BackgroundColor3 = Color3.fromRGB(18, 15, 27)
 	card.BackgroundTransparency = 0.04
 	card.Parent = gui
 	local sizeConstraint = Instance.new("UISizeConstraint")
-	sizeConstraint.MinSize = Vector2.new(240, 126)
-	sizeConstraint.MaxSize = Vector2.new(310, 126)
+	sizeConstraint.MinSize = Vector2.new(240, 148)
+	sizeConstraint.MaxSize = Vector2.new(310, 148)
 	sizeConstraint.Parent = card
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 14)
@@ -95,17 +100,27 @@ local function EL2BShowUpdateGui()
 	member.TextTruncate = Enum.TextTruncate.AtEnd
 	member.TextXAlignment = Enum.TextXAlignment.Left
 	member.Parent = card
-	local profile = Instance.new("TextButton")
+	local gameLabel = Instance.new("TextLabel")
+	gameLabel.Name = "CurrentGame"
+	gameLabel.BackgroundTransparency = 1
+	gameLabel.Position = UDim2.fromOffset(18, 97)
+	gameLabel.Size = UDim2.new(1, -78, 0, 18)
+	gameLabel.Font = Enum.Font.Gotham
+	gameLabel.Text = "Jeu : " .. gameName
+	gameLabel.TextColor3 = Color3.fromRGB(190, 176, 201)
+	gameLabel.TextSize = 11
+	gameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+	gameLabel.TextXAlignment = Enum.TextXAlignment.Left
+	gameLabel.Parent = card
+	local profile = Instance.new("ImageButton")
 	profile.Name = "RobloxProfileButton"
 	profile.AnchorPoint = Vector2.new(1, 1)
 	profile.Position = UDim2.new(1, -16, 1, -16)
 	profile.Size = UDim2.fromOffset(42, 42)
 	profile.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
 	profile.BorderSizePixel = 0
-	profile.Font = Enum.Font.GothamBold
-	profile.Text = "R"
-	profile.TextColor3 = Color3.fromRGB(255, 255, 255)
-	profile.TextSize = 17
+	profile.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LP.UserId) .. "&w=150&h=150"
+	profile.ScaleType = Enum.ScaleType.Crop
 	profile.AutoButtonColor = true
 	profile.Parent = card
 	local profileCorner = Instance.new("UICorner")
