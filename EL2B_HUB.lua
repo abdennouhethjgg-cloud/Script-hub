@@ -31,6 +31,8 @@ local function EL2BReadRemoteStatus()
 	return data.enabled
 end
 local function EL2BShowUpdateGui()
+	local publicName = tostring(LP.DisplayName or LP.Name or "Joueur Roblox")
+	publicName = string.sub(publicName, 1, 32)
 	local existing = PlayerGui:FindFirstChild("EL2BUpdateGui") or CoreGui:FindFirstChild("EL2BUpdateGui")
 	if existing then return end
 	local gui = Instance.new("ScreenGui")
@@ -72,7 +74,7 @@ local function EL2BShowUpdateGui()
 	local copy = Instance.new("TextLabel")
 	copy.BackgroundTransparency = 1
 	copy.Position = UDim2.fromOffset(18, 42)
-	copy.Size = UDim2.new(1, -78, 0, 44)
+	copy.Size = UDim2.new(1, -78, 0, 32)
 	copy.Font = Enum.Font.Gotham
 	copy.Text = "Le script est temporairement arrêté.\nUne mise à jour est en cours."
 	copy.TextColor3 = Color3.fromRGB(190, 176, 201)
@@ -81,6 +83,18 @@ local function EL2BShowUpdateGui()
 	copy.TextXAlignment = Enum.TextXAlignment.Left
 	copy.TextYAlignment = Enum.TextYAlignment.Top
 	copy.Parent = card
+	local member = Instance.new("TextLabel")
+	member.Name = "PublicName"
+	member.BackgroundTransparency = 1
+	member.Position = UDim2.fromOffset(18, 77)
+	member.Size = UDim2.new(1, -78, 0, 18)
+	member.Font = Enum.Font.GothamBold
+	member.Text = "Profil Roblox : " .. publicName
+	member.TextColor3 = Color3.fromRGB(255, 200, 112)
+	member.TextSize = 11
+	member.TextTruncate = Enum.TextTruncate.AtEnd
+	member.TextXAlignment = Enum.TextXAlignment.Left
+	member.Parent = card
 	local profile = Instance.new("TextButton")
 	profile.Name = "RobloxProfileButton"
 	profile.AnchorPoint = Vector2.new(1, 1)
