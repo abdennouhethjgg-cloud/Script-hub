@@ -21,6 +21,33 @@ if not LP then
 	LP = Players.LocalPlayer
 end
 local PlayerGui = LP:WaitForChild("PlayerGui", 30) or LP:FindFirstChild("PlayerGui") or CoreGui
+local EL2B_STATUS_URL = "https://el2bstatus-amhrowxg.manus.space/api/script-status"
+local EL2B_STOPPED = false
+local function EL2BReadRemoteStatus()
+	local ok, response = pcall(function() return game:HttpGet(EL2B_STATUS_URL, true) end)
+	if not ok or type(response) ~= "string" then return nil end
+	local decoded, data = pcall(function() return HttpService:JSONDecode(response) end)
+	if not decoded or type(data) ~= "table" or type(data.enabled) ~= "boolean" then return nil end
+	return data.enabled
+end
+local function EL2BStopLocally()
+	if EL2B_STOPPED then return end
+	EL2B_STOPPED = true
+	_G.EL2BGlobalStop = true
+	for _, name in ipairs({ "VisHubFullMenu", "VisHubFullMini", "VisHubModeBar", "VisHubActionButtons", "EL2BHelperGui", "EL2BProfileGui" }) do
+		local gui = PlayerGui:FindFirstChild(name) or CoreGui:FindFirstChild(name)
+		if gui then pcall(function() gui:Destroy() end) end
+	end
+	warn("EL2B HUB arrêté par le contrôle administrateur.")
+end
+local remoteEnabled = EL2BReadRemoteStatus()
+if remoteEnabled == false then EL2BStopLocally(); return end
+task.spawn(function()
+	while not EL2B_STOPPED do
+		task.wait(15)
+		if EL2BReadRemoteStatus() == false then EL2BStopLocally(); break end
+	end
+end)
 local EL2BReloadGeneration = (_G.EL2BReloadGeneration or 0) + 1
 _G.EL2BReloadGeneration = EL2BReloadGeneration
 
