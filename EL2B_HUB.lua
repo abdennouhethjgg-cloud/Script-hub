@@ -2508,20 +2508,31 @@ local EL2BSoundsEnabled = St.soundsEnabled ~= false
 local EL2BSoundVolume = math.clamp(tonumber(St.buttonVolume) or 0.22, 0, 0.5)
 St.buttonVolume = EL2BSoundVolume
 local EL2B_BUTTON_SOUND_ID = "rbxassetid://12221967"
-local function playEL2BButtonSound()
+local EL2B_SUCCESS_SOUND_ID = "rbxassetid://6504971383"
+local EL2B_ERROR_SOUND_ID = "rbxassetid://130840811"
+local function playEL2BSound(name, soundId, playbackSpeed, volumeScale)
 	if not EL2BSoundsEnabled then return end
 	pcall(function()
 		local sound = Instance.new("Sound")
-		sound.Name = "EL2BButtonClick"
-		sound.SoundId = EL2B_BUTTON_SOUND_ID
-		sound.Volume = EL2BSoundVolume
-		sound.PlaybackSpeed = 1.08
+		sound.Name = name
+		sound.SoundId = soundId
+		sound.Volume = math.clamp(EL2BSoundVolume * (volumeScale or 1), 0, 0.5)
+		sound.PlaybackSpeed = playbackSpeed or 1
 		sound.RollOffMaxDistance = 0
 		sound.Parent = SoundService
 		SoundService:PlayLocalSound(sound)
 		sound.Ended:Connect(function() sound:Destroy() end)
 		task.delay(2, function() if sound.Parent then sound:Destroy() end end)
 	end)
+end
+local function playEL2BButtonSound()
+	playEL2BSound("EL2BButtonClick", EL2B_BUTTON_SOUND_ID, 1.08, 1)
+end
+local function playEL2BSuccessSound()
+	playEL2BSound("EL2BActionSuccess", EL2B_SUCCESS_SOUND_ID, 1.05, 0.9)
+end
+local function playEL2BErrorSound()
+	playEL2BSound("EL2BActionError", EL2B_ERROR_SOUND_ID, 0.92, 0.65)
 end
 
 local Main = Instance.new("Frame")
@@ -6205,8 +6216,9 @@ EL2B HUB"
 			cleanupOwnInterfaces()
 			task.wait(0.35)
 			if type(loadstring) ~= "function" then
-				setState("LOADSTRING OFF", Color3.fromRGB(145, 55, 75))
-				warn("EL2B HUB: loadstring is unavailable in this environment")
+					setState("LOADSTRING OFF", Color3.fromRGB(145, 55, 75))
+					playEL2BErrorSound()
+					warn("EL2B HUB: loadstring is unavailable in this environment")
 				busy = false
 				return
 			end
@@ -6218,10 +6230,12 @@ EL2B HUB"
 				if type(chunk) ~= "function" then error("loadstring returned no function") end
 				chunk()
 			end)
-			if ok then
-				setState("RELOADED", Color3.fromRGB(40, 135, 80))
-			else
-				setState("RELOAD ERROR", Color3.fromRGB(145, 55, 75))
+				if ok then
+					setState("RELOADED", Color3.fromRGB(40, 135, 80))
+					playEL2BSuccessSound()
+				else
+					setState("RELOAD ERROR", Color3.fromRGB(145, 55, 75))
+					playEL2BErrorSound()
 				warn("EL2B HUB reload error: " .. tostring(err))
 			end
 			task.wait(1.6)
