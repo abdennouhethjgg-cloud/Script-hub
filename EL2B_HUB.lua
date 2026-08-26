@@ -2507,7 +2507,7 @@ local MW, MH = 310, 380
 local EL2BSoundsEnabled = St.soundsEnabled ~= false
 local EL2BSoundVolume = math.clamp(tonumber(St.buttonVolume) or 0.22, 0, 0.5)
 St.buttonVolume = EL2BSoundVolume
-local EL2B_BUTTON_SOUND_ID = "rbxassetid://6026984224"
+local EL2B_BUTTON_SOUND_ID = "rbxassetid://12221967"
 local function playEL2BButtonSound()
 	if not EL2BSoundsEnabled then return end
 	pcall(function()
@@ -2515,6 +2515,7 @@ local function playEL2BButtonSound()
 		sound.Name = "EL2BButtonClick"
 		sound.SoundId = EL2B_BUTTON_SOUND_ID
 		sound.Volume = EL2BSoundVolume
+		sound.PlaybackSpeed = 1.08
 		sound.RollOffMaxDistance = 0
 		sound.Parent = SoundService
 		SoundService:PlayLocalSound(sound)
