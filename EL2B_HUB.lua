@@ -40,6 +40,9 @@ local function EL2BShowUpdateGui()
 	gameName = string.sub(gameName, 1, 42)
 	local isOnline = LP.Parent == Players
 	local statusText = isOnline and "EN LIGNE · ONLINE" or "HORS LIGNE · OFFLINE"
+	local gameLower = string.lower(gameName)
+	local isStealABrainrot = string.find(gameLower, "steal a brainrot", 1, true) ~= nil
+	local safeModeText = isStealABrainrot and "Steal a Brainrot · mode sûr / safe mode" or "Mode sûr EL2B / EL2B safe mode"
 	local existing = PlayerGui:FindFirstChild("EL2BUpdateGui") or CoreGui:FindFirstChild("EL2BUpdateGui")
 	if existing then return end
 	local gui = Instance.new("ScreenGui")
@@ -279,23 +282,25 @@ local function EL2BShowUpdateGui()
 	progressText.Name = "UpdateProgressText"
 	progressText.BackgroundTransparency = 1
 	progressText.Position = UDim2.fromOffset(18, 182)
-	progressText.Size = UDim2.new(1, -154, 0, 20)
+	progressText.Size = UDim2.new(1, -154, 0, 32)
 	progressText.Font = Enum.Font.Gotham
-	progressText.Text = "Chargement de la mise à jour · 20s / Update loading · 20s"
+	progressText.Text = safeModeText .. " · 20s"
 	progressText.TextColor3 = Color3.fromRGB(190, 176, 201)
 	progressText.TextSize = 10
 	progressText.TextTruncate = Enum.TextTruncate.AtEnd
+	progressText.TextWrapped = true
 	progressText.TextXAlignment = Enum.TextXAlignment.Left
+	progressText.TextYAlignment = Enum.TextYAlignment.Top
 	progressText.ZIndex = 2
 	progressText.Parent = card
 	task.spawn(function()
 		local duration = 20
 		local endsAt = time() + duration
 		local messages = {
-			"Préparation de la mise à jour · Preparing update...",
-			"Vérification du statut · Checking status...",
-			"Synchronisation en cours · Sync in progress...",
-			"Patientez encore · Please wait...",
+			"Vérification du statut EL2B · Checking EL2B status...",
+			"Profil local préparé · Preparing local profile...",
+			"Nom et icône du jeu lus localement · Reading local game metadata...",
+			"Diagnostic autorisé uniquement · Allowed diagnostics only...",
 		}
 		local lastSecond = -1
 		while gui.Parent do
@@ -308,7 +313,7 @@ local function EL2BShowUpdateGui()
 					local index = math.clamp(math.floor((duration - remaining) / 5) + 1, 1, #messages)
 					progressText.Text = messages[index] .. " " .. tostring(remaining) .. "s"
 				else
-					progressText.Text = "Mise à jour vérifiée · Toujours en pause / Update checked · Still paused"
+					progressText.Text = "Mise à jour vérifiée · Toujours en pause / Update checked · Still paused\nAucune donnée sensible envoyée / No sensitive data sent"
 				end
 			end
 			if remaining <= 0 then break end
