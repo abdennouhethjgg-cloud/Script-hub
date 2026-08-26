@@ -4627,6 +4627,19 @@ local function updateRobloxProfileLayout()
 	profileCard.Position = UDim2.new(0, 18, 1, -getProfileBottomOffset())
 end
 
+local function openRobloxProfile()
+	local userId = tonumber(LP.UserId)
+	if not userId or userId <= 0 then return end
+	local url = "https://www.roblox.com/users/" .. tostring(math.floor(userId)) .. "/profile"
+	local opened = pcall(function()
+		GuiService:OpenBrowserWindow(url)
+	end)
+	if not opened and type(setclipboard) == "function" then
+		pcall(setclipboard, url)
+		if type(showToast) == "function" then showToast("PROFILE URL COPIED") end
+	end
+end
+
 local function closeRobloxProfile()
 	profileVisible = false
 	if profileCard then profileCard.Visible = false end
@@ -4672,7 +4685,7 @@ local function showRobloxProfile()
 		title.ZIndex = 202
 		title.Parent = profileCard
 
-		local avatar = Instance.new("ImageLabel")
+		local avatar = Instance.new("ImageButton")
 		avatar.Name = "Avatar"
 		avatar.Size = UDim2.new(0, 54, 0, 54)
 		avatar.Position = UDim2.new(0, 14, 0, 14)
@@ -4680,12 +4693,15 @@ local function showRobloxProfile()
 		avatar.BorderSizePixel = 0
 		avatar.ZIndex = 202
 		avatar.Parent = profileCard
+		avatar.AutoButtonColor = false
+		avatar.Selectable = true
+		avatar.Activated:Connect(openRobloxProfile)
 		corner(avatar, 27)
 		local avatarStroke = Instance.new("UIStroke", avatar)
 		avatarStroke.Color = Color3.fromRGB(180, 75, 255)
 		avatarStroke.Thickness = 2
 
-		local details = Instance.new("TextLabel")
+		local details = Instance.new("TextButton")
 		details.Name = "Details"
 		details.BackgroundTransparency = 1
 		details.Position = UDim2.new(0, 76, 0, 38)
@@ -4696,7 +4712,10 @@ local function showRobloxProfile()
 		details.TextXAlignment = Enum.TextXAlignment.Left
 		details.TextYAlignment = Enum.TextYAlignment.Top
 		details.TextWrapped = true
+		details.AutoButtonColor = false
+		details.Selectable = true
 		details.ZIndex = 202
+		details.Activated:Connect(openRobloxProfile)
 		details.Parent = profileCard
 
 		local close = Instance.new("TextButton")
