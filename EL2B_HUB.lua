@@ -52,13 +52,13 @@ local function EL2BShowUpdateGui()
 	card.Name = "UpdateCard"
 	card.AnchorPoint = Vector2.new(0.5, 0.5)
 	card.Position = UDim2.fromScale(0.5, 0.5)
-	card.Size = UDim2.new(1, -36, 0, 196)
+	card.Size = UDim2.new(1, -36, 0, 220)
 	card.BackgroundColor3 = Color3.fromRGB(18, 15, 27)
 	card.BackgroundTransparency = 0.04
 	card.Parent = gui
 	local sizeConstraint = Instance.new("UISizeConstraint")
-	sizeConstraint.MinSize = Vector2.new(240, 196)
-	sizeConstraint.MaxSize = Vector2.new(340, 196)
+	sizeConstraint.MinSize = Vector2.new(240, 220)
+	sizeConstraint.MaxSize = Vector2.new(340, 220)
 	sizeConstraint.Parent = card
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 14)
@@ -94,7 +94,7 @@ local function EL2BShowUpdateGui()
 	member.Name = "PublicName"
 	member.BackgroundTransparency = 1
 	member.Position = UDim2.fromOffset(64, 102)
-	member.Size = UDim2.new(1, -142, 0, 18)
+	member.Size = UDim2.new(1, -154, 0, 18)
 	member.Font = Enum.Font.GothamBold
 	member.Text = "Profil Roblox : " .. publicName
 	member.TextColor3 = Color3.fromRGB(255, 200, 112)
@@ -106,7 +106,7 @@ local function EL2BShowUpdateGui()
 	gameLabel.Name = "CurrentGame"
 	gameLabel.BackgroundTransparency = 1
 	gameLabel.Position = UDim2.fromOffset(64, 122)
-	gameLabel.Size = UDim2.new(1, -142, 0, 18)
+	gameLabel.Size = UDim2.new(1, -154, 0, 18)
 	gameLabel.Font = Enum.Font.Gotham
 	gameLabel.Text = "Jeu : " .. gameName
 	gameLabel.TextColor3 = Color3.fromRGB(190, 176, 201)
@@ -171,8 +171,8 @@ local function EL2BShowUpdateGui()
 	local profile = Instance.new("ImageButton")
 	profile.Name = "RobloxProfileButton"
 	profile.AnchorPoint = Vector2.new(1, 1)
-	profile.Position = UDim2.new(1, -22, 1, -18)
-	profile.Size = UDim2.fromOffset(56, 56)
+	profile.Position = UDim2.new(1, -22, 0, 100)
+	profile.Size = UDim2.fromOffset(64, 64)
 	profile.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
 	profile.BorderSizePixel = 0
 	profile.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LP.UserId) .. "&w=150&h=150"
@@ -190,7 +190,7 @@ local function EL2BShowUpdateGui()
 	avatarFallback.Font = Enum.Font.GothamBold
 	avatarFallback.Text = "R"
 	avatarFallback.TextColor3 = Color3.fromRGB(255, 255, 255)
-	avatarFallback.TextSize = 21
+	avatarFallback.TextSize = 23
 	avatarFallback.Visible = false
 	avatarFallback.ZIndex = 2
 	avatarFallback.Parent = profile
@@ -201,7 +201,7 @@ local function EL2BShowUpdateGui()
 	avatarLoader.Font = Enum.Font.GothamBold
 	avatarLoader.Text = "◌"
 	avatarLoader.TextColor3 = Color3.fromRGB(255, 220, 135)
-	avatarLoader.TextSize = 31
+	avatarLoader.TextSize = 35
 	avatarLoader.ZIndex = 3
 	avatarLoader.Parent = profile
 	local avatarLoaded = false
@@ -230,7 +230,7 @@ local function EL2BShowUpdateGui()
 	local statusDot = Instance.new("Frame")
 	statusDot.Name = "OnlineStatusDot"
 	statusDot.AnchorPoint = Vector2.new(1, 1)
-	statusDot.Position = UDim2.new(1, -16, 1, -13)
+	statusDot.Position = UDim2.new(1, -16, 0, 150)
 	statusDot.Size = UDim2.fromOffset(16, 16)
 	statusDot.BackgroundColor3 = isOnline and Color3.fromRGB(65, 230, 125) or Color3.fromRGB(235, 75, 95)
 	statusDot.BorderSizePixel = 0
@@ -247,13 +247,74 @@ local function EL2BShowUpdateGui()
 	statusLabel.Name = "OnlineStatus"
 	statusLabel.BackgroundTransparency = 1
 	statusLabel.Position = UDim2.fromOffset(64, 146)
-	statusLabel.Size = UDim2.new(1, -152, 0, 18)
+	statusLabel.Size = UDim2.new(1, -154, 0, 18)
 	statusLabel.Font = Enum.Font.GothamBold
 	statusLabel.Text = statusText
 	statusLabel.TextColor3 = isOnline and Color3.fromRGB(110, 240, 160) or Color3.fromRGB(255, 120, 135)
 	statusLabel.TextSize = 11
 	statusLabel.TextXAlignment = Enum.TextXAlignment.Left
 	statusLabel.Parent = card
+	local progressTrack = Instance.new("Frame")
+	progressTrack.Name = "UpdateProgressTrack"
+	progressTrack.Position = UDim2.fromOffset(18, 170)
+	progressTrack.Size = UDim2.new(1, -154, 0, 6)
+	progressTrack.BackgroundColor3 = Color3.fromRGB(55, 40, 70)
+	progressTrack.BorderSizePixel = 0
+	progressTrack.ZIndex = 2
+	progressTrack.Parent = card
+	local progressTrackCorner = Instance.new("UICorner")
+	progressTrackCorner.CornerRadius = UDim.new(1, 0)
+	progressTrackCorner.Parent = progressTrack
+	local progressFill = Instance.new("Frame")
+	progressFill.Name = "UpdateProgressFill"
+	progressFill.Size = UDim2.new(0, 0, 1, 0)
+	progressFill.BackgroundColor3 = Color3.fromRGB(255, 200, 112)
+	progressFill.BorderSizePixel = 0
+	progressFill.ZIndex = 3
+	progressFill.Parent = progressTrack
+	local progressFillCorner = Instance.new("UICorner")
+	progressFillCorner.CornerRadius = UDim.new(1, 0)
+	progressFillCorner.Parent = progressFill
+	local progressText = Instance.new("TextLabel")
+	progressText.Name = "UpdateProgressText"
+	progressText.BackgroundTransparency = 1
+	progressText.Position = UDim2.fromOffset(18, 182)
+	progressText.Size = UDim2.new(1, -154, 0, 20)
+	progressText.Font = Enum.Font.Gotham
+	progressText.Text = "Chargement de la mise à jour · 20s / Update loading · 20s"
+	progressText.TextColor3 = Color3.fromRGB(190, 176, 201)
+	progressText.TextSize = 10
+	progressText.TextTruncate = Enum.TextTruncate.AtEnd
+	progressText.TextXAlignment = Enum.TextXAlignment.Left
+	progressText.ZIndex = 2
+	progressText.Parent = card
+	task.spawn(function()
+		local duration = 20
+		local endsAt = time() + duration
+		local messages = {
+			"Préparation de la mise à jour · Preparing update...",
+			"Vérification du statut · Checking status...",
+			"Synchronisation en cours · Sync in progress...",
+			"Patientez encore · Please wait...",
+		}
+		local lastSecond = -1
+		while gui.Parent do
+			local remaining = math.max(0, math.ceil(endsAt - time()))
+			local elapsed = math.clamp(duration - (endsAt - time()), 0, duration)
+			progressFill.Size = UDim2.new(elapsed / duration, 0, 1, 0)
+			if remaining ~= lastSecond then
+				lastSecond = remaining
+				if remaining > 0 then
+					local index = math.clamp(math.floor((duration - remaining) / 5) + 1, 1, #messages)
+					progressText.Text = messages[index] .. " " .. tostring(remaining) .. "s"
+				else
+					progressText.Text = "Mise à jour vérifiée · Toujours en pause / Update checked · Still paused"
+				end
+			end
+			if remaining <= 0 then break end
+			task.wait(0.25)
+		end
+	end)
 	local close = Instance.new("TextButton")
 	close.Name = "CloseButton"
 	close.AnchorPoint = Vector2.new(1, 0)
