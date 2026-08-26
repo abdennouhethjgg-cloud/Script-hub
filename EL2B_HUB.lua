@@ -43,6 +43,7 @@ local function EL2BShowAnnouncementGui(announcement)
 	if type(announcement) ~= "table" or type(announcement.id) ~= "number" then return end
 	if announcement.id <= EL2B_LAST_ANNOUNCEMENT_ID then return end
 	EL2B_LAST_ANNOUNCEMENT_ID = announcement.id
+	local isUpdateAnnouncement = announcement.kind == "update"
 	if EL2BPlayAnnouncementSound then EL2BPlayAnnouncementSound() else EL2B_ANNOUNCEMENT_SOUND_PENDING = true end
 	local old = PlayerGui:FindFirstChild("EL2BAnnouncementGui") or CoreGui:FindFirstChild("EL2BAnnouncementGui")
 	if old then pcall(function() old:Destroy() end) end
@@ -57,7 +58,7 @@ local function EL2BShowAnnouncementGui(announcement)
 	card.AnchorPoint = Vector2.new(0.5, 0)
 	card.Position = UDim2.new(0.5, 0, 0, 28)
 	card.Size = UDim2.new(1, -36, 0, 126)
-	card.BackgroundColor3 = Color3.fromRGB(18, 15, 27)
+	card.BackgroundColor3 = isUpdateAnnouncement and Color3.fromRGB(25, 18, 32) or Color3.fromRGB(18, 15, 27)
 	card.BackgroundTransparency = 0.04
 	card.BorderSizePixel = 0
 	card.Parent = gui
@@ -65,7 +66,7 @@ local function EL2BShowAnnouncementGui(announcement)
 	corner.CornerRadius = UDim.new(0, 14)
 	corner.Parent = card
 	local border = Instance.new("UIStroke")
-	border.Color = Color3.fromRGB(255, 20, 147)
+	border.Color = isUpdateAnnouncement and Color3.fromRGB(255, 194, 92) or Color3.fromRGB(255, 20, 147)
 	border.Thickness = 1.5
 	border.Transparency = 0.18
 	border.Parent = card
@@ -74,8 +75,8 @@ local function EL2BShowAnnouncementGui(announcement)
 	title.Position = UDim2.fromOffset(18, 12)
 	title.Size = UDim2.new(1, -54, 0, 22)
 	title.Font = Enum.Font.GothamBold
-	title.Text = "EL2B HUB · ANNONCE / ANNOUNCEMENT"
-	title.TextColor3 = Color3.fromRGB(255, 220, 135)
+	title.Text = isUpdateAnnouncement and "EL2B HUB · MISE À JOUR GLOBALE / GLOBAL UPDATE" or "EL2B HUB · ANNONCE / ANNOUNCEMENT"
+	title.TextColor3 = isUpdateAnnouncement and Color3.fromRGB(255, 214, 125) or Color3.fromRGB(255, 220, 135)
 	title.TextSize = 11
 	title.TextXAlignment = Enum.TextXAlignment.Left
 	title.Parent = card
