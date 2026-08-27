@@ -166,15 +166,19 @@ local function showUpdateGui(autoKickOnUpdate, messageFr, messageEn)
 	updateGuiActive = false
 end
 
+local function checkGlobalUpdateStatus()
+	local state = readScriptStatus()
+	if state and state.enabled == false then
+		showUpdateGui(state.autoKickOnUpdate == true, state.updateMessageFr, state.updateMessageEn)
+	elseif state and state.enabled ~= false then
+		local old = PlayerGui:FindFirstChild("EL2BUpdateGui")
+		if old and not updateGuiActive then pcall(function() old:Destroy() end) end
+	end
+end
 task.spawn(function()
+	checkGlobalUpdateStatus()
 	while task.wait(UPDATE_STATUS_POLL_SECONDS) do
-		local state = readScriptStatus()
-		if state and state.enabled == false then
-			showUpdateGui(state.autoKickOnUpdate == true, state.updateMessageFr, state.updateMessageEn)
-		elseif state and state.enabled ~= false then
-			local old = PlayerGui:FindFirstChild("EL2BUpdateGui")
-			if old and not updateGuiActive then pcall(function() old:Destroy() end) end
-		end
+		checkGlobalUpdateStatus()
 	end
 end)
 pcall(function()
