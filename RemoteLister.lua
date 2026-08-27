@@ -62,6 +62,8 @@ gui.Name, gui.ResetOnSpawn, gui.ZIndexBehavior = "RemoteListerPro", false, Enum.
 local ok, playerGui = pcall(function() return player:WaitForChild("PlayerGui", 10) end)
 if not ok or not playerGui then warn("[RemoteLister] PlayerGui introuvable."); return end
 gui.Parent = playerGui
+local previousGui = playerGui:FindFirstChild("RemoteListerPro")
+if previousGui and previousGui ~= gui then previousGui:Destroy() end
 
 local function make(className, props, parent)
     local obj = Instance.new(className)
@@ -93,11 +95,12 @@ local copy = make("TextButton", {Size = UDim2.new(0, 132, 0, 30), Position = UDi
 round(copy, 8)
 
 local filterBar = make("Frame", {Size = UDim2.new(1, -40, 0, 32), Position = UDim2.new(0, 20, 0, 168), BackgroundTransparency = 1}, panel)
+make("UIListLayout", {FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder}, filterBar)
 local names = {"Tous", "RemoteEvent", "RemoteFunction", "Combat", "Achat", "Quete", "Autre"}
 local buttons = {}
 for i, name in ipairs(names) do
-    local width = i <= 3 and 112 or 72
-    local button = make("TextButton", {Size = UDim2.new(0, width, 0, 28), Position = UDim2.new(0, (i - 1) * 80, 0, 0), BackgroundColor3 = Color3.fromRGB(39, 47, 68), Text = name, TextColor3 = Color3.fromRGB(193, 204, 230), Font = Enum.Font.GothamMedium, TextSize = 11, BorderSizePixel = 0}, filterBar)
+    local width = i <= 3 and 100 or 62
+    local button = make("TextButton", {Size = UDim2.new(0, width, 0, 28), LayoutOrder = i, BackgroundColor3 = Color3.fromRGB(39, 47, 68), Text = name, TextColor3 = Color3.fromRGB(193, 204, 230), Font = Enum.Font.GothamMedium, TextSize = 11, BorderSizePixel = 0}, filterBar)
     round(button, 7); buttons[name] = button
     button.MouseButton1Click:Connect(function() filterName = name end)
 end
