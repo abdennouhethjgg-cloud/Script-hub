@@ -6833,8 +6833,7 @@ do
 	button.Position = UDim2.new(0, 18, 0, 106)
 	button.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
 	button.BorderSizePixel = 0
-	button.Text = "RELOAD\
-EL2B HUB"
+button.Text = "RELOAD\nEL2B HUB"
 	button.TextColor3 = Color3.fromRGB(255, 255, 255)
 	button.TextSize = 13
 	button.Font = Enum.Font.GothamBold
@@ -6935,8 +6934,7 @@ EL2B HUB"
 				warn("EL2B HUB reload error: " .. tostring(err))
 			end
 			task.wait(1.6)
-			if button and button.Parent then setState("RELOAD\
-EL2B HUB", Color3.fromRGB(12, 12, 16)) end
+			if button and button.Parent then setState("RELOAD\nEL2B HUB", Color3.fromRGB(12, 12, 16)) end
 			busy = false
 		end)
 	end)
