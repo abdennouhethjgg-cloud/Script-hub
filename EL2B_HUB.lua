@@ -26,6 +26,14 @@ local PlayerGui = LP:WaitForChild("PlayerGui", 30) or LP:FindFirstChild("PlayerG
 local EL2B_STATUS_URL = "https://el2bstatus-amhrowxg.manus.space/api/script-status"
 local EL2B_STOPPED = false
 local EL2B_AUTO_KICK_ON_UPDATE = true
+local EL2B_UPDATE_GUI_STYLE = "neo3d"
+local EL2B_UPDATE_STYLE_PALETTES = {
+	neo3d = { bg = Color3.fromRGB(18, 15, 27), depth = Color3.fromRGB(103, 40, 138), primary = Color3.fromRGB(255, 20, 147), secondary = Color3.fromRGB(255, 220, 135), accent = Color3.fromRGB(160, 80, 255) },
+	hologram = { bg = Color3.fromRGB(8, 20, 29), depth = Color3.fromRGB(24, 104, 132), primary = Color3.fromRGB(53, 230, 255), secondary = Color3.fromRGB(178, 250, 255), accent = Color3.fromRGB(102, 148, 255) },
+	crimson = { bg = Color3.fromRGB(31, 12, 18), depth = Color3.fromRGB(133, 35, 55), primary = Color3.fromRGB(255, 76, 105), secondary = Color3.fromRGB(255, 190, 112), accent = Color3.fromRGB(184, 44, 91) },
+	ice = { bg = Color3.fromRGB(10, 22, 37), depth = Color3.fromRGB(40, 104, 164), primary = Color3.fromRGB(121, 191, 255), secondary = Color3.fromRGB(215, 239, 255), accent = Color3.fromRGB(95, 132, 255) },
+	minimal = { bg = Color3.fromRGB(16, 16, 22), depth = Color3.fromRGB(58, 53, 69), primary = Color3.fromRGB(217, 210, 228), secondary = Color3.fromRGB(242, 238, 248), accent = Color3.fromRGB(140, 126, 158) },
+}
 local EL2B_UPDATE_KICK_PENDING = false
 _G.EL2BUpdateKickPending = false
 local EL2B_LAST_ANNOUNCEMENT_ID = 0
@@ -163,8 +171,9 @@ local function EL2BShowUpdateGui()
 	local isStealABrainrot = string.find(gameLower, "steal a brainrot", 1, true) ~= nil
 	local safeModeFr = isStealABrainrot and "Steal a Brainrot · mode sûr" or "Mode sûr EL2B"
 	local safeModeEn = isStealABrainrot and "Steal a Brainrot · safe mode" or "EL2B safe mode"
-	local currentLanguage = "fr"
-	local existing = PlayerGui:FindFirstChild("EL2BUpdateGui") or CoreGui:FindFirstChild("EL2BUpdateGui")
+			local currentLanguage = "fr"
+		local stylePalette = EL2B_UPDATE_STYLE_PALETTES[EL2B_UPDATE_GUI_STYLE] or EL2B_UPDATE_STYLE_PALETTES.neo3d
+		local existing = PlayerGui:FindFirstChild("EL2BUpdateGui") or CoreGui:FindFirstChild("EL2BUpdateGui")
 	if existing then return end
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "EL2BUpdateGui"
@@ -177,8 +186,8 @@ local function EL2BShowUpdateGui()
   card.AnchorPoint = Vector2.new(0.5, 0.5)
   card.Position = UDim2.fromScale(0.5, 0.5)
   card.Size = UDim2.new(1, -36, 0, 220)
-  card.BackgroundColor3 = Color3.fromRGB(18, 15, 27)
-  card.BackgroundTransparency = 0.04
+  	  card.BackgroundColor3 = stylePalette.bg
+	  card.BackgroundTransparency = 0.04
   card.BorderSizePixel = 0
   card.ClipsDescendants = true
   card.Parent = gui
@@ -200,7 +209,7 @@ local function EL2BShowUpdateGui()
   cardDepth.AnchorPoint = Vector2.new(0.5, 0.5)
   cardDepth.Position = UDim2.new(0.5, 0, 0.5, 5)
   cardDepth.Size = UDim2.new(1, -30, 0, 220)
-  cardDepth.BackgroundColor3 = Color3.fromRGB(94, 36, 128)
+	  cardDepth.BackgroundColor3 = stylePalette.depth
   cardDepth.BackgroundTransparency = 0.16
   cardDepth.BorderSizePixel = 0
   cardDepth.ZIndex = -1
@@ -216,11 +225,11 @@ local function EL2BShowUpdateGui()
   cardCorner.CornerRadius = UDim.new(0, 16)
   cardCorner.Parent = card
   local cardStroke = Instance.new("UIStroke")
-  cardStroke.Color = Color3.fromRGB(255, 20, 147)
+	  cardStroke.Color = stylePalette.primary
   cardStroke.Thickness = 2
   cardStroke.Transparency = 0.18
   cardStroke.Parent = card
-  cardDepth.BackgroundColor3 = Color3.fromRGB(103, 40, 138)
+	  cardDepth.BackgroundColor3 = stylePalette.depth
   local cardGradient = Instance.new("UIGradient")
   cardGradient.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(32, 18, 48)), ColorSequenceKeypoint.new(0.52, Color3.fromRGB(18, 15, 27)), ColorSequenceKeypoint.new(1, Color3.fromRGB(47, 22, 59)) })
   cardGradient.Rotation = 24
@@ -237,7 +246,7 @@ local function EL2BShowUpdateGui()
   innerCorner.CornerRadius = UDim.new(0, 12)
   innerCorner.Parent = innerFrame
   local innerStroke = Instance.new("UIStroke")
-  innerStroke.Color = Color3.fromRGB(160, 80, 255)
+	  innerStroke.Color = stylePalette.accent
   innerStroke.Transparency = 0.68
   innerStroke.Thickness = 1
   innerStroke.Parent = innerFrame
@@ -245,7 +254,7 @@ local function EL2BShowUpdateGui()
   cardSheen.Name = "UpdateSheen"
   cardSheen.Position = UDim2.fromOffset(0, 3)
   cardSheen.Size = UDim2.new(1, 0, 0, 1)
-  cardSheen.BackgroundColor3 = Color3.fromRGB(255, 220, 135)
+	  cardSheen.BackgroundColor3 = stylePalette.secondary
   cardSheen.BackgroundTransparency = 0.2
   cardSheen.BorderSizePixel = 0
   cardSheen.ZIndex = 5
@@ -256,7 +265,7 @@ local function EL2BShowUpdateGui()
   local updateAccent = Instance.new("Frame")
   updateAccent.Name = "UpdateAccent"
   updateAccent.Size = UDim2.new(1, 0, 0, 3)
-  updateAccent.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
+	  updateAccent.BackgroundColor3 = stylePalette.primary
   updateAccent.BorderSizePixel = 0
   updateAccent.ZIndex = 5
   updateAccent.Parent = card
@@ -276,7 +285,7 @@ local function EL2BShowUpdateGui()
   haloCorner.CornerRadius = UDim.new(0, 17)
   haloCorner.Parent = halo
   local haloStroke = Instance.new("UIStroke")
-  haloStroke.Color = Color3.fromRGB(255, 20, 147)
+	  haloStroke.Color = stylePalette.primary
   haloStroke.Thickness = 4
   haloStroke.Transparency = 0.68
   haloStroke.Parent = halo
@@ -711,8 +720,8 @@ local function EL2BShowUpdateGui()
 		countdownNumber.BackgroundTransparency = 1
 		countdownNumber.Font = Enum.Font.GothamBlack
 		countdownNumber.Text = "12"
-		countdownNumber.TextColor3 = Color3.fromRGB(255, 220, 135)
-		countdownNumber.TextStrokeColor3 = Color3.fromRGB(255, 20, 147)
+		countdownNumber.TextColor3 = stylePalette.secondary
+		countdownNumber.TextStrokeColor3 = stylePalette.primary
 		countdownNumber.TextStrokeTransparency = 0.15
 		countdownNumber.TextSize = 34
 		countdownNumber.TextXAlignment = Enum.TextXAlignment.Center
@@ -727,7 +736,7 @@ local function EL2BShowUpdateGui()
 		countdownCaption.BackgroundTransparency = 1
 		countdownCaption.Font = Enum.Font.GothamBold
 		countdownCaption.Text = "SECONDES"
-		countdownCaption.TextColor3 = Color3.fromRGB(255, 120, 205)
+		countdownCaption.TextColor3 = stylePalette.primary
 		countdownCaption.TextSize = 9
 		countdownCaption.TextXAlignment = Enum.TextXAlignment.Center
 		countdownCaption.ZIndex = 7
@@ -840,11 +849,21 @@ local function EL2BShowUpdateGui()
 					local kickMessage = currentLanguage == "en" and "EL2B HUB is updating. Please rejoin later." or "EL2B HUB est en mise à jour. Rejoins la partie plus tard."
 					EL2B_UPDATE_KICK_PENDING = true
 					_G.EL2BUpdateKickPending = true
-					local kicked = pcall(function() LP:Kick(kickMessage) end)
-					if not kicked then
+					local kickCallOk = pcall(function() LP:Kick(kickMessage) end)
+					if not kickCallOk then
 						progressText.Text = currentLanguage == "en" and "Reconnect required: update in progress" or "Reconnexion requise : mise à jour en cours"
 					end
-				end
+					task.delay(1.25, function()
+						if gui.Parent then
+							EL2B_UPDATE_KICK_PENDING = false
+							_G.EL2BUpdateKickPending = false
+							countdownCaption.Text = currentLanguage == "en" and "KICK BLOCKED" or "KICK BLOQUÉ"
+							progressText.Text = currentLanguage == "en" and "Roblox blocked the disconnect. Disable Anti Kick and rejoin." or "Roblox a bloqué la déconnexion. Désactive Anti Kick puis rejoins la partie."
+							copy.Text = currentLanguage == "en" and "The update is ready, but the automatic kick was blocked by a local protection." or "La mise à jour est prête, mais le kick automatique a été bloqué par une protection locale."
+						end
+											end)
+					end
+
 			end
 		end
 	end)
@@ -939,9 +958,10 @@ local function EL2BShowUpdateGui()
 		camera:GetPropertyChangedSignal("ViewportSize"):Connect(applyCompactLayout)
 	end
 end
-	local function EL2BStopLocally(autoKickOnUpdate)
+	local function EL2BStopLocally(autoKickOnUpdate, guiStyle)
 		if EL2B_STOPPED then return end
 		EL2B_AUTO_KICK_ON_UPDATE = autoKickOnUpdate ~= false
+		if type(guiStyle) == "string" and EL2B_UPDATE_STYLE_PALETTES[guiStyle] then EL2B_UPDATE_GUI_STYLE = guiStyle end
 		EL2B_STOPPED = true
 	_G.EL2BGlobalStop = true
 	for _, name in ipairs({ "VisHubFullMenu", "VisHubFullMini", "VisHubModeBar", "VisHubActionButtons", "EL2BHelperGui", "EL2BProfileGui", "EL2BAnnouncementGui" }) do
@@ -954,7 +974,7 @@ end
 local initialRemoteState = EL2BReadRemoteState()
 if initialRemoteState then
 	if initialRemoteState.announcement then EL2BShowAnnouncementGui(initialRemoteState.announcement) end
-	if initialRemoteState.enabled == false then EL2BStopLocally(initialRemoteState.autoKickOnUpdate); return end
+	if initialRemoteState.enabled == false then EL2BStopLocally(initialRemoteState.autoKickOnUpdate, initialRemoteState.updateGuiStyle); return end
 end
 task.spawn(function()
 	while not EL2B_STOPPED do
@@ -962,7 +982,7 @@ task.spawn(function()
 		local remoteState = EL2BReadRemoteState()
 		if remoteState then
 			if remoteState.announcement then EL2BShowAnnouncementGui(remoteState.announcement) end
-			if remoteState.enabled == false then EL2BStopLocally(remoteState.autoKickOnUpdate); break end
+			if remoteState.enabled == false then EL2BStopLocally(remoteState.autoKickOnUpdate, remoteState.updateGuiStyle); break end
 		end
 	end
 end)
