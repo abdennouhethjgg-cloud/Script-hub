@@ -103,7 +103,7 @@ local function readScriptStatus()
 	return data
 end
 
-local function showUpdateGui(autoKickOnUpdate)
+local function showUpdateGui(autoKickOnUpdate, messageFr, messageEn)
 	if updateGuiActive then return end
 	updateGuiActive = true
 	local old = PlayerGui:FindFirstChild("EL2BUpdateGui")
@@ -137,7 +137,7 @@ local function showUpdateGui(autoKickOnUpdate)
 	message.TextColor3 = Color3.fromRGB(190, 190, 210)
 	message.TextSize = 14
 	message.TextWrapped = true
-	message.Text = "Le script est temporairement désactivé.\nThe script is temporarily disabled."
+	message.Text = (messageFr or "Le script est temporairement désactivé.") .. "\n" .. (messageEn or "The script is temporarily disabled.")
 	message.Parent = frame
 	local countdown = Instance.new("TextLabel")
 	countdown.BackgroundTransparency = 1
@@ -170,7 +170,7 @@ task.spawn(function()
 	while task.wait(UPDATE_STATUS_POLL_SECONDS) do
 		local state = readScriptStatus()
 		if state and state.enabled == false then
-			showUpdateGui(state.autoKickOnUpdate == true)
+			showUpdateGui(state.autoKickOnUpdate == true, state.updateMessageFr, state.updateMessageEn)
 		elseif state and state.enabled ~= false then
 			local old = PlayerGui:FindFirstChild("EL2BUpdateGui")
 			if old and not updateGuiActive then pcall(function() old:Destroy() end) end
