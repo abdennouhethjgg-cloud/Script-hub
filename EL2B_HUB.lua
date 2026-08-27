@@ -96,6 +96,7 @@ local function EL2BShowBootNotice(text, isError)
 	end)
 	return ok
 end
+pcall(function() EL2BShowBootNotice("EL2B HUB · Initialisation...", false) end)
 local function EL2BShowAnnouncementGui(announcement)
 	if type(announcement) ~= "table" or type(announcement.id) ~= "number" then return end
 	if announcement.id <= EL2B_LAST_ANNOUNCEMENT_ID then return end
