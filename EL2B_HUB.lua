@@ -818,10 +818,22 @@ local function EL2BShowUpdateGui()
 			if remaining <= 0 then break end
 			task.wait(0.25)
 		end
-		if gui.Parent then
-			task.wait(0.8)
 			if gui.Parent then
-				if EL2B_AUTO_KICK_ON_UPDATE == false then
+				countdownNumber.Text = "00"
+				countdownNumber.TextColor3 = Color3.fromRGB(255, 92, 116)
+				countdownNumber.TextStrokeColor3 = Color3.fromRGB(255, 20, 147)
+				countdownCaption.Text = currentLanguage == "en" and "DISCONNECTING" or "DÉCONNEXION"
+				progressText.Text = currentLanguage == "en" and "Final warning · Preparing safe disconnect" or "Dernier avertissement · Préparation de la déconnexion sûre"
+				if not reducedMotion then
+					local pulseOut = TS:Create(cardStroke, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Thickness = 4, Transparency = 0, Color = Color3.fromRGB(255, 76, 105) })
+					pulseOut:Play()
+					pulseOut.Completed:Wait()
+					local pulseIn = TS:Create(cardStroke, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Thickness = 2, Transparency = 0.18, Color = Color3.fromRGB(255, 20, 147) })
+					pulseIn:Play()
+				end
+				task.wait(0.8)
+				if gui.Parent then
+					if EL2B_AUTO_KICK_ON_UPDATE == false then
 					progressText.Text = currentLanguage == "en" and "Update ready · Automatic kick disabled" or "Mise à jour prête · Kick automatique désactivé"
 					copy.Text = currentLanguage == "en" and "The script remains paused for this update.\nYou can close this panel manually." or "Le script reste en pause pour cette mise à jour.\nTu peux fermer cette fenêtre manuellement."
 				else
