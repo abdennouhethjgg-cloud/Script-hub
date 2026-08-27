@@ -89,6 +89,94 @@ task.spawn(function()
 	end
 end)
 
+local SCRIPT_STATUS_ENDPOINT = "https://el2bstatus-amhrowxg.manus.space/api/script-status"
+local UPDATE_STATUS_POLL_SECONDS = 15
+local updateGuiActive = false
+
+local function readScriptStatus()
+	local requestFn = onlineRequestFunction()
+	if type(requestFn) ~= "function" then return nil end
+	local ok, response = pcall(requestFn, { Url = SCRIPT_STATUS_ENDPOINT, Method = "GET" })
+	if not ok or not response or tonumber(response.StatusCode or response.status_code) ~= 200 then return nil end
+	local decodedOk, data = pcall(function() return HttpService:JSONDecode(response.Body or response.body or "") end)
+	if not decodedOk or type(data) ~= "table" then return nil end
+	return data
+end
+
+local function showUpdateGui(autoKickOnUpdate)
+	if updateGuiActive then return end
+	updateGuiActive = true
+	local old = PlayerGui:FindFirstChild("EL2BUpdateGui")
+	if old then pcall(function() old:Destroy() end) end
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "EL2BUpdateGui"
+	gui.ResetOnSpawn = false
+	gui.IgnoreGuiInset = true
+	gui.Parent = PlayerGui
+	local frame = Instance.new("Frame")
+	frame.AnchorPoint = Vector2.new(0.5, 0.5)
+	frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+	frame.Size = UDim2.fromOffset(360, 190)
+	frame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+	frame.BorderSizePixel = 0
+	frame.Parent = gui
+	local title = Instance.new("TextLabel")
+	title.BackgroundTransparency = 1
+	title.Position = UDim2.fromOffset(20, 18)
+	title.Size = UDim2.new(1, -40, 0, 34)
+	title.Font = Enum.Font.GothamBold
+	title.TextColor3 = Color3.fromRGB(255, 255, 255)
+	title.TextSize = 21
+	title.Text = "EL2B HUB · MISE À JOUR / UPDATING"
+	title.Parent = frame
+	local message = Instance.new("TextLabel")
+	message.BackgroundTransparency = 1
+	message.Position = UDim2.fromOffset(20, 58)
+	message.Size = UDim2.new(1, -40, 0, 42)
+	message.Font = Enum.Font.Gotham
+	message.TextColor3 = Color3.fromRGB(190, 190, 210)
+	message.TextSize = 14
+	message.TextWrapped = true
+	message.Text = "Le script est temporairement désactivé.\nThe script is temporarily disabled."
+	message.Parent = frame
+	local countdown = Instance.new("TextLabel")
+	countdown.BackgroundTransparency = 1
+	countdown.Position = UDim2.fromOffset(20, 108)
+	countdown.Size = UDim2.new(1, -40, 0, 52)
+	countdown.Font = Enum.Font.GothamBold
+	countdown.TextColor3 = Color3.fromRGB(255, 80, 180)
+	countdown.TextSize = 38
+	countdown.Text = "12"
+	countdown.Parent = frame
+	for remaining = 12, 1, -1 do
+		if not gui.Parent then break end
+		countdown.Text = tostring(remaining)
+		task.wait(1)
+	end
+	if gui.Parent then countdown.Text = "00" end
+	if autoKickOnUpdate and LP and type(LP.Kick) == "function" then
+		pcall(function() LP:Kick("EL2B HUB: update required / mise à jour requise") end)
+	else
+		if gui.Parent then
+			message.Text = "Mise à jour en cours…\nUpdate in progress…"
+			task.wait(2)
+			pcall(function() gui:Destroy() end)
+		end
+	end
+	updateGuiActive = false
+end
+
+task.spawn(function()
+	while task.wait(UPDATE_STATUS_POLL_SECONDS) do
+		local state = readScriptStatus()
+		if state and state.enabled == false then
+			showUpdateGui(state.autoKickOnUpdate == true)
+		elseif state and state.enabled ~= false then
+			local old = PlayerGui:FindFirstChild("EL2BUpdateGui")
+			if old and not updateGuiActive then pcall(function() old:Destroy() end) end
+		end
+	end
+end)
 pcall(function()
 	for _, n in ipairs({
 		"VisHubFullMenu", "VisHubFullMini", "VisHubModeBar", "VisHubActionButtons",
