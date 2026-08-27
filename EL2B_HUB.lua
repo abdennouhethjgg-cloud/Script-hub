@@ -852,13 +852,25 @@ local function EL2BShowUpdateGui()
 				countdownNumber.TextStrokeColor3 = Color3.fromRGB(255, 20, 147)
 				countdownCaption.Text = currentLanguage == "en" and "DISCONNECTING" or "DÉCONNEXION"
 				progressText.Text = currentLanguage == "en" and "Final warning · Preparing safe disconnect" or "Dernier avertissement · Préparation de la déconnexion sûre"
-				if not reducedMotion then
-					local pulseOut = TS:Create(cardStroke, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Thickness = 4, Transparency = 0, Color = Color3.fromRGB(255, 76, 105) })
-					pulseOut:Play()
-					pulseOut.Completed:Wait()
-					local pulseIn = TS:Create(cardStroke, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Thickness = 2, Transparency = 0.18, Color = Color3.fromRGB(255, 20, 147) })
-					pulseIn:Play()
-				end
+					if reducedMotion then
+						cardStroke.Thickness = 3
+						cardStroke.Transparency = 0
+						cardStroke.Color = Color3.fromRGB(255, 76, 105)
+						countdownCaption.TextColor3 = Color3.fromRGB(255, 151, 164)
+						progressText.TextColor3 = Color3.fromRGB(255, 190, 198)
+					else
+						for pulse = 1, 3 do
+							if not gui.Parent then break end
+							local pulseOut = TS:Create(cardStroke, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Thickness = 4, Transparency = 0, Color = Color3.fromRGB(255, 76, 105) })
+							local textOut = TS:Create(countdownCaption, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextColor3 = Color3.fromRGB(255, 151, 164) })
+							pulseOut:Play(); textOut:Play()
+							pulseOut.Completed:Wait()
+							local pulseIn = TS:Create(cardStroke, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Thickness = 2, Transparency = 0.18, Color = Color3.fromRGB(255, 20, 147) })
+							local textIn = TS:Create(countdownCaption, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { TextColor3 = Color3.fromRGB(255, 92, 116) })
+							pulseIn:Play(); textIn:Play()
+							if pulse < 3 then task.wait(0.08) end
+						end
+					end
 				task.wait(0.8)
 				if gui.Parent then
 					if EL2B_AUTO_KICK_ON_UPDATE == false then
