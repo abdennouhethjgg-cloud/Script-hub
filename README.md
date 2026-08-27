@@ -61,9 +61,11 @@ Script EL2B HUB corrigé et vérifié pour exécution par `loadstring` :
 loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/EL2B_HUB.lua"))()
 ```
 
-## RemoteEvent & RemoteFunction Lister
+## RemoteEvent & RemoteFunction Lister Pro
 
-Le script `RemoteLister.lua` affiche dans une interface les `RemoteEvent` et `RemoteFunction` présents dans le jeu, les trie par chemin complet et permet de copier la liste lorsque l’environnement d’exécution fournit `setclipboard` ou `toclipboard`.
+`RemoteLister.lua` propose une interface modernisée avec recherche, filtres par type et catégorie, compteur séparé, copie de la liste et fenêtre déplaçable. Son analyse intelligente est **locale et heuristique** : elle classe les noms selon des mots-clés courants et affiche un indicateur de confiance, sans appeler d’API externe.
+
+La liste est actualisée automatiquement lorsque de nouveaux `RemoteEvent` ou `RemoteFunction` apparaissent ou disparaissent. Le script ne contient ni requête HTTP, ni webhook, ni collecte distante. La fonction de copie reste dépendante de la disponibilité de `setclipboard` ou `toclipboard` dans l’environnement d’exécution.
 
 Pour charger la version Raw depuis Roblox :
 
@@ -71,4 +73,4 @@ Pour charger la version Raw depuis Roblox :
 loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/RemoteLister.lua"))()
 ```
 
-Utilisez ce script uniquement dans des expériences et environnements où vous disposez de l’autorisation nécessaire, conformément aux règles de Roblox et du jeu concerné.
+Le contrôle statique Luau est passé. Aucun compilateur Luau n’étant disponible dans l’environnement de développement, un test manuel dans Roblox reste nécessaire pour confirmer la compatibilité avec l’exécuteur utilisé. Utilisez ce script uniquement dans des expériences et environnements où vous disposez de l’autorisation nécessaire, conformément aux règles de Roblox et du jeu concerné.

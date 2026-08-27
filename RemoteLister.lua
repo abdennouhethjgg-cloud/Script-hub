@@ -1,252 +1,174 @@
--- ============================================================
---  RemoteEvent & RemoteFunction Lister – Édition Deluxe
---  Pour Delta Executor – Aucune erreur, tout style !
--- ============================================================
+--[[
+    RemoteLister Pro
+    Scanner local de RemoteEvent et RemoteFunction pour Roblox.
+    Detection dynamique, recherche, filtres et analyse locale.
+    Aucune requete HTTP, aucun webhook, aucune collecte distante.
+]]
 
-local player = game.Players.LocalPlayer
-if not player then repeat wait() until player end
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+if not player then warn("[RemoteLister] LocalPlayer indisponible."); return end
 
--- Fonction sécurisée de copie
-local function copyToClipboard(text)
-    if setclipboard then
-        setclipboard(text)
-        return true
-    elseif toclipboard then
-        toclipboard(text)
-        return true
-    else
-        warn("❌ Aucune fonction de copie disponible (setclipboard/toclipboard introuvable)")
-        return false
-    end
+local function safeClipboard(text)
+    local fn = setclipboard or toclipboard
+    if type(fn) ~= "function" then return false end
+    return pcall(fn, text)
 end
 
--- Récupération des événements (avec vérification d'existence)
-local events = {}
-for _, obj in ipairs(game:GetDescendants()) do
-    if obj and obj.IsA and (obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction")) then
-        table.insert(events, obj)
+-- Analyse heuristique locale : elle classe les noms sans envoyer de donnees.
+local function classify(name)
+    local n = string.lower(name)
+    local rules = {
+        {"Combat", {"attack", "hit", "damage", "weapon", "shoot", "fire", "punch", "sword"}},
+        {"Achat", {"buy", "purchase", "shop", "product", "crate", "trade", "gift"}},
+        {"Quete", {"quest", "mission", "objective", "task", "reward"}},
+        {"Teleport", {"teleport", "tp", "portal", "spawn", "travel"}},
+        {"Joueur", {"player", "character", "equip", "inventory", "loadout"}},
+        {"Interface", {"ui", "menu", "dialog", "button", "click", "prompt"}},
+    }
+    for _, rule in ipairs(rules) do
+        for _, keyword in ipairs(rule[2]) do
+            if string.find(n, keyword, 1, true) then return rule[1], 0.82 end
+        end
     end
+    return "Autre", 0.35
 end
 
--- Tri par nom complet
-table.sort(events, function(a, b)
-    return a:GetFullName() < b:GetFullName()
-end)
+local records, index = {}, {}
+local filterName, searchText, queued = "Tous", "", false
+local function isRemote(obj) return obj and (obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction")) end
 
--- Création de l'interface
+local function scan()
+    local alive = {}
+    for _, obj in ipairs(game:GetDescendants()) do
+        if isRemote(obj) then
+            alive[obj] = true
+            if not index[obj] then
+                local category, confidence = classify(obj.Name)
+                index[obj] = {instance = obj, path = obj:GetFullName(), name = obj.Name, kind = obj.ClassName, category = category, confidence = confidence}
+            else index[obj].path = obj:GetFullName() end
+        end
+    end
+    for obj in pairs(index) do if not alive[obj] or not obj.Parent then index[obj] = nil end end
+    records = {}
+    for _, record in pairs(index) do table.insert(records, record) end
+    table.sort(records, function(a, b) return a.path < b.path end)
+end
+scan()
+
 local gui = Instance.new("ScreenGui")
-gui.Name = "RemoteLister"
-gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
+gui.Name, gui.ResetOnSpawn, gui.ZIndexBehavior = "RemoteListerPro", false, Enum.ZIndexBehavior.Sibling
+local ok, playerGui = pcall(function() return player:WaitForChild("PlayerGui", 10) end)
+if not ok or not playerGui then warn("[RemoteLister] PlayerGui introuvable."); return end
+gui.Parent = playerGui
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 380, 0, 480)
-mainFrame.Position = UDim2.new(0.5, -190, 0.5, -240)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-mainFrame.BackgroundTransparency = 0.15
-mainFrame.BorderSizePixel = 0
-mainFrame.ClipsDescendants = true
-mainFrame.Parent = gui
+local function make(className, props, parent)
+    local obj = Instance.new(className)
+    for key, value in pairs(props or {}) do obj[key] = value end
+    obj.Parent = parent
+    return obj
+end
+local function round(obj, radius) make("UICorner", {CornerRadius = UDim.new(0, radius)}, obj) end
 
--- Coins arrondis (via UICorner)
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12)
-corner.Parent = mainFrame
+local root = make("Frame", {Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1}, gui)
+local panel = make("Frame", {Size = UDim2.new(0, 640, 0, 570), Position = UDim2.new(.5, -320, .5, -285), BackgroundColor3 = Color3.fromRGB(15, 18, 28), BorderSizePixel = 0, ClipsDescendants = true}, root)
+round(panel, 16)
+make("UIStroke", {Color = Color3.fromRGB(71, 84, 122), Thickness = 1}, panel)
+make("UIGradient", {Color = ColorSequence.new(Color3.fromRGB(25, 30, 48), Color3.fromRGB(11, 14, 22)), Rotation = 90}, panel)
 
--- Ombre portée (simulée par un autre frame)
-local shadow = Instance.new("Frame")
-shadow.Size = UDim2.new(1, 10, 1, 10)
-shadow.Position = UDim2.new(0, -5, 0, -5)
-shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-shadow.BackgroundTransparency = 0.6
-shadow.BorderSizePixel = 0
-shadow.ZIndex = 0
-shadow.Parent = mainFrame
-local shadowCorner = Instance.new("UICorner")
-shadowCorner.CornerRadius = UDim.new(0, 16)
-shadowCorner.Parent = shadow
+local top = make("Frame", {Size = UDim2.new(1, 0, 0, 78), BackgroundColor3 = Color3.fromRGB(47, 74, 145), BorderSizePixel = 0}, panel)
+make("UIGradient", {Color = ColorSequence.new(Color3.fromRGB(56, 101, 190), Color3.fromRGB(103, 51, 163)), Rotation = 20}, top)
+make("TextLabel", {Size = UDim2.new(1, -150, 0, 30), Position = UDim2.new(0, 20, 0, 12), BackgroundTransparency = 1, Text = "REMOTE LISTER  /  PRO", TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 20, TextXAlignment = Enum.TextXAlignment.Left}, top)
+make("TextLabel", {Size = UDim2.new(1, -150, 0, 20), Position = UDim2.new(0, 21, 0, 43), BackgroundTransparency = 1, Text = "Scanner dynamique  •  Analyse locale intelligente", TextColor3 = Color3.fromRGB(205, 220, 255), Font = Enum.Font.Gotham, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left}, top)
+local close = make("TextButton", {Size = UDim2.new(0, 38, 0, 34), Position = UDim2.new(1, -54, 0, 15), BackgroundColor3 = Color3.fromRGB(201, 62, 81), Text = "X", TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 20, BorderSizePixel = 0}, top)
+round(close, 9)
+close.MouseButton1Click:Connect(function() gui:Destroy() end)
 
--- En-tête avec dégradé
-local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 45)
-header.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-header.BorderSizePixel = 0
-header.Parent = mainFrame
+local search = make("TextBox", {Size = UDim2.new(1, -40, 0, 38), Position = UDim2.new(0, 20, 0, 92), BackgroundColor3 = Color3.fromRGB(27, 32, 48), PlaceholderText = "Rechercher un nom, chemin ou categorie...", PlaceholderColor3 = Color3.fromRGB(135, 147, 176), Text = "", TextColor3 = Color3.fromRGB(240, 244, 255), Font = Enum.Font.Gotham, TextSize = 13, ClearTextOnFocus = false, BorderSizePixel = 0}, panel)
+round(search, 9)
+make("UIStroke", {Color = Color3.fromRGB(62, 78, 113), Thickness = 1}, search)
+local stats = make("TextLabel", {Size = UDim2.new(.6, 0, 0, 27), Position = UDim2.new(0, 22, 0, 138), BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(166, 183, 221), Font = Enum.Font.GothamMedium, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left}, panel)
+local copy = make("TextButton", {Size = UDim2.new(0, 132, 0, 30), Position = UDim2.new(1, -152, 0, 136), BackgroundColor3 = Color3.fromRGB(41, 174, 125), Text = "Copier la liste", TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 12, BorderSizePixel = 0}, panel)
+round(copy, 8)
 
-local headerCorner = Instance.new("UICorner")
-headerCorner.CornerRadius = UDim.new(0, 12)
-headerCorner.Parent = header
+local filterBar = make("Frame", {Size = UDim2.new(1, -40, 0, 32), Position = UDim2.new(0, 20, 0, 168), BackgroundTransparency = 1}, panel)
+local names = {"Tous", "RemoteEvent", "RemoteFunction", "Combat", "Achat", "Quete", "Autre"}
+local buttons = {}
+for i, name in ipairs(names) do
+    local width = i <= 3 and 112 or 72
+    local button = make("TextButton", {Size = UDim2.new(0, width, 0, 28), Position = UDim2.new(0, (i - 1) * 80, 0, 0), BackgroundColor3 = Color3.fromRGB(39, 47, 68), Text = name, TextColor3 = Color3.fromRGB(193, 204, 230), Font = Enum.Font.GothamMedium, TextSize = 11, BorderSizePixel = 0}, filterBar)
+    round(button, 7); buttons[name] = button
+    button.MouseButton1Click:Connect(function() filterName = name end)
+end
 
--- Dégradé horizontal (UIGradient)
-local gradient = Instance.new("UIGradient")
-gradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 100, 200)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(120, 60, 200))
-})
-gradient.Rotation = 90
-gradient.Parent = header
+local list = make("ScrollingFrame", {Size = UDim2.new(1, -40, 1, -218), Position = UDim2.new(0, 20, 0, 208), BackgroundColor3 = Color3.fromRGB(10, 13, 21), BackgroundTransparency = .1, BorderSizePixel = 0, ScrollBarThickness = 5, ScrollBarImageColor3 = Color3.fromRGB(81, 105, 175), CanvasSize = UDim2.new()}, panel)
+round(list, 10)
+local layout = make("UIListLayout", {Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder}, list)
+make("UIPadding", {PaddingTop = UDim.new(0, 8), PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8)}, list)
 
--- Titre
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(0.7, 0, 1, 0)
-title.BackgroundTransparency = 1
-title.Text = "📡 Événements réseau"
-title.TextColor3 = Color3.new(1, 1, 1)
-title.Font = Enum.Font.SourceSansBold
-title.TextSize = 18
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Position = UDim2.new(0, 15, 0, 0)
-title.Parent = header
+local function matches(record)
+    local q = string.lower(searchText)
+    local filterOk = filterName == "Tous" or record.kind == filterName or record.category == filterName
+    local textOk = q == "" or string.find(string.lower(record.path), q, 1, true) or string.find(string.lower(record.category), q, 1, true)
+    return filterOk and textOk
+end
 
--- Compteur
-local countLabel = Instance.new("TextLabel")
-countLabel.Size = UDim2.new(0.3, 0, 1, 0)
-countLabel.Position = UDim2.new(0.7, 0, 0, 0)
-countLabel.BackgroundTransparency = 1
-countLabel.Text = #events .. " trouvés"
-countLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
-countLabel.Font = Enum.Font.SourceSans
-countLabel.TextSize = 14
-countLabel.TextXAlignment = Enum.TextXAlignment.Right
-countLabel.TextYAlignment = Enum.TextYAlignment.Center
-countLabel.Parent = header
+local function rebuild()
+    for _, child in ipairs(list:GetChildren()) do if child:IsA("Frame") then child:Destroy() end end
+    local shown, eventCount, functionCount = 0, 0, 0
+    for _, record in ipairs(records) do
+        if record.kind == "RemoteEvent" then eventCount = eventCount + 1 else functionCount = functionCount + 1 end
+        if matches(record) then
+            shown = shown + 1
+            local row = make("Frame", {Size = UDim2.new(1, 0, 0, 48), BackgroundColor3 = shown % 2 == 0 and Color3.fromRGB(25, 31, 46) or Color3.fromRGB(20, 25, 38), BorderSizePixel = 0}, list)
+            round(row, 7)
+            make("TextLabel", {Size = UDim2.new(1, -155, 0, 23), Position = UDim2.new(0, 12, 0, 5), BackgroundTransparency = 1, Text = record.path, TextColor3 = Color3.fromRGB(231, 237, 255), Font = Enum.Font.GothamMedium, TextSize = 12, TextTruncate = Enum.TextTruncate.AtEnd, TextXAlignment = Enum.TextXAlignment.Left}, row)
+            make("TextLabel", {Size = UDim2.new(1, -155, 0, 16), Position = UDim2.new(0, 12, 0, 27), BackgroundTransparency = 1, Text = record.kind .. "  •  " .. record.category, TextColor3 = Color3.fromRGB(132, 155, 203), Font = Enum.Font.Gotham, TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left}, row)
+            local badge = make("TextLabel", {Size = UDim2.new(0, 120, 0, 22), Position = UDim2.new(1, -132, 0, 13), BackgroundColor3 = Color3.fromRGB(39, 55, 91), Text = string.format("IA %.0f%%", record.confidence * 100), TextColor3 = Color3.fromRGB(184, 210, 255), Font = Enum.Font.GothamBold, TextSize = 10, BorderSizePixel = 0}, row)
+            round(badge, 6)
+        end
+    end
+    list.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 16)
+    stats.Text = string.format("%d affiches  •  %d RemoteEvent  •  %d RemoteFunction", shown, eventCount, functionCount)
+    for name, button in pairs(buttons) do
+        button.BackgroundColor3 = name == filterName and Color3.fromRGB(67, 94, 164) or Color3.fromRGB(39, 47, 68)
+        button.TextColor3 = name == filterName and Color3.new(1, 1, 1) or Color3.fromRGB(193, 204, 230)
+    end
+end
 
--- Bouton Copier (avec animation)
-local copyBtn = Instance.new("TextButton")
-copyBtn.Size = UDim2.new(0, 120, 0, 32)
-copyBtn.Position = UDim2.new(1, -135, 0, 8)
-copyBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
-copyBtn.Text = "📋 Copier tout"
-copyBtn.TextColor3 = Color3.new(1, 1, 1)
-copyBtn.Font = Enum.Font.SourceSansBold
-copyBtn.TextSize = 14
-copyBtn.BorderSizePixel = 0
-copyBtn.Parent = header
-
-local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(0, 6)
-btnCorner.Parent = copyBtn
-
--- Effet hover / clic
-copyBtn.MouseEnter:Connect(function()
-    copyBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 255)
-end)
-copyBtn.MouseLeave:Connect(function()
-    copyBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+local function queueRefresh()
+    if queued then return end
+    queued = true
+    task.delay(.15, function() queued = false; scan(); rebuild() end)
+end
+game.DescendantAdded:Connect(function(obj) if isRemote(obj) then queueRefresh() end end)
+game.DescendantRemoving:Connect(function(obj) if index[obj] then queueRefresh() end end)
+search:GetPropertyChangedSignal("Text"):Connect(function() searchText = search.Text; rebuild() end)
+copy.MouseButton1Click:Connect(function()
+    local lines = {"-- RemoteLister Pro --"}
+    for _, record in ipairs(records) do if matches(record) then table.insert(lines, string.format("[%s | %s] %s", record.kind, record.category, record.path)) end end
+    local success = safeClipboard(table.concat(lines, "\n"))
+    copy.Text = success and "Copie !" or "Clipboard indisponible"
+    task.delay(1.5, function() if copy.Parent then copy.Text = "Copier la liste" end end)
 end)
 
--- Bouton Fermer
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -38, 0, 8)
-closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-closeBtn.Text = "✕"
-closeBtn.TextColor3 = Color3.new(1, 1, 1)
-closeBtn.Font = Enum.Font.SourceSansBold
-closeBtn.TextSize = 18
-closeBtn.BorderSizePixel = 0
-closeBtn.Parent = header
-
-local closeCorner = Instance.new("UICorner")
-closeCorner.CornerRadius = UDim.new(0, 6)
-closeCorner.Parent = closeBtn
-
-closeBtn.MouseEnter:Connect(function()
-    closeBtn.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
-end)
-closeBtn.MouseLeave:Connect(function()
-    closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-end)
-
-closeBtn.MouseButton1Click:Connect(function()
-    gui:Destroy()
-end)
-
--- Zone de défilement (avec fond semi-transparent)
-local scrollFrame = Instance.new("ScrollingFrame")
-scrollFrame.Size = UDim2.new(1, -20, 1, -60)
-scrollFrame.Position = UDim2.new(0, 10, 0, 55)
-scrollFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-scrollFrame.BackgroundTransparency = 0.3
-scrollFrame.BorderSizePixel = 0
-scrollFrame.VerticalScrollBarPosition = Enum.VerticalScrollBarPosition.Right
-scrollFrame.ScrollBarThickness = 6
-scrollFrame.Parent = mainFrame
-
-local scrollCorner = Instance.new("UICorner")
-scrollCorner.CornerRadius = UDim.new(0, 8)
-scrollCorner.Parent = scrollFrame
-
-local listLayout = Instance.new("UIListLayout")
-listLayout.SortOrder = Enum.SortOrder.Name
-listLayout.Padding = UDim.new(0, 3)
-listLayout.Parent = scrollFrame
-
--- Création des lignes d'événements (avec style alterné)
-local function createEventLabel(ev, index)
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 28)
-    label.BackgroundColor3 = (index % 2 == 0) and Color3.fromRGB(45, 45, 55) or Color3.fromRGB(35, 35, 45)
-    label.BackgroundTransparency = 0.2
-    label.Text = ev:GetFullName()
-    label.TextColor3 = Color3.fromRGB(230, 230, 255)
-    label.Font = Enum.Font.SourceSans
-    label.TextSize = 13
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextTruncate = Enum.TextTruncate.AtEnd
-    label.BorderSizePixel = 0
-    label.Parent = scrollFrame
-
-    -- Coins arrondis individuels
-    local lblCorner = Instance.new("UICorner")
-    lblCorner.CornerRadius = UDim.new(0, 4)
-    lblCorner.Parent = label
-
-    -- Effet hover (surlignage)
-    label.MouseEnter:Connect(function()
-        label.BackgroundColor3 = Color3.fromRGB(70, 70, 100)
-        label.BackgroundTransparency = 0.1
+-- La barre superieure permet de deplacer la fenetre.
+do
+    local dragging, dragStart, startPosition
+    top.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging, dragStart, startPosition = true, input.Position, panel.Position
+            input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+        end
     end)
-    label.MouseLeave:Connect(function()
-        label.BackgroundColor3 = (index % 2 == 0) and Color3.fromRGB(45, 45, 55) or Color3.fromRGB(35, 35, 45)
-        label.BackgroundTransparency = 0.2
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            panel.Position = UDim2.new(startPosition.X.Scale, startPosition.X.Offset + delta.X, startPosition.Y.Scale, startPosition.Y.Offset + delta.Y)
+        end
     end)
 end
 
-for i, ev in ipairs(events) do
-    createEventLabel(ev, i)
-end
-
--- Ajustement de la hauteur du canvas
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #events * 31 + 10)
-
--- Fonction de copie avec feedback
-copyBtn.MouseButton1Click:Connect(function()
-    if #events == 0 then
-        copyBtn.Text = "⚠️ Aucun"
-        wait(1)
-        copyBtn.Text = "📋 Copier tout"
-        return
-    end
-
-    local text = "-- Liste des RemoteEvents/Functions --\n"
-    for _, ev in ipairs(events) do
-        text = text .. ev:GetFullName() .. "\n"
-    end
-
-    local success = copyToClipboard(text)
-    if success then
-        copyBtn.Text = "✅ Copié !"
-        wait(1.2)
-        copyBtn.Text = "📋 Copier tout"
-    else
-        copyBtn.Text = "❌ Échec"
-        wait(1.2)
-        copyBtn.Text = "📋 Copier tout"
-        -- Affichage dans la console en secours
-        print(text)
-    end
-end)
-
--- Petit message dans la console
-print("✅ GUI chargée – " .. #events .. " événements réseau trouvés.")
+rebuild()
+print(string.format("[RemoteLister Pro] Pret a scanner %d remote(s).", #records))
