@@ -39,12 +39,31 @@ _G.EL2BUpdateKickPending = false
 local EL2B_LAST_ANNOUNCEMENT_ID = 0
 local EL2B_ANNOUNCEMENT_SOUND_PENDING = false
 local EL2BPlayAnnouncementSound = nil
+local function EL2BHttpGet(url)
+	local ok, response = pcall(function() return game:HttpGet(url, true) end)
+	if ok and type(response) == "string" and response ~= "" then return response end
+	local requestFn = request or http_request or (syn and syn.request)
+	if type(requestFn) == "function" then
+		local requestOk, result = pcall(function() return requestFn({ Url = url, Method = "GET" }) end)
+		if requestOk and type(result) == "table" and type(result.Body) == "string" then return result.Body end
+	end
+	return nil
+end
 local function EL2BReadRemoteState()
-	local ok, response = pcall(function() return game:HttpGet(EL2B_STATUS_URL, true) end)
-	if not ok or type(response) ~= "string" then return nil end
-	local decoded, data = pcall(function() return HttpService:JSONDecode(response) end)
-	if not decoded or type(data) ~= "table" or type(data.enabled) ~= "boolean" then return nil end
-	return data
+	local response = EL2BHttpGet(EL2B_STATUS_URL)
+	if type(response) ~= "string" then return nil end
+		local decoded, data = pcall(function() return HttpService:JSONDecode(response) end)
+		if not decoded or type(data) ~= "table" then return nil end
+		local enabled = data.enabled
+		if type(enabled) ~= "boolean" then
+			if enabled == 0 or enabled == 1 then enabled = enabled ~= 0 else return nil end
+		end
+		data.enabled = enabled
+		if data.autoKickOnUpdate ~= nil and type(data.autoKickOnUpdate) ~= "boolean" then
+			if data.autoKickOnUpdate == 0 or data.autoKickOnUpdate == 1 then data.autoKickOnUpdate = data.autoKickOnUpdate ~= 0 else data.autoKickOnUpdate = true end
+		end
+		if type(data.updateGuiStyle) ~= "string" or not EL2B_UPDATE_STYLE_PALETTES[data.updateGuiStyle] then data.updateGuiStyle = "neo3d" end
+		return data
 end
 local function EL2BReadRemoteStatus()
 	local state = EL2BReadRemoteState()
@@ -174,7 +193,7 @@ local function EL2BShowUpdateGui()
 			local currentLanguage = "fr"
 		local stylePalette = EL2B_UPDATE_STYLE_PALETTES[EL2B_UPDATE_GUI_STYLE] or EL2B_UPDATE_STYLE_PALETTES.neo3d
 		local existing = PlayerGui:FindFirstChild("EL2BUpdateGui") or CoreGui:FindFirstChild("EL2BUpdateGui")
-	if existing then return end
+		if existing then pcall(function() existing:Destroy() end) end
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "EL2BUpdateGui"
 	gui.ResetOnSpawn = false
@@ -971,10 +990,20 @@ end
 	EL2BShowUpdateGui()
 	warn("EL2B HUB arrêté par le contrôle administrateur.")
 end
-local initialRemoteState = EL2BReadRemoteState()
+local initialRemoteState = nil
+for attempt = 1, 3 do
+	initialRemoteState = EL2BReadRemoteState()
+	if initialRemoteState then break end
+	if attempt < 3 then task.wait(0.75) end
+end
 if initialRemoteState then
 	if initialRemoteState.announcement then EL2BShowAnnouncementGui(initialRemoteState.announcement) end
-	if initialRemoteState.enabled == false then EL2BStopLocally(initialRemoteState.autoKickOnUpdate, initialRemoteState.updateGuiStyle); return end
+	if initialRemoteState.enabled == false then
+		EL2BStopLocally(initialRemoteState.autoKickOnUpdate, initialRemoteState.updateGuiStyle)
+		return
+	end
+else
+	warn("EL2B HUB : statut update indisponible après 3 tentatives ; le script continue en mode normal.")
 end
 task.spawn(function()
 	while not EL2B_STOPPED do
