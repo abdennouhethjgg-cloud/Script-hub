@@ -215,7 +215,6 @@ local C = {
 }
 
 
--- [STABILIZED] Embedded Auto Steal file generation disabled.
 -- [STABILIZED] The main VIS HUB implementation remains active.
 
 local St = {
@@ -230,7 +229,6 @@ local St = {
 	dropMode = 2, -- 1 Stand/Fling, 2 Jump
 	instaMode = "V1",
 	mobileBtns = true, guiLock = false, -- default ON: Drop / Insta / TP buttons
-	showStealBtn = true, showLaggerPanel = false, showPingLaggerPanel = false, showSpeedBypassPanel = false, speedBypassLock = false, panelGuiScale = 0.7, panelGuiWidth = 1, laggerPanelLock = false, pingPanelLock = false, -- hiện nút Auto Steal ngoài (độc lập auto steal on/off)
 	btnShape = "Square", -- Round | Box | Square
 	btnScale = 0.75,
 	menuScale = 1.0,
@@ -240,7 +238,6 @@ local St = {
 		TPDown = Enum.KeyCode.F,
 		InstaReset = Enum.KeyCode.Z,
 		DestroySentry = Enum.KeyCode.H,
-		AutoSteal = nil, -- nil = None (no key)
 	},
 	esp = false, tracer = false, antiLag = false,
 	antiKick = true, wallOpacity = 0.12, speedMethod = "Velocity",
@@ -377,8 +374,6 @@ function loadCfg()
 	St.stealRadius = tonumber(St.stealRadius) or 60
 	St.stealVer = St.stealVer or "V1"
 	St.stealBarScale = tonumber(St.stealBarScale) or 1
-	if St.showStealBtn == nil then St.showStealBtn = true end
-	autoStealRadius = St.stealRadius
 	return true
 end
 loadCfg()
@@ -2703,7 +2698,6 @@ keyRow("Key Drop", "Drop", 31)
 keyRow("Key TP Down", "TPDown", 32)
 keyRow("Key Insta Reset", "InstaReset", 33)
 keyRow("Key Destroy Sentry", "DestroySentry", 34)
-keyRow("Key Auto Steal", "AutoSteal", 35)
 
 -- Full KEYBINDS TAB
 if pageKeys then
@@ -2776,7 +2770,6 @@ if pageKeys then
 	keyRowTab("TP Down", "TPDown", 3)
 	keyRowTab("Insta Reset", "InstaReset", 4)
 	keyRowTab("Destroy Sentry", "DestroySentry", 5)
-	keyRowTab("Auto Steal (toggle)", "AutoSteal", 6)
 	local hint = Instance.new("TextLabel")
 	hint.Size = UDim2.new(1, -16, 0, 40)
 	hint.BackgroundTransparency = 1
@@ -2848,15 +2841,6 @@ toggleNamed(pageSet, "Mobile Buttons", St.mobileBtns, function(on)
 	if _G.VisApplyMobile then _G.VisApplyMobile() end
 	saveCfg()
 end, 2, "mobileBtns")
-toggleNamed(pageSet, "Show Auto Steal Button", St.showStealBtn ~= false, function(on)
-	St.showStealBtn = on and true or false
-	if _G.VisRefreshStealBtn then pcall(_G.VisRefreshStealBtn) end
-	-- nếu bật show mà chưa có nút → rebuild
-	if St.showStealBtn and (not actRefs or not actRefs.steal) and _G.VisApplyMobile then
-		pcall(_G.VisApplyMobile)
-	end
-	saveCfg()
-end, 2.5, "showStealBtn")
 toggleNamed(pageSet, "Show Panel TP", St.showTPPanel ~= false, function(on)
 	St.showTPPanel = on and true or false
 	local g = PlayerGui:FindFirstChild("VisHubbTP")
@@ -3159,7 +3143,6 @@ sizeRow("Size: Drop", "drop", 23)
 sizeRow("Size: Insta", "insta", 24)
 sizeRow("Size: TP", "tp", 25)
 sizeRow("Size: Sentry", "sentry", 25.5)
-sizeRow("Size: Auto Steal", "steal", 26)
 
 
 section(pageSet, "* — MENU UI SCALE", 28)
@@ -3226,8 +3209,7 @@ actionBtn(pageSet, "Reset All Settings", C.danger, function()
 	St.dropMode = 2
 	St.instaMode = "V1"
 	St.mobileBtns = true
-	St.showStealBtn = true
-	St.guiLock = false
+		St.guiLock = false
 	St.btnShape = "Square"
 	St.btnScale = 0.75
 	St.menuScale = 1
@@ -3236,14 +3218,8 @@ actionBtn(pageSet, "Reset All Settings", C.danger, function()
 	St._modeBarPos = nil
 	St._miniPos = nil
 	St._mainPos = nil
-	St._stealBarPos = nil
-	St._tpMainPos = nil
-	St.stealVer = "V1"
-	St.stealRadius = 60
-	St.stealPause = false
-	St.stealPausePct = 75
-	St.autoSteal = false
-	St.modes = {
+		St._tpMainPos = nil
+						St.modes = {
 		Normal = { norm = 59, steal = 30, key = Enum.KeyCode.T },
 		Lagger = { norm = 18, steal = 24, key = Enum.KeyCode.Q },
 		Custom = { norm = 33, steal = 33, key = Enum.KeyCode.C },
@@ -3260,8 +3236,6 @@ actionBtn(pageSet, "Reset All Settings", C.danger, function()
 	pcall(function() setAntiLag(false) end)
 	pcall(function() setSpamLaser(false) end)
 	pcall(function() setSpamPaint(false) end)
-	if type(setAutoSteal) == "function" then
-		pcall(function() setAutoSteal(false) end)
 	end
 	-- sync toggle UI
 	local defs = {
@@ -3270,7 +3244,7 @@ actionBtn(pageSet, "Reset All Settings", C.danger, function()
 		mobileBtns = true, guiLock = false,
 		esp = false, tracer = false, antiLag = false,
 		spamLaser = false, spamPaint = false,
-		autoSteal = false, stealPause = false, showTPPanel = true,
+		showTPPanel = true,
 	}
 	for k, v in pairs(defs) do
 		if ToggleRefs[k] and ToggleRefs[k].set then
@@ -3281,7 +3255,6 @@ actionBtn(pageSet, "Reset All Settings", C.danger, function()
 	if _G.VisApplyMobile then pcall(_G.VisApplyMobile) end
 	if _G.VisRefreshModeCards then pcall(_G.VisRefreshModeCards) end
 	pcall(applyMenuScale)
-	if _G.VisSyncAutoSteal then pcall(_G.VisSyncAutoSteal) end
 	pcall(saveCfg)
 	showToast("RESET ALL ✓ Free Sell Là Tuất Ngu Lồn")
 end, 32)
@@ -3994,7 +3967,7 @@ function makeActBtn(key, label, pos, cb)
 		dragging = false
 		local tapLimit = TAP_MAX
 		-- steal/sentry/drop/insta/tp: dễ bấm hơn
-		if key == "steal" or key == "sentry" or key == "drop" or key == "insta" or key == "tp" then
+		if key == "sentry" or key == "drop" or key == "insta" or key == "tp" then
 			tapLimit = 48
 		end
 		if movedDistance < tapLimit then
@@ -4004,7 +3977,6 @@ function makeActBtn(key, label, pos, cb)
 				if key == "sentry" then
 					if _G.VisRefreshSentryBtn then pcall(_G.VisRefreshSentryBtn) end
 				elseif key == "steal" then
-					if _G.VisRefreshStealBtn then pcall(_G.VisRefreshStealBtn) end
 				end
 			end
 		else
@@ -4021,45 +3993,12 @@ function makeActBtn(key, label, pos, cb)
 		btn:SetAttribute("_lastTap", tick())
 		if cb then pcall(cb) end
 		if key == "sentry" and _G.VisRefreshSentryBtn then pcall(_G.VisRefreshSentryBtn) end
-		if key == "steal" and _G.VisRefreshStealBtn then pcall(_G.VisRefreshStealBtn) end
-	end
+			end
 	btn.MouseButton1Click:Connect(backupClick)
 	btn.Activated:Connect(backupClick)
 	-- overlay không chặn click
 	local ov = btn:FindFirstChild("BtnTextOverlay")
 	if ov then ov.Active = false; ov.Selectable = false end
-
-	-- STEAL / SENTRY: phản hồi ngay + màu xanh đậm
-	if key == "steal" or key == "sentry" then
-		local function instantToggle()
-			local last = btn:GetAttribute("_lastTap") or 0
-			if tick() - last < 0.12 then return end
-			btn:SetAttribute("_lastTap", tick())
-			if key == "steal" then
-				local on = not (St.autoSteal == true)
-				if type(setAutoSteal) == "function" then pcall(setAutoSteal, on)
-				elseif type(_G.setAutoSteal) == "function" then pcall(_G.setAutoSteal, on)
-				else
-					St.autoSteal = on
-					autoStealEnabled = on
-					if on and type(startAutoSteal)=="function" then pcall(startAutoSteal)
-					elseif (not on) and type(stopAutoSteal)=="function" then pcall(stopAutoSteal) end
-				end
-				applyActBtnState(btn, St.autoSteal == true, "STEAL\nON", "AUTO\nSTEAL")
-				if _G.VisRefreshStealBtn then pcall(_G.VisRefreshStealBtn) end
-			else
-				local on = not (St.destroySentry == true)
-				if type(setDestroySentry) == "function" then pcall(setDestroySentry, on)
-				else St.destroySentry = on end
-				applyActBtnState(btn, St.destroySentry == true, "SENTRY\nON", "SENTRY")
-				if _G.VisRefreshSentryBtn then pcall(_G.VisRefreshSentryBtn) end
-			end
-		end
-		btn.MouseButton1Down:Connect(instantToggle)
-		btn.TouchTap:Connect(function() end) -- ensure touch focus
-		-- thay cb để InputEnded cũng dùng logic này
-		cb = instantToggle
-	end
 
 	actRefs[key] = { holder = holder, btn = btn }
 end
@@ -4124,22 +4063,6 @@ function rebuildMobile()
 		end
 		if _G.VisRefreshSentryBtn then pcall(_G.VisRefreshSentryBtn) end
 	end)
-	makeActBtn("steal", "AUTO\nSTEAL", UDim2.new(1, -150, 0.5, 100), function()
-		local on = not (St.autoSteal == true)
-		if type(setAutoSteal) == "function" then
-			setAutoSteal(on)
-		elseif type(_G.setAutoSteal) == "function" then
-			_G.setAutoSteal(on)
-		else
-			St.autoSteal = on
-			autoStealEnabled = on
-			if on and startAutoSteal then startAutoSteal() elseif stopAutoSteal then stopAutoSteal() end
-		end
-		if _G.VisRefreshStealBtn then pcall(_G.VisRefreshStealBtn) end
-		if ToggleRefs and ToggleRefs.autoSteal and ToggleRefs.autoSteal.setVisual then
-			pcall(ToggleRefs.autoSteal.setVisual, St.autoSteal == true)
-		end
-	end)
 	-- restore saved positions
 	for key, e in pairs(actRefs) do
 		if e.holder then restorePos(e.holder, "A_" .. key) end
@@ -4149,7 +4072,6 @@ function rebuildMobile()
 	end
 	_G.VisRefreshModeBar()
 	_G.VisRefreshSentryBtn()
-	if _G.VisRefreshStealBtn then pcall(_G.VisRefreshStealBtn) end
 end
 
 
@@ -4211,17 +4133,6 @@ function applyActBtnState(btn, on, onText, offText)
 		end
 		local st = btn:FindFirstChildOfClass("UIStroke")
 		if st then st.Color = Color3.fromRGB(255, 80, 180); st.Transparency = 0.2; st.Thickness = 1.6 end
-	end
-end
-
-function _G.VisRefreshStealBtn()
-	local e = actRefs and actRefs.steal
-	if not e or not e.holder then return end
-	local show = (St.showStealBtn ~= false)
-	e.holder.Visible = show
-	if e.btn then
-		e.btn.Visible = show
-		applyActBtnState(e.btn, St.autoSteal == true, "STEAL\nON", "AUTO\nSTEAL")
 	end
 end
 
@@ -4317,7 +4228,6 @@ function _G.VisUpdateMobileVisuals()
 	end
 	if _G.VisRefreshModeBar then pcall(_G.VisRefreshModeBar) end
 	if _G.VisRefreshSentryBtn then pcall(_G.VisRefreshSentryBtn) end
-	if _G.VisRefreshStealBtn then pcall(_G.VisRefreshStealBtn) end
 	-- Scale Speed V2 mode bar
 	pcall(function()
 		local gui = PlayerGui:FindFirstChild("VisV2ModeBar")
@@ -4368,14 +4278,6 @@ UIS.InputBegan:Connect(function(input, gp)
 	elseif k == St.keys.TPDown then doTPDown(true)
 	elseif k == St.keys.InstaReset then doInstaReset()
 	elseif k == St.keys.DestroySentry then setDestroySentry(not St.destroySentry)
-	elseif St.keys.AutoSteal and k == St.keys.AutoSteal then
-		if type(setAutoSteal) == "function" then
-			setAutoSteal(not (St.autoSteal == true))
-			-- sync toggle UI
-			if ToggleRefs and ToggleRefs.autoSteal and ToggleRefs.autoSteal.setVisual then
-				pcall(ToggleRefs.autoSteal.setVisual, St.autoSteal == true)
-			end
-		end
 	else
 		for name, m in pairs(St.modes) do
 			if m.key == k then setActiveMode(name) break end
@@ -4459,13 +4361,6 @@ function reapplyAllLogic(reason)
 	-- Spam
 	pcall(function() if St.spamLaser and setSpamLaser then setSpamLaser(true) end end)
 	pcall(function() if St.spamPaint and setSpamPaint then setSpamPaint(true) end end)
-	-- Auto steal
-	pcall(function()
-		if St.autoSteal then
-			if type(setAutoSteal) == "function" then setAutoSteal(true) end
-			if _G.VisSyncAutoSteal then pcall(_G.VisSyncAutoSteal) end
-		end
-	end)
 	-- Ragdoll TP
 	pcall(function()
 	end)
@@ -4505,17 +4400,6 @@ pcall(function() setTracer(St.tracer == true) end)
 pcall(function() setAntiLag(St.antiLag == true) end)
 pcall(function() setSpamLaser(St.spamLaser == true) end)
 pcall(function() setSpamPaint(St.spamPaint == true) end)
--- Auto Steal after setups exist
-task.defer(function()
-	pcall(function()
-		if type(setAutoSteal) == "function" then
-			setAutoSteal(St.autoSteal == true)
-		end
-		if St.autoSteal and _G.VisSyncAutoSteal then
-			pcall(_G.VisSyncAutoSteal)
-		end
-	end)
-end)
 pcall(applyMenuScale)
 pcall(function() setTab("Player") end)
 task.defer(function()
@@ -4553,7 +4437,6 @@ task.defer(function()
 		end
 	end)
 	pcall(function() if St.activeMode and setActiveMode then setActiveMode(St.activeMode) end end)
-	pcall(function() if St.autoSteal and type(setAutoSteal) == "function" then setAutoSteal(true) end end)
 	pcall(function() if St.destroySentry and setDestroySentry then setDestroySentry(true) end end)
 end)
 
@@ -4576,7 +4459,6 @@ _G._VisHubCharReapplyConn = LP.CharacterAdded:Connect(function(char)
 			if St.infJump and setInfJump then setInfJump(true) end
 			if St.antiRagdoll and startAntiRagdoll then startAntiRagdoll() end
 			if St.toolAim and setToolAim then setToolAim(true) end
-			if St.autoSteal and _G.VisSyncAutoSteal then pcall(_G.VisSyncAutoSteal) end
 		end
 	end)
 end)
@@ -4586,7 +4468,6 @@ print("[VisHub Full] Player(Anti+Speed S2+Aim+Drop+Insta) | ESP | Settings mobil
 
 
 -- ============================================================
--- EXTENSION: InfJump 2-mode | Auto Steal V1/V2 | Steal Bar | Panel TP
 -- ============================================================
 
 -- InfJump mode: hold | manual
@@ -4600,899 +4481,6 @@ function isMyPlot(plotName)
 	local sign = plot:FindFirstChild("PlotSign")
 	local yb = sign and sign:FindFirstChild("YourBase")
 	return yb and yb:IsA("BillboardGui") and yb.Enabled
-end
-
-function findStealPrompt()
-	local char = LP.Character
-	local root = char and char:FindFirstChild("HumanoidRootPart")
-	if not root then return nil, nil end
-	local radius = St.stealRadius or 60
-	local best, bestDist, bestPart = nil, math.huge, nil
-	local function consider(d)
-		if not isStealAction(d) then return end
-		if d.Enabled == false then return end
-		if LP.Character and d:IsDescendantOf(LP.Character) then return end
-		local part = d.Parent
-		local basePart = part and (part:IsA("BasePart") and part
-			or part:FindFirstChildWhichIsA("BasePart", true)
-			or d:FindFirstAncestorWhichIsA("BasePart"))
-		if not basePart then return end
-		local plot = d
-		for _ = 1, 8 do
-			if not plot.Parent or plot.Parent == workspace then break end
-			plot = plot.Parent
-			if isOwnPlot(plot) then return end
-		end
-		local dist = (basePart.Position - root.Position).Magnitude
-		if dist <= radius and dist < bestDist then
-			best, bestDist, bestPart = d, dist, basePart
-		end
-	end
-	local plots = workspace:FindFirstChild("Plots") or workspace:FindFirstChild("plots")
-	if plots then
-		for _, plot in ipairs(plots:GetChildren()) do
-			if not isOwnPlot(plot) then
-				for _, d in ipairs(plot:GetDescendants()) do
-					if d:IsA("ProximityPrompt") then consider(d) end
-				end
-			end
-		end
-	else
-		for _, d in ipairs(workspace:GetDescendants()) do
-			if d:IsA("ProximityPrompt") then consider(d) end
-		end
-	end
-	return best, bestPart
-end
-
-function fireSteal(prompt)
-	-- Assistance manuelle : aucune API d’exécuteur n’est appelée.
-	if not prompt or not prompt.Parent then return false end
-	local now = tick()
-	if StealA.lastHintPrompt == prompt and now - (StealA.lastHintAt or 0) < 1 then return false end
-	StealA.lastHintPrompt = prompt
-	StealA.lastHintAt = now
-	pcall(function()
-		if _G.VisStealBar and _G.VisStealBar.Set then
-			_G.VisStealBar.Set(0, "READY · USE PROMPT")
-		end
-	end)
-	return false
-end
--- Les anciens exécuteurs V1/V2 ont été retirés : ils dépendaient d’APIs d’exécuteur non standard.
--- Le système conserve la détection et laisse le joueur utiliser le ProximityPrompt Roblox.
-function startAutoSteal()
-	StealA.enabled = true
-	if StealA.conn then return end
-	StealA.conn = RS.Heartbeat:Connect(function()
-		if not StealA.enabled or StealA.busy then return end
-		local prompt, part = findStealPrompt()
-		if prompt then
-			-- Le joueur active lui-même le ProximityPrompt Roblox détecté.
-			fireSteal(prompt)
-		end
-	end)
-end
-function stopAutoSteal()
-	StealA.enabled = false
-	StealA.busy = false
-	if StealA.conn then pcall(function() StealA.conn:Disconnect() end) StealA.conn = nil end
-	-- Chỉ về 0%, KHÔNG ẩn / destroy steal bar
-	_G.AceStealBarProgress = 0
-	pcall(function() if _G.StealBar and _G.StealBar.Reset then _G.StealBar.Reset() end end)
-	pcall(function() if _G.VisStealBar and _G.VisStealBar.Reset then _G.VisStealBar.Reset() end end)
-end
-function setAutoSteal(on)
-	-- exported below
-	St.autoSteal = on and true or false
-	autoStealEnabled = St.autoSteal
-	autoStealRadius = tonumber(St.stealRadius) or 60
-	selectedStealMode = St.stealVer or "V1"
-	if St.autoSteal then startAutoSteal() else stopAutoSteal() end
-	if _G.VisSyncAutoSteal then pcall(_G.VisSyncAutoSteal) end
-	if _G.VisRefreshStealBtn then pcall(_G.VisRefreshStealBtn) end
-	-- đảm bảo nút mobile tồn tại
-	if St.autoSteal and (not actRefs or not actRefs.steal) and _G.VisApplyMobile then
-		pcall(_G.VisApplyMobile)
-	end
-	saveCfg()
-end
-
-----------------------------------------------------------------
--- PANEL TP (from VisHubb, no music / no image / no sentry)
-----------------------------------------------------------------
-local TP = {
-	base = nil, pet = nil,
-	delayBase = 0.07, delayPet = 0.07,
-	key = Enum.KeyCode.X,
-	busy = false, markers = {},
-}
-
-_G.setAutoSteal = setAutoSteal
-_G.setDestroySentry = setDestroySentry
-
-function tpMarker(pos, col)
-	local P = Instance.new("Part")
-	P.Size = Vector3.new(3, 0.25, 3)
-	P.Material = Enum.Material.Neon
-	P.Anchored = true
-	P.CanCollide = false
-	P.Position = pos + Vector3.new(0, 2, 0)
-	P.Color = col
-	P.Name = "VisTP_SavePoint"
-	P.Parent = workspace
-	return P
-end
-
-function smoothTP(hrp, pos)
-	hrp.AssemblyLinearVelocity = Vector3.zero
-	hrp.AssemblyAngularVelocity = Vector3.zero
-	local tw = TS:Create(hrp, TweenInfo.new(0.065, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		CFrame = CFrame.new(pos),
-	})
-	tw:Play()
-	tw.Completed:Wait()
-end
-
-function chilliTP(hrp, targetPos, char)
-	if not hrp or not targetPos then return end
-	local hum = char and char:FindFirstChildOfClass("Humanoid")
-	-- equip carpet if any
-	pcall(function()
-		for _, n in ipairs({"Flying Carpet", "Carpet", "Cloud", "Witch's Broom"}) do
-			local g = char:FindFirstChild(n) or LP.Backpack:FindFirstChild(n)
-			if g and hum then hum:EquipTool(g) break end
-		end
-	end)
-	task.wait(0.04)
-	for _, p in ipairs(char:GetDescendants()) do
-		if p:IsA("BasePart") then pcall(function() p.CanCollide = false end) end
-	end
-	if hum then pcall(function() hum.PlatformStand = true end) end
-	local airHeight = 95
-	local airPos = Vector3.new(targetPos.X, targetPos.Y + airHeight, targetPos.Z)
-	hrp.CFrame = CFrame.new(airPos)
-	hrp.AssemblyLinearVelocity = Vector3.new(0, -5, 0)
-	task.wait(0.05)
-	hrp.AssemblyLinearVelocity = Vector3.new(0, -220, 0)
-	local landY = targetPos.Y + 3
-	pcall(function()
-		local params = RaycastParams.new()
-		params.FilterType = Enum.RaycastFilterType.Exclude
-		params.FilterDescendantsInstances = { char }
-		local result = workspace:Raycast(airPos, Vector3.new(0, -(airHeight + 80), 0), params)
-		if result then landY = result.Position.Y + 3.2 end
-	end)
-	local landPos = Vector3.new(targetPos.X, landY, targetPos.Z)
-	local t0 = os.clock()
-	while os.clock() - t0 < 0.55 do
-		if not hrp.Parent then break end
-		if hrp.Position.Y <= landY + 8 then break end
-		hrp.AssemblyLinearVelocity = Vector3.new(0, -220, 0)
-		task.wait()
-	end
-	for _ = 1, 6 do
-		if not hrp.Parent then break end
-		hrp.CFrame = CFrame.new(landPos)
-		hrp.AssemblyLinearVelocity = Vector3.zero
-		task.wait(0.03)
-	end
-	if hum then pcall(function() hum.PlatformStand = false end) end
-	for _, p in ipairs(char:GetDescendants()) do
-		if p:IsA("BasePart") then pcall(function() p.CanCollide = true end) end
-	end
-end
-
-function runPanelTP()
-	if TP.busy then return end
-	if not TP.base and not TP.pet then
-		showToast("Chưa lưu điểm")
-		return
-	end
-	local char = LP.Character
-	local hrp = char and char:FindFirstChild("HumanoidRootPart")
-	if not hrp then return end
-	TP.busy = true
-	task.spawn(function()
-		pcall(function()
-			if (TP.base and not TP.pet) or (TP.pet and not TP.base) then
-				chilliTP(hrp, TP.base or TP.pet, char)
-			else
-				smoothTP(hrp, TP.base)
-				task.wait(TP.delayBase)
-				char = LP.Character or char
-				hrp = char and char:FindFirstChild("HumanoidRootPart") or hrp
-				if hrp and TP.pet then smoothTP(hrp, TP.pet) end
-			end
-		end)
-		TP.busy = false
-		if _G.VisRefreshTPBtn then _G.VisRefreshTPBtn() end
-	end)
-end
-
--- Panel TP GUI (popup)
-function openPanelTP()
-	local old = PlayerGui:FindFirstChild("VisPanelTP")
-	if old then old:Destroy() end
-	local gui = Instance.new("ScreenGui")
-	gui.Name = "VisPanelTP"
-	gui.ResetOnSpawn = false
-	gui.IgnoreGuiInset = true
-	gui.DisplayOrder = 130
-	gui.Parent = PlayerGui
-	local f = Instance.new("Frame")
-	f.Size = UDim2.new(0, 260, 0, 320)
-	f.Position = UDim2.new(0.5, -130, 0.5, -160)
-	f.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
-	f.BorderSizePixel = 0
-	f.Active = true
-	f.Parent = gui
-	Instance.new("UICorner", f).CornerRadius = UDim.new(0, 12)
-	local st = Instance.new("UIStroke", f)
-	st.Color = Color3.fromRGB(120, 90, 200)
-	st.Thickness = 1.5
-	-- drag
-	local panelLocked = false
-	do
-		local dragging, dragStart, startPos
-		f.InputBegan:Connect(function(input)
-			if panelLocked then return end
-			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-				dragging = true
-				dragStart = input.Position
-				startPos = f.Position
-				input.Changed:Connect(function()
-					if input.UserInputState == Enum.UserInputState.End then
-						dragging = false
-						-- save panel pos
-						St._panelTPPos = {f.Position.X.Scale, f.Position.X.Offset, f.Position.Y.Scale, f.Position.Y.Offset}
-						saveCfg()
-					end
-				end)
-			end
-		end)
-		UIS.InputChanged:Connect(function(input)
-			if dragging and not panelLocked and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-				local d = input.Position - dragStart
-				f.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
-			end
-		end)
-	end
-	local title = Instance.new("TextLabel")
-	title.Size = UDim2.new(1, -120, 0, 32)
-	title.Position = UDim2.new(0, 10, 0, 4)
-	title.BackgroundTransparency = 1
-	title.Text = "PANEL TP"
-	title.TextColor3 = Color3.new(1, 1, 1)
-	title.Font = Enum.Font.GothamBold
-	title.TextSize = 14
-	title.TextXAlignment = Enum.TextXAlignment.Left
-	title.Parent = f
-	local close = Instance.new("TextButton")
-	close.Size = UDim2.new(0, 28, 0, 28)
-	close.Position = UDim2.new(1, -34, 0, 6)
-	close.BackgroundColor3 = Color3.fromRGB(40, 30, 50)
-	close.Text = "X"
-	close.TextColor3 = Color3.new(1, 1, 1)
-	close.Font = Enum.Font.GothamBold
-	close.Parent = f
-	Instance.new("UICorner", close).CornerRadius = UDim.new(0, 6)
-	close.MouseButton1Click:Connect(function() gui:Destroy() end)
-	local lockB = Instance.new("TextButton")
-	lockB.Size = UDim2.new(0, 64, 0, 24)
-	lockB.Position = UDim2.new(1, -100, 0, 8)
-	lockB.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-	lockB.Text = "UNLOCK"
-	lockB.TextColor3 = Color3.new(1,1,1)
-	lockB.Font = Enum.Font.GothamBold
-	lockB.TextSize = 10
-	lockB.Parent = f
-	Instance.new("UICorner", lockB).CornerRadius = UDim.new(0, 6)
-	lockB.MouseButton1Click:Connect(function()
-		panelLocked = not panelLocked
-		lockB.Text = panelLocked and "LOCK" or "UNLOCK"
-		lockB.BackgroundColor3 = panelLocked and Color3.fromRGB(180, 60, 80) or Color3.fromRGB(40, 40, 55)
-	end)
-	-- restore pos
-	if St._panelTPPos then
-		f.Position = UDim2.new(St._panelTPPos[1], St._panelTPPos[2], St._panelTPPos[3], St._panelTPPos[4])
-	end
-
-	local function mkBtn(text, y, col, cb)
-		local b = Instance.new("TextButton")
-		b.Size = UDim2.new(1, -24, 0, 32)
-		b.Position = UDim2.new(0, 12, 0, y)
-		b.BackgroundColor3 = col or Color3.fromRGB(50, 50, 70)
-		b.Text = text
-		b.TextColor3 = Color3.new(1, 1, 1)
-		b.Font = Enum.Font.GothamBold
-		b.TextSize = 12
-		b.Parent = f
-		Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
-		b.MouseButton1Click:Connect(cb)
-		return b
-	end
-	mkBtn("Lưu Base (điểm 1)", 44, Color3.fromRGB(180, 80, 140), function()
-		local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-		if not hrp then return end
-		TP.base = hrp.Position
-		if TP.markers.base then TP.markers.base:Destroy() end
-		TP.markers.base = tpMarker(TP.base, Color3.fromRGB(255, 105, 180))
-		showToast("BASE SAVED")
-		if _G.VisRefreshTPBtn then _G.VisRefreshTPBtn() end
-	end)
-	mkBtn("Lưu Pet (điểm 2)", 84, Color3.fromRGB(200, 120, 40), function()
-		local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-		if not hrp then return end
-		TP.pet = hrp.Position
-		if TP.markers.pet then TP.markers.pet:Destroy() end
-		TP.markers.pet = tpMarker(TP.pet, Color3.fromRGB(255, 140, 0))
-		showToast("PET SAVED")
-		if _G.VisRefreshTPBtn then _G.VisRefreshTPBtn() end
-	end)
-	mkBtn("Xóa điểm", 124, Color3.fromRGB(80, 40, 40), function()
-		TP.base, TP.pet = nil, nil
-		if TP.markers.base then TP.markers.base:Destroy() end
-		if TP.markers.pet then TP.markers.pet:Destroy() end
-		TP.markers = {}
-		showToast("CLEARED")
-		if _G.VisRefreshTPBtn then _G.VisRefreshTPBtn() end
-	end)
-	mkBtn("TP NOW", 164, Color3.fromRGB(90, 70, 180), function()
-		runPanelTP()
-	end)
-	-- delays
-	local function delayRow(label, key, y)
-		local t = Instance.new("TextLabel")
-		t.Size = UDim2.new(0.5, 0, 0, 24)
-		t.Position = UDim2.new(0, 12, 0, y)
-		t.BackgroundTransparency = 1
-		t.Text = label
-		t.TextColor3 = Color3.fromRGB(200, 200, 210)
-		t.TextSize = 11
-		t.Font = Enum.Font.Gotham
-		t.TextXAlignment = Enum.TextXAlignment.Left
-		t.Parent = f
-		local val = Instance.new("TextLabel")
-		val.Size = UDim2.new(0, 50, 0, 24)
-		val.Position = UDim2.new(1, -100, 0, y)
-		val.BackgroundTransparency = 1
-		val.Text = string.format("%.2f", TP[key])
-		val.TextColor3 = Color3.new(1, 1, 1)
-		val.Font = Enum.Font.GothamBold
-		val.TextSize = 12
-		val.Parent = f
-		for i, sign in ipairs({ "-", "+" }) do
-			local b = Instance.new("TextButton")
-			b.Size = UDim2.new(0, 24, 0, 24)
-			b.Position = UDim2.new(1, -40 + (i - 1) * 28 - 28, 0, y)
-			b.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-			b.Text = sign
-			b.TextColor3 = Color3.new(1, 1, 1)
-			b.Font = Enum.Font.GothamBold
-			b.Parent = f
-			Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
-			b.MouseButton1Click:Connect(function()
-				TP[key] = math.clamp(TP[key] + (sign == "+" and 0.01 or -0.01), 0.01, 0.5)
-				val.Text = string.format("%.2f", TP[key])
-			end)
-		end
-	end
-	delayRow("Delay Base", "delayBase", 210)
-	delayRow("Delay Pet", "delayPet", 240)
-	-- keybind
-	local keyBtn = mkBtn("PHÍM TP: [" .. tostring(TP.key):gsub("Enum.KeyCode.", "") .. "]", 270, Color3.fromRGB(40, 40, 55), function() end)
-	keyBtn.MouseButton1Click:Connect(function()
-		keyBtn.Text = "Nhấn phím..."
-		local conn
-		conn = UIS.InputBegan:Connect(function(input, gp)
-			if gp or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
-			TP.key = input.KeyCode
-			keyBtn.Text = "PHÍM TP: [" .. input.KeyCode.Name .. "]"
-			conn:Disconnect()
-		end)
-	end)
-end
-
--- Center TP button when 2 points saved
-do
-	local tpg = Instance.new("ScreenGui")
-	tpg.Name = "VisCenterTP"
-	tpg.ResetOnSpawn = false
-	tpg.IgnoreGuiInset = true
-	tpg.DisplayOrder = 1002
-	tpg.Parent = PlayerGui
-	local btn = Instance.new("TextButton")
-	btn.Name = "CenterTP"
-	btn.Size = UDim2.new(0, 160, 0, 40)
-	btn.Position = UDim2.new(0.5, -80, 1, -120)
-	btn.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
-	btn.Text = "TP"
-	btn.TextColor3 = Color3.new(1, 1, 1)
-	btn.Font = Enum.Font.GothamBlack
-	btn.TextSize = 14
-	btn.Visible = false
-	btn.Parent = tpg
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
-	local bst = Instance.new("UIStroke", btn)
-	bst.Color = Color3.fromRGB(140, 100, 255)
-	btn.MouseButton1Click:Connect(runPanelTP)
-	function _G.VisRefreshTPBtn()
-		local has = TP.base ~= nil or TP.pet ~= nil
-		btn.Visible = has
-		local kn = tostring(TP.key):gsub("Enum.KeyCode.", "")
-		if TP.base and TP.pet then
-			btn.Text = "TP [" .. kn .. "]"
-		elseif TP.base or TP.pet then
-			btn.Text = "TP 1pt [" .. kn .. "]"
-		else
-			btn.Visible = false
-		end
-	end
-end
-
-UIS.InputBegan:Connect(function(input, gp)
-	if gp then return end
-	if input.KeyCode == TP.key then
-		runPanelTP()
-	end
-end)
-
-
-----------------------------------------------------------------
--- BODY LOCK (full VisHub Clean / BloodHounds)
-----------------------------------------------------------------
-local bodyLockEnabled = false
-local bodyLockRange = 20
-local _bodyLockConn = nil
-local _blSuppressCount = 0
-
-function bodyLockCombatActive()
-	return (_G.AceNormalAimbotOn == true)
-		or (_G.AceAntiBypassAimbotOn == true)
-		or (_G.AceAntiDesyncAimbotOn == true)
-		or (St and St.toolAim == true and _G._VisToolAimActive == true)
-end
-
-function getClosestTargetBody()
-	local char = LP.Character
-	if not char then return nil end
-	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return nil end
-	local closest, minDist = nil, math.huge
-	for _, plr in ipairs(Players:GetPlayers()) do
-		if plr ~= LP and plr.Character then
-			local tRoot = plr.Character:FindFirstChild("HumanoidRootPart")
-			local hum = plr.Character:FindFirstChildOfClass("Humanoid")
-			if tRoot and hum and hum.Health > 0 then
-				local dist = (tRoot.Position - root.Position).Magnitude
-				if dist < minDist then
-					minDist = dist
-					closest = tRoot
-				end
-			end
-		end
-	end
-	return closest
-end
-
--- Clean / BloodHounds body lock tick (predict + angular velocity)
-function _bodyLockTick()
-	local char = LP.Character
-	if not char then return end
-	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if not hum then return end
-	local target = getClosestTargetBody()
-	if not target then
-		if not hum.AutoRotate then hum.AutoRotate = true end
-		return
-	end
-	local range = tonumber(bodyLockRange) or (type(St)=="table" and tonumber(St.bodyLockRange)) or 20
-	local dist = (target.Position - root.Position).Magnitude
-	if dist > range then
-		if not hum.AutoRotate then hum.AutoRotate = true end
-		return
-	end
-	if hum.AutoRotate then hum.AutoRotate = false end
-	local targetVel = target.AssemblyLinearVelocity
-	local speed3 = targetVel.Magnitude
-	local predictTime = math.clamp(speed3 / 80, 0.08, 0.35)
-	local predictedPos = target.Position + targetVel * predictTime
-	local targetHead = target.Parent and target.Parent:FindFirstChild("Head")
-	local targetHeight = targetHead and targetHead.Position.Y or target.Position.Y
-	local myHeight = root.Position.Y + (hum.HipHeight or 0)
-	local heightDiff = targetHeight - myHeight
-	local verticalCorrection = math.clamp(heightDiff * 0.15, -1.5, 1.5)
-	local flatTarget = Vector3.new(predictedPos.X, root.Position.Y + verticalCorrection, predictedPos.Z)
-	local toPredict = flatTarget - root.Position
-	if toPredict.Magnitude > 0.1 then
-		local goalCF = CFrame.lookAt(root.Position, flatTarget)
-		local diffCF = root.CFrame:Inverse() * goalCF
-		local _, ry, _ = diffCF:ToEulerAnglesXYZ()
-		ry = math.clamp(ry, -2.5, 2.5)
-		root.AssemblyAngularVelocity = root.CFrame:VectorToWorldSpace(Vector3.new(0, ry * 42, 0))
-	end
-end
-
-function startBodyLock()
-	if _bodyLockConn then
-		pcall(function() _bodyLockConn:Disconnect() end)
-		_bodyLockConn = nil
-	end
-	bodyLockEnabled = true
-	if type(St) == "table" then St.bodyLock = true end
-	local RS_ = RS or RunService or game:GetService("RunService")
-	_bodyLockConn = RS_.RenderStepped:Connect(function()
-		if not bodyLockEnabled then return end
-		if (_blSuppressCount or 0) > 0 then return end
-		_bodyLockTick()
-	end)
-end
-
-function stopBodyLock()
-	if _bodyLockConn then
-		pcall(function() _bodyLockConn:Disconnect() end)
-		_bodyLockConn = nil
-	end
-	bodyLockEnabled = false
-	if type(St) == "table" then St.bodyLock = false end
-	local c = LP.Character
-	local root = c and c:FindFirstChild("HumanoidRootPart")
-	if root then
-		root.AssemblyAngularVelocity = Vector3.zero
-		root.AssemblyLinearVelocity = Vector3.new(root.AssemblyLinearVelocity.X, -0.1, root.AssemblyLinearVelocity.Z)
-	end
-	local hum2 = c and c:FindFirstChildOfClass("Humanoid")
-	if hum2 then hum2.AutoRotate = true end
-end
-
--- Clean suppress (auto left/right / bat can pause lock)
-function _suppressBodyLock()
-	_blSuppressCount = (_blSuppressCount or 0) + 1
-	if _blSuppressCount == 1 and bodyLockEnabled then
-		_blWasEnabled = true
-		-- only disconnect loop, keep bodyLockEnabled true for restore
-		if _bodyLockConn then
-			pcall(function() _bodyLockConn:Disconnect() end)
-			_bodyLockConn = nil
-		end
-		if bodyLockSetVisual then pcall(bodyLockSetVisual, false) end
-		if _blRestoreTimer then
-			pcall(task.cancel, _blRestoreTimer)
-			_blRestoreTimer = nil
-		end
-		_blSmoothRestore = false
-	end
-end
-
-function _unsuppressBodyLock(delayed)
-	if (_blSuppressCount or 0) > 0 then
-		_blSuppressCount = _blSuppressCount - 1
-	end
-	if _blSuppressCount == 0 and _blWasEnabled then
-		_blWasEnabled = false
-		local function restore()
-			if bodyLockEnabled then
-				_blSmoothRestore = true
-				startBodyLock()
-				if bodyLockSetVisual then pcall(bodyLockSetVisual, true) end
-				task.delay(0.5, function() _blSmoothRestore = false end)
-			end
-			_blRestoreTimer = nil
-		end
-		if delayed then
-			_blRestoreTimer = task.delay(1, restore)
-		else
-			restore()
-		end
-	end
-end
-
-function setBodyLock(on)
-	if on then startBodyLock() else stopBodyLock() end
-	pcall(function() if saveCfg then saveCfg() end end)
-end
-
--- sync range from config when set
-function setBodyLockRange(v)
-	v = math.clamp(tonumber(v) or 20, 5, 100)
-	bodyLockRange = v
-	St.bodyLockRange = v
-	saveCfg()
-end
-
-
-----------------------------------------------------------------
--- UI: Panel tab + Auto Steal + InfJump mode on existing pages
-----------------------------------------------------------------
-task.defer(function()
-	-- Auto steal on Player page
-	if not pagePlayer then warn("[VisHub] pagePlayer nil") return end
-	section(pagePlayer, "* — AUTO STEAL", 20)
-	local function safeSetAS(on)
-		if type(setAutoSteal) == "function" then
-			setAutoSteal(on)
-		else
-			St.autoSteal = on and true or false
-		end
-	end
-	toggleNamed(pagePlayer, "Auto Steal", St.autoSteal == true, safeSetAS, 21, "autoSteal")
-	-- ver modes
-	local verRow = row(pagePlayer, 36, 22)
-	local vl = Instance.new("TextLabel")
-	vl.Size = UDim2.new(0.35, 0, 1, 0)
-	vl.Position = UDim2.new(0, 10, 0, 0)
-	vl.BackgroundTransparency = 1
-	vl.Text = "Version"
-	vl.TextColor3 = C.text
-	vl.TextSize = 12
-	vl.Font = Enum.Font.Gotham
-	vl.TextXAlignment = Enum.TextXAlignment.Left
-	vl.Parent = verRow
-	for i, name in ipairs({"V1", "V2", "V3"}) do
-		local b = Instance.new("TextButton")
-		b.Size = UDim2.new(0, 40, 0, 26)
-		b.Position = UDim2.new(1, -140 + (i - 1) * 44, 0.5, -13)
-		b.BackgroundColor3 = (St.stealVer == name) and C.accent or C.box
-		b.Text = name
-		b.TextColor3 = (St.stealVer == name) and Color3.fromRGB(30, 20, 30) or C.text
-		b.TextSize = 11
-		b.Font = Enum.Font.GothamBold
-		b.AutoButtonColor = false
-		b.Active = true
-		b.ZIndex = 40
-		b.Parent = verRow
-		Instance.new("UICorner", b).CornerRadius = UDim.new(0, 7)
-		local function pickVer()
-			St.stealVer = name
-			for _, ch in ipairs(verRow:GetChildren()) do
-				if ch:IsA("TextButton") then
-					local on = ch.Text == St.stealVer
-					ch.BackgroundColor3 = on and C.accent or C.box
-					ch.TextColor3 = on and Color3.fromRGB(30, 20, 30) or C.text
-				end
-			end
-			-- apply mode immediately (fix non-responsive V1/V2/V3)
-			selectedStealMode = (name == "V1") and "Normal" or "Semi"
-			if name == "V2" then autoStealV2Version = "V1" end
-			if name == "V3" then autoStealV2Version = "V2" end
-			if name == "V1" then selectedStealMode = "Normal" end
-			autoStealRadius = tonumber(St.stealRadius) or 60
-			if type(setAutoSteal) == "function" and St.autoSteal then
-				pcall(function() setAutoSteal(true) end)
-			elseif _G.VisSyncAutoSteal then
-				pcall(_G.VisSyncAutoSteal)
-			end
-			pcall(saveCfg)
-		end
-		b.MouseButton1Click:Connect(pickVer)
-		b.Activated:Connect(pickVer)
-	end
-	toggleNamed(pagePlayer, "Pause (chỉ khi bật)", St.stealPause == true, function(on)
-		St.stealPause = on and true or false
-		_G.VisStealPause = St.stealPause
-		if _G.VisSyncAutoSteal then pcall(_G.VisSyncAutoSteal) end
-		saveCfg()
-	end, 23, "stealPause")
-	-- radius box
-	local rr = row(pagePlayer, 36, 24)
-	local rl = Instance.new("TextLabel")
-	rl.Size = UDim2.new(0.5, 0, 1, 0)
-	rl.Position = UDim2.new(0, 10, 0, 0)
-	rl.BackgroundTransparency = 1
-	rl.Text = "Steal Radius"
-	rl.TextColor3 = C.text
-	rl.TextSize = 12
-	rl.Font = Enum.Font.Gotham
-	rl.TextXAlignment = Enum.TextXAlignment.Left
-	rl.Parent = rr
-	numBox(rr, UDim2.new(1, -70, 0.5, -12), 56, St.stealRadius, function(v)
-		St.stealRadius = v
-		saveCfg()
-	end)
-	-- force scroll size so AUTO STEAL is visible
-	pcall(function()
-		local lay = pagePlayer:FindFirstChildOfClass("UIListLayout")
-		if lay then
-			pagePlayer.CanvasSize = UDim2.new(0, 0, 0, lay.AbsoluteContentSize.Y + 40)
-		end
-	end)
-
-	-- InfJump mode row near inf jump if exists
-	section(pagePlayer, "* — INF JUMP MODE", 217)
-	local ij = row(pagePlayer, 36, 218)
-	for i, name in ipairs({"hold", "manual"}) do
-		local b = Instance.new("TextButton")
-		b.Size = UDim2.new(0, 70, 0, 26)
-		b.Position = UDim2.new(0, 12 + (i - 1) * 80, 0.5, -13)
-		b.BackgroundColor3 = (St.infJumpMode == name) and C.accent or C.box
-		b.Text = name
-		b.TextColor3 = (St.infJumpMode == name) and Color3.fromRGB(30, 20, 30) or C.text
-		b.TextSize = 11
-		b.Font = Enum.Font.GothamBold
-		b.Parent = ij
-		Instance.new("UICorner", b).CornerRadius = UDim.new(0, 7)
-		b.MouseButton1Click:Connect(function()
-			setInfJumpMode(name)
-			for _, ch in ipairs(ij:GetChildren()) do
-				if ch:IsA("TextButton") then
-					local on = ch.Text == St.infJumpMode
-					ch.BackgroundColor3 = on and C.accent or C.box
-					ch.TextColor3 = on and Color3.fromRGB(30, 20, 30) or C.text
-				end
-			end
-		end)
-	end
-
-	setTab("Panel")
-end)
-
-print("[VisHub Ext] Panel TP | AutoSteal V1/V2 + bar | InfJump hold/manual | ToolAim ON")
-
-
-
--- ============================================================
--- TP TO BEST (Chilli style) — equip carpet + TP best brainrot
--- ============================================================
-function parseGenValue(text)
-	if not text then return 0 end
-	text = tostring(text):gsub(",", ""):gsub("%s", ""):upper()
-	-- $5M/s  $1.2B  850M  7M/S  14.8B
-	local best = 0
-	for num, suffix in text:gmatch("([%d%.]+)([KMBTQA]?)") do
-		local n = tonumber(num)
-		if n then
-			local mul = 1
-			if suffix == "K" then mul = 1e3
-			elseif suffix == "M" then mul = 1e6
-			elseif suffix == "B" then mul = 1e9
-			elseif suffix == "T" then mul = 1e12
-			elseif suffix == "Q" or suffix == "QA" then mul = 1e15
-			end
-			local v = n * mul
-			if v > best then best = v end
-		end
-	end
-	return best
-end
-
-function isStealAction(prompt)
-	if not prompt or not prompt:IsA("ProximityPrompt") then return false end
-	local act = tostring(prompt.ActionText or ""):lower()
-	local obj = tostring(prompt.ObjectText or ""):lower()
-	-- EN + ES + VI (Cướp)
-	if act:find("steal") or act:find("robar") or act:find("cướp") or act:find("cuop")
-		or act:find("grab") or act:find("take") then
-		return true
-	end
-	if obj:find("steal") or obj:find("cướp") or obj:find("cuop") or obj:find("robar") then
-		return true
-	end
-	-- unicode normalize fallback
-	local actRaw = tostring(prompt.ActionText or "")
-	if actRaw:find("ướp") or actRaw:find("Cướp") or actRaw:find("cướp") then return true end
-	return false
-end
-
-function isOwnPlot(plot)
-	if not plot then return false end
-	local sign = plot:FindFirstChild("PlotSign") or plot:FindFirstChild("Sign")
-	if sign then
-		for _, d in ipairs(sign:GetDescendants()) do
-			if d:IsA("BillboardGui") and (d.Name:lower():find("your") or d.Enabled) then
-				if d.Name:lower():find("your") or d.Name:lower():find("base") then
-					-- check owner attribute
-				end
-			end
-		end
-	end
-	-- attribute / string value owner
-	local ok, owner = pcall(function()
-		return plot:GetAttribute("Owner") or plot:GetAttribute("OwnerId")
-	end)
-	if ok and owner and tostring(owner) == tostring(LP.UserId) then return true end
-	local ok2, ownerName = pcall(function()
-		return plot:GetAttribute("OwnerName")
-	end)
-	if ok2 and ownerName and tostring(ownerName) == LP.Name then return true end
-	-- YourBase billboard
-	for _, d in ipairs(plot:GetDescendants()) do
-		if d:IsA("BillboardGui") and d.Name == "YourBase" and d.Enabled then
-			return true
-		end
-	end
-	return false
-end
-
-function findBestBrainrot()
-	local roots = {}
-	for _, name in ipairs({"Plots", "plots", "Bases", "Animals", "Pets", "Map"}) do
-		local f = workspace:FindFirstChild(name)
-		if f then table.insert(roots, f) end
-	end
-	if #roots == 0 then table.insert(roots, workspace) end
-
-	local bestPrompt, bestVal, bestPart = nil, -1, nil
-	local function consider(d)
-		if not d:IsA("ProximityPrompt") then return end
-		if not isStealAction(d) then return end
-		if d.Enabled == false then return end
-		-- skip own character
-		if LP.Character and d:IsDescendantOf(LP.Character) then return end
-		local part = d.Parent
-		if not part then return end
-		-- climb out of own plot
-		local plot = d
-		for _ = 1, 8 do
-			if not plot.Parent or plot.Parent == workspace then break end
-			plot = plot.Parent
-			if isOwnPlot(plot) then return end
-		end
-		local basePart = part:IsA("BasePart") and part
-			or (part:IsA("Model") and part:FindFirstChildWhichIsA("BasePart", true))
-			or part:FindFirstAncestorWhichIsA("BasePart")
-		if not basePart then return end
-		local val = 0
-		local searchRoot = part:IsA("Model") and part or part.Parent
-		if searchRoot then
-			for _, lab in ipairs(searchRoot:GetDescendants()) do
-				if lab:IsA("TextLabel") or lab:IsA("TextButton") then
-					local t = lab.Text or ""
-					if t:find("%$") or t:find("/s") or t:find("/S") or t:upper():find("[KMBT]") then
-						local v = parseGenValue(t)
-						if v > val then val = v end
-					end
-				end
-			end
-		end
-		local v2 = parseGenValue(d.ObjectText)
-		if v2 > val then val = v2 end
-		-- BillboardGui near prompt
-		for _, bb in ipairs(workspace:GetDescendants()) do
-			if bb:IsA("BillboardGui") and bb.Adornee then
-				local okd, dist = pcall(function()
-					return (bb.Adornee.Position - basePart.Position).Magnitude
-				end)
-				if okd and dist and dist < 12 then
-					for _, lab in ipairs(bb:GetDescendants()) do
-						if lab:IsA("TextLabel") then
-							local v = parseGenValue(lab.Text)
-							if v > val then val = v end
-						end
-					end
-				end
-			end
-		end
-		if val > bestVal or (val == bestVal and bestVal < 0) then
-			bestVal = val
-			bestPrompt = d
-			bestPart = basePart
-		elseif bestPrompt == nil then
-			bestVal = val
-			bestPrompt = d
-			bestPart = basePart
-		end
-	end
-
-	for _, root in ipairs(roots) do
-		if root == workspace then
-			-- limit scan
-			for _, d in ipairs(workspace:GetDescendants()) do
-				if d:IsA("ProximityPrompt") then consider(d) end
-			end
-		else
-			for _, plot in ipairs(root:GetChildren()) do
-				if not isOwnPlot(plot) then
-					for _, d in ipairs(plot:GetDescendants()) do
-						consider(d)
-					end
-				end
-			end
-		end
-	end
-	return bestPart, bestVal, bestPrompt
 end
 
 function equipFlyingCarpet(char)
@@ -5712,7 +4700,6 @@ print("[VisHub] TP TO BEST (Chilli) ready | key B | nút TP BEST")
 
 
 -- ============================================================
--- [STABILIZED] Dynamic Auto Steal reload disabled; internal functions remain available.
 -- Remote control panel intentionally removed.
 -- It contained a hard-coded API key and commands capable of kicking, freezing,
 -- or deliberately lagging the client.
