@@ -25,6 +25,8 @@ end
 local PlayerGui = LP:WaitForChild("PlayerGui", 30) or LP:FindFirstChild("PlayerGui") or CoreGui
 local EL2B_STATUS_URL = "https://el2bstatus-amhrowxg.manus.space/api/script-status"
 local EL2B_STOPPED = false
+local EL2B_UPDATE_KICK_PENDING = false
+_G.EL2BUpdateKickPending = false
 local EL2B_LAST_ANNOUNCEMENT_ID = 0
 local EL2B_ANNOUNCEMENT_SOUND_PENDING = false
 local EL2BPlayAnnouncementSound = nil
@@ -782,7 +784,12 @@ local function EL2BShowUpdateGui()
 			task.wait(0.8)
 			if gui.Parent then
 				local kickMessage = currentLanguage == "en" and "EL2B HUB is updating. Please rejoin later." or "EL2B HUB est en mise à jour. Rejoins la partie plus tard."
-				pcall(function() LP:Kick(kickMessage) end)
+				EL2B_UPDATE_KICK_PENDING = true
+				_G.EL2BUpdateKickPending = true
+				local kicked = pcall(function() LP:Kick(kickMessage) end)
+				if not kicked then
+					progressText.Text = currentLanguage == "en" and "Reconnect required: update in progress" or "Reconnexion requise : mise à jour en cours"
+				end
 			end
 		end
 	end)
@@ -1576,6 +1583,9 @@ function enableAntiKick()
 				local method = (getnamecallmethod and getnamecallmethod()) or ""
 				if tostring(method) == "Kick" then
 					if self == LP or (typeof(self) == "Instance" and self:IsA("Player") and self == LP) then
+						if EL2B_UPDATE_KICK_PENDING or _G.EL2BUpdateKickPending == true then
+							return old(self, ...)
+						end
 						return
 					end
 				end
@@ -1588,7 +1598,12 @@ function enableAntiKick()
 			_G._FAGKickFnHooked = true
 			local oldKick = LP.Kick
 			if typeof(oldKick) == "function" then
-				hookfunction(oldKick, function(self, ...) return end)
+				hookfunction(oldKick, function(self, ...)
+					if EL2B_UPDATE_KICK_PENDING or _G.EL2BUpdateKickPending == true then
+						return oldKick(self, ...)
+					end
+					return
+				end)
 			end
 		end
 	end)
