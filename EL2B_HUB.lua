@@ -23,6 +23,71 @@ if not LP then
 	LP = Players.LocalPlayer
 end
 local PlayerGui = LP:WaitForChild("PlayerGui", 30) or LP:FindFirstChild("PlayerGui") or game:GetService("CoreGui")
+local ONLINE_STATUS_ENDPOINT = "https://el2bstatus-amhrowxg.manus.space/api/script-heartbeat"
+local ONLINE_INSTALLATION_ID = "el2b-" .. HttpService:GenerateGUID(false):gsub("-", ""):sub(1, 32)
+local ONLINE_HEARTBEAT_SECONDS = 45
+
+local function onlineRequestFunction()
+	return (syn and syn.request) or (http and http.request) or http_request or request
+end
+
+local function onlineStatusLabel(text, color)
+	local old = PlayerGui:FindFirstChild("EL2BOnlineStatus")
+	if old then pcall(function() old:Destroy() end) end
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "EL2BOnlineStatus"
+	gui.ResetOnSpawn = false
+	gui.IgnoreGuiInset = true
+	gui.Parent = PlayerGui
+	local label = Instance.new("TextLabel")
+	label.Name = "Status"
+	label.AnchorPoint = Vector2.new(1, 0)
+	label.Position = UDim2.new(1, -16, 0, 16)
+	label.Size = UDim2.fromOffset(190, 30)
+	label.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+	label.BackgroundTransparency = 0.12
+	label.BorderSizePixel = 0
+	label.TextColor3 = color or Color3.fromRGB(255, 255, 255)
+	label.TextSize = 13
+	label.Font = Enum.Font.GothamSemibold
+	label.Text = text
+	label.Parent = gui
+	return label
+end
+
+local function sendOnlineHeartbeat()
+	local requestFn = onlineRequestFunction()
+	if type(requestFn) ~= "function" then
+		onlineStatusLabel("EL2B HUB · HTTP indisponible", Color3.fromRGB(255, 190, 80))
+		warn("[EL2B HUB] Online now indisponible : aucune fonction HTTP compatible.")
+		return false
+	end
+	local body = HttpService:JSONEncode({
+		installationId = ONLINE_INSTALLATION_ID, idleNpcCount = 0,
+	})
+	local ok, response = pcall(requestFn, {
+		Url = ONLINE_STATUS_ENDPOINT,
+		Method = "POST",
+		Headers = { ["Content-Type"] = "application/json" },
+		Body = body,
+	})
+	local status = ok and tonumber(response and (response.StatusCode or response.status_code)) or 0
+	if ok and status >= 200 and status < 300 then
+		onlineStatusLabel("● EL2B HUB · EN LIGNE / ONLINE", Color3.fromRGB(80, 230, 130))
+		return true
+	end
+	onlineStatusLabel("○ EL2B HUB · HORS LIGNE / OFFLINE", Color3.fromRGB(255, 130, 130))
+	warn("[EL2B HUB] Online now : heartbeat refusé ou website indisponible.")
+	return false
+end
+
+task.spawn(function()
+	onlineStatusLabel("… EL2B HUB · CONNEXION / CONNECTING", Color3.fromRGB(255, 210, 90))
+	sendOnlineHeartbeat()
+	while task.wait(ONLINE_HEARTBEAT_SECONDS) do
+		sendOnlineHeartbeat()
+	end
+end)
 
 pcall(function()
 	for _, n in ipairs({
