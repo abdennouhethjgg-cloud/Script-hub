@@ -4646,152 +4646,21 @@ function findStealPrompt()
 end
 
 function fireSteal(prompt)
-	if not prompt then return end
-	if not StealA.data[prompt] then
-		StealA.data[prompt] = { hold = {}, trigger = {} }
-		if getconnections then
-			pcall(function()
-				for _, c in ipairs(getconnections(prompt.PromptButtonHoldBegan) or {}) do
-					if c.Function then table.insert(StealA.data[prompt].hold, c.Function) end
-				end
-				for _, c in ipairs(getconnections(prompt.Triggered) or {}) do
-					if c.Function then table.insert(StealA.data[prompt].trigger, c.Function) end
-				end
-			end)
+	-- Assistance manuelle : aucune API d’exécuteur n’est appelée.
+	if not prompt or not prompt.Parent then return false end
+	local now = tick()
+	if StealA.lastHintPrompt == prompt and now - (StealA.lastHintAt or 0) < 1 then return false end
+	StealA.lastHintPrompt = prompt
+	StealA.lastHintAt = now
+	pcall(function()
+		if _G.VisStealBar and _G.VisStealBar.Set then
+			_G.VisStealBar.Set(0, "READY · USE PROMPT")
 		end
-	end
-	local data = StealA.data[prompt]
-	for _, fn in ipairs(data.hold) do task.spawn(fn) end
-	for _, fn in ipairs(data.trigger) do task.spawn(fn) end
-	if #data.hold == 0 and #data.trigger == 0 and fireproximityprompt then
-		pcall(function() fireproximityprompt(prompt) end)
-	end
-end
-
-function executeStealV1(prompt, part)
-	if StealA.busy or not prompt then return end
-	StealA.busy = true
-	local dur = St.stealDuration or 1.4
-	local pauseOn = St.stealPause == true
-	local pausePct = (St.stealPausePct or 75) / 100
-	local root = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-	local function stillInRange()
-		if not prompt or not prompt.Parent or not part or not part.Parent then return false end
-		local r = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-		if not r then return false end
-		return (r.Position - part.Position).Magnitude <= (St.stealRadius or 60)
-	end
-	local function closeEnough()
-		local r = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-		if not r or not part then return false end
-		return (r.Position - part.Position).Magnitude <= 3
-	end
-
-	task.spawn(function()
-		-- hold begin
-		for _, fn in ipairs((StealA.data[prompt] and StealA.data[prompt].hold) or {}) do
-			task.spawn(fn)
-		end
-		if fireproximityprompt then pcall(function() fireproximityprompt(prompt, dur) end) end
-
-		if pauseOn then
-			-- 0 → pausePct, wait close, then → 100%
-			local t0 = tick()
-			while tick() - t0 < dur * pausePct do
-				if not StealA.enabled or not stillInRange() then
-					_G.VisStealBar.Reset()
-					StealA.busy = false
-					return
-				end
-				local p = (tick() - t0) / dur
-				_G.VisStealBar.Set(math.clamp(p, 0, pausePct), "STEALING")
-				task.wait()
-			end
-			_G.VisStealBar.Set(pausePct, "WAIT")
-			-- wait until close
-			while StealA.enabled and stillInRange() and not closeEnough() do
-				_G.VisStealBar.Set(pausePct, "WAIT")
-				task.wait(0.05)
-			end
-			if not StealA.enabled or not stillInRange() then
-				_G.VisStealBar.Reset()
-				StealA.busy = false
-				return
-			end
-			local t1 = tick()
-			local remain = dur * (1 - pausePct)
-			while tick() - t1 < remain do
-				if not StealA.enabled or not stillInRange() then
-					_G.VisStealBar.Reset()
-					StealA.busy = false
-					return
-				end
-				local p = pausePct + (tick() - t1) / remain * (1 - pausePct)
-				_G.VisStealBar.Set(p, "STEALING")
-				task.wait()
-			end
-		else
-			-- continuous 0-100 loop while in radius
-			while StealA.enabled and stillInRange() do
-				local t0 = tick()
-				while tick() - t0 < dur do
-					if not StealA.enabled or not stillInRange() then
-						_G.VisStealBar.Reset()
-						StealA.busy = false
-						return
-					end
-					_G.VisStealBar.Set((tick() - t0) / dur, "STEALING")
-					task.wait()
-				end
-				_G.VisStealBar.Set(1, "SUCCESS")
-				fireSteal(prompt)
-				_G.VisStealBar.Reset() -- 100% → 0 ngay, loop tiếp trong radius
-			end
-			StealA.busy = false
-			return
-		end
-		_G.VisStealBar.Set(1, "SUCCESS")
-		fireSteal(prompt)
-		_G.VisStealBar.Reset() -- 100% → 0 ngay
-		StealA.busy = false
-		-- tiếp tục nếu còn trong radius (heartbeat startAutoSteal sẽ pick lại)
 	end)
+	return false
 end
-
-function executeStealV2(prompt, part)
-	-- V2: hold full then trigger when in range (simpler BloodHounds-like)
-	if StealA.busy or not prompt then return end
-	StealA.busy = true
-	local dur = St.stealDuration or 1.4
-	task.spawn(function()
-		local t0 = tick()
-		while tick() - t0 < dur do
-			if not StealA.enabled then
-				_G.VisStealBar.Reset()
-				StealA.busy = false
-				return
-			end
-			local r = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-			if not r or not part or not part.Parent then
-				_G.VisStealBar.Reset()
-				StealA.busy = false
-				return
-			end
-			if (r.Position - part.Position).Magnitude > (St.stealRadius or 60) then
-				_G.VisStealBar.Reset()
-				StealA.busy = false
-				return
-			end
-			_G.VisStealBar.Set((tick() - t0) / dur, "STEALING")
-			task.wait()
-		end
-		_G.VisStealBar.Set(1, "SUCCESS")
-		fireSteal(prompt)
-		_G.VisStealBar.Reset() -- 100% → 0 ngay
-		StealA.busy = false
-	end)
-end
-
+-- Les anciens exécuteurs V1/V2 ont été retirés : ils dépendaient d’APIs d’exécuteur non standard.
+-- Le système conserve la détection et laisse le joueur utiliser le ProximityPrompt Roblox.
 function startAutoSteal()
 	StealA.enabled = true
 	if StealA.conn then return end
@@ -4799,11 +4668,8 @@ function startAutoSteal()
 		if not StealA.enabled or StealA.busy then return end
 		local prompt, part = findStealPrompt()
 		if prompt then
-			if St.stealVer == "V2" then
-				executeStealV2(prompt, part)
-			else
-				executeStealV1(prompt, part)
-			end
+			-- Le joueur active lui-même le ProximityPrompt Roblox détecté.
+			fireSteal(prompt)
 		end
 	end)
 end
