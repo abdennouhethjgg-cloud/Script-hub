@@ -23,6 +23,30 @@ if not LP then
 	LP = Players.LocalPlayer
 end
 local PlayerGui = LP:WaitForChild("PlayerGui", 30) or LP:FindFirstChild("PlayerGui") or game:GetService("CoreGui")
+local VIS_STARTUP_GUI
+pcall(function()
+	local startupParent = PlayerGui
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "VisHubStartupSignal"
+	gui.ResetOnSpawn = false
+	gui.DisplayOrder = 999999
+	gui.Parent = startupParent
+	local label = Instance.new("TextLabel")
+	label.Name = "Status"
+	label.AnchorPoint = Vector2.new(0.5, 0)
+	label.Position = UDim2.new(0.5, 0, 0, 18)
+	label.Size = UDim2.new(1, -24, 0, 34)
+	label.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+	label.BorderSizePixel = 1
+	label.BorderColor3 = Color3.fromRGB(255, 20, 147)
+	label.Font = Enum.Font.GothamBold
+	label.Text = "VIS HUB · démarrage / starting..."
+	label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	label.TextSize = 13
+	label.TextWrapped = true
+	label.Parent = gui
+	VIS_STARTUP_GUI = gui
+end)
 
 pcall(function()
 	for _, n in ipairs({
