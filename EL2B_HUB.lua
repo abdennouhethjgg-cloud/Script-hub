@@ -128,70 +128,57 @@ local function EL2BShowEnvironmentCheck()
 	local report = EL2BGetEnvironmentReport()
 	local allCore = report.loadstring and (report.httpGet or report.request) and report.json
 	local text = EL2BFormatEnvironmentReport(report)
-	local shown = pcall(function()
-			local old = PlayerGui:FindFirstChild("EL2BEnvironmentCheck") or CoreGui:FindFirstChild("EL2BEnvironmentCheck")
-			if old then old:Destroy() end
-			local gui = Instance.new("ScreenGui")
-			gui.Name = "EL2BEnvironmentCheck"
-			gui.ResetOnSpawn = false
-			gui.IgnoreGuiInset = true
-			gui.DisplayOrder = 100004
-			gui.Parent = PlayerGui
-			local panel = Instance.new("Frame")
-			panel.Name = "EnvironmentPanel"
-			panel.AnchorPoint = Vector2.new(0.5, 1)
-			panel.Position = UDim2.new(0.5, 0, 1, -70)
-			panel.Size = UDim2.new(1, -32, 0, 198)
-			panel.BackgroundColor3 = allCore and Color3.fromRGB(18, 42, 35) or Color3.fromRGB(56, 22, 38)
-			panel.BackgroundTransparency = 0.06
-			panel.BorderSizePixel = 0
-			panel.Parent = gui
-			local reportLabel = Instance.new("TextLabel")
-			reportLabel.Name = "EnvironmentReport"
-			reportLabel.BackgroundTransparency = 1
-			reportLabel.Position = UDim2.fromOffset(14, 12)
-			reportLabel.Size = UDim2.new(1, -28, 1, -62)
-			reportLabel.Font = Enum.Font.Code
-			reportLabel.Text = text
-			reportLabel.TextColor3 = allCore and Color3.fromRGB(167, 255, 205) or Color3.fromRGB(255, 176, 191)
-			reportLabel.TextSize = 12
-			reportLabel.TextWrapped = true
-			reportLabel.TextXAlignment = Enum.TextXAlignment.Left
-			reportLabel.TextYAlignment = Enum.TextYAlignment.Top
-			reportLabel.Parent = panel
-			local rerun = Instance.new("TextButton")
-			rerun.Name = "RerunEnvironmentCheck"
-			rerun.AnchorPoint = Vector2.new(1, 1)
-			rerun.Position = UDim2.new(1, -14, 1, -12)
-			rerun.Size = UDim2.fromOffset(188, 34)
-			rerun.BackgroundColor3 = allCore and Color3.fromRGB(46, 145, 101) or Color3.fromRGB(133, 42, 78)
-			rerun.BorderSizePixel = 0
-			rerun.Font = Enum.Font.GothamBold
-			rerun.Text = "Relancer le diagnostic / Re-run check"
-			rerun.TextColor3 = Color3.fromRGB(255, 255, 255)
-			rerun.TextSize = 11
-			rerun.TextWrapped = true
-			rerun.AutoButtonColor = true
-			rerun.Parent = panel
-			local buttonCorner = Instance.new("UICorner")
-			buttonCorner.CornerRadius = UDim.new(0, 8)
-			buttonCorner.Parent = rerun
-			local buttonStroke = Instance.new("UIStroke")
-			buttonStroke.Color = allCore and Color3.fromRGB(131, 255, 200) or Color3.fromRGB(255, 125, 166)
-			buttonStroke.Transparency = 0.25
-			buttonStroke.Parent = rerun
-			rerun.Activated:Connect(function()
-				EL2B_ENVIRONMENT_REPORT = EL2BShowEnvironmentCheck()
-			end)
-			local corner = Instance.new("UICorner")
-			corner.CornerRadius = UDim.new(0, 12)
-			corner.Parent = panel
-			local stroke = Instance.new("UIStroke")
-			stroke.Color = allCore and Color3.fromRGB(88, 255, 174) or Color3.fromRGB(255, 85, 137)
-			stroke.Thickness = 1.5
-			stroke.Parent = panel
-			task.delay(10, function() if gui.Parent then gui:Destroy() end end)
+	local function createGui(parent)
+		local old = parent:FindFirstChild("EL2BEnvironmentCheck")
+		if old then old:Destroy() end
+		local gui = Instance.new("ScreenGui")
+		gui.Name = "EL2BEnvironmentCheck"
+		gui.ResetOnSpawn = false
+		gui.DisplayOrder = 100004
+		gui.Parent = parent
+		local frame = Instance.new("Frame")
+		frame.Name = "EnvironmentPanel"
+		frame.AnchorPoint = Vector2.new(0.5, 1)
+		frame.Position = UDim2.new(0.5, 0, 1, -24)
+		frame.Size = UDim2.new(1, -24, 0, 190)
+		frame.BackgroundColor3 = allCore and Color3.fromRGB(18, 42, 35) or Color3.fromRGB(56, 22, 38)
+		frame.BorderSizePixel = 1
+		frame.BorderColor3 = allCore and Color3.fromRGB(88, 255, 174) or Color3.fromRGB(255, 85, 137)
+		frame.Parent = gui
+		local label = Instance.new("TextLabel")
+		label.Name = "EnvironmentReport"
+		label.BackgroundTransparency = 1
+		label.Position = UDim2.fromOffset(10, 8)
+		label.Size = UDim2.new(1, -20, 1, -52)
+		label.Font = Enum.Font.Code
+		label.Text = text
+		label.TextColor3 = allCore and Color3.fromRGB(167, 255, 205) or Color3.fromRGB(255, 176, 191)
+		label.TextSize = 11
+		label.TextWrapped = true
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.TextYAlignment = Enum.TextYAlignment.Top
+		label.Parent = frame
+		local button = Instance.new("TextButton")
+		button.Name = "RerunEnvironmentCheck"
+		button.Position = UDim2.new(0, 10, 1, -40)
+		button.Size = UDim2.new(1, -20, 0, 30)
+		button.BackgroundColor3 = allCore and Color3.fromRGB(46, 145, 101) or Color3.fromRGB(133, 42, 78)
+		button.BorderSizePixel = 0
+		button.Font = Enum.Font.GothamBold
+		button.Text = "Relancer le diagnostic / Re-run check"
+		button.TextColor3 = Color3.fromRGB(255, 255, 255)
+		button.TextSize = 11
+		button.TextWrapped = true
+		button.Parent = frame
+		button.Activated:Connect(function()
+			EL2B_ENVIRONMENT_REPORT = EL2BShowEnvironmentCheck()
 		end)
+		task.delay(10, function() if gui.Parent then gui:Destroy() end end)
+	end
+	local shown = pcall(function() createGui(PlayerGui) end)
+	if not shown then
+		shown = pcall(function() createGui(CoreGui) end)
+	end
 	if not shown then
 		warn("[EL2B HUB] " .. text)
 	end
