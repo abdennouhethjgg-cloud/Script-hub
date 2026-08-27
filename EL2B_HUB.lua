@@ -25,6 +25,7 @@ end
 local PlayerGui = LP:WaitForChild("PlayerGui", 30) or LP:FindFirstChild("PlayerGui") or CoreGui
 local EL2B_STATUS_URL = "https://el2bstatus-amhrowxg.manus.space/api/script-status"
 local EL2B_STOPPED = false
+local EL2B_AUTO_KICK_ON_UPDATE = true
 local EL2B_UPDATE_KICK_PENDING = false
 _G.EL2BUpdateKickPending = false
 local EL2B_LAST_ANNOUNCEMENT_ID = 0
@@ -783,12 +784,17 @@ local function EL2BShowUpdateGui()
 		if gui.Parent then
 			task.wait(0.8)
 			if gui.Parent then
-				local kickMessage = currentLanguage == "en" and "EL2B HUB is updating. Please rejoin later." or "EL2B HUB est en mise à jour. Rejoins la partie plus tard."
-				EL2B_UPDATE_KICK_PENDING = true
-				_G.EL2BUpdateKickPending = true
-				local kicked = pcall(function() LP:Kick(kickMessage) end)
-				if not kicked then
-					progressText.Text = currentLanguage == "en" and "Reconnect required: update in progress" or "Reconnexion requise : mise à jour en cours"
+				if EL2B_AUTO_KICK_ON_UPDATE == false then
+					progressText.Text = currentLanguage == "en" and "Update ready · Automatic kick disabled" or "Mise à jour prête · Kick automatique désactivé"
+					copy.Text = currentLanguage == "en" and "The script remains paused for this update.\nYou can close this panel manually." or "Le script reste en pause pour cette mise à jour.\nTu peux fermer cette fenêtre manuellement."
+				else
+					local kickMessage = currentLanguage == "en" and "EL2B HUB is updating. Please rejoin later." or "EL2B HUB est en mise à jour. Rejoins la partie plus tard."
+					EL2B_UPDATE_KICK_PENDING = true
+					_G.EL2BUpdateKickPending = true
+					local kicked = pcall(function() LP:Kick(kickMessage) end)
+					if not kicked then
+						progressText.Text = currentLanguage == "en" and "Reconnect required: update in progress" or "Reconnexion requise : mise à jour en cours"
+					end
 				end
 			end
 		end
@@ -884,9 +890,10 @@ local function EL2BShowUpdateGui()
 		camera:GetPropertyChangedSignal("ViewportSize"):Connect(applyCompactLayout)
 	end
 end
-local function EL2BStopLocally()
-	if EL2B_STOPPED then return end
-	EL2B_STOPPED = true
+	local function EL2BStopLocally(autoKickOnUpdate)
+		if EL2B_STOPPED then return end
+		EL2B_AUTO_KICK_ON_UPDATE = autoKickOnUpdate ~= false
+		EL2B_STOPPED = true
 	_G.EL2BGlobalStop = true
 	for _, name in ipairs({ "VisHubFullMenu", "VisHubFullMini", "VisHubModeBar", "VisHubActionButtons", "EL2BHelperGui", "EL2BProfileGui", "EL2BAnnouncementGui" }) do
 		local gui = PlayerGui:FindFirstChild(name) or CoreGui:FindFirstChild(name)
@@ -898,7 +905,7 @@ end
 local initialRemoteState = EL2BReadRemoteState()
 if initialRemoteState then
 	if initialRemoteState.announcement then EL2BShowAnnouncementGui(initialRemoteState.announcement) end
-	if initialRemoteState.enabled == false then EL2BStopLocally(); return end
+	if initialRemoteState.enabled == false then EL2BStopLocally(initialRemoteState.autoKickOnUpdate); return end
 end
 task.spawn(function()
 	while not EL2B_STOPPED do
@@ -906,7 +913,7 @@ task.spawn(function()
 		local remoteState = EL2BReadRemoteState()
 		if remoteState then
 			if remoteState.announcement then EL2BShowAnnouncementGui(remoteState.announcement) end
-			if remoteState.enabled == false then EL2BStopLocally(); break end
+			if remoteState.enabled == false then EL2BStopLocally(remoteState.autoKickOnUpdate); break end
 		end
 	end
 end)
