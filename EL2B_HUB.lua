@@ -647,6 +647,67 @@ local function EL2BShowUpdateGui()
 	close.TextSize = 20
 	close.Parent = card
 	close.Activated:Connect(function() gui:Destroy() end)
+	local compactLayout = false
+	local camera = workspace.CurrentCamera
+	local function applyCompactLayout()
+		local viewport = camera and camera.ViewportSize or Vector2.new(800, 600)
+		local shouldCompact = viewport.X <= 650 or viewport.Y <= 500
+		compactLayout = shouldCompact
+		local scale = shouldCompact and 0.86 or 1
+		card.Size = UDim2.new(1, shouldCompact and -24 or -36, 0, shouldCompact and 190 or 220)
+		sizeConstraint.MinSize = Vector2.new(shouldCompact and 220 or 240, shouldCompact and 190 or 220)
+		sizeConstraint.MaxSize = Vector2.new(shouldCompact and 340 or 340, shouldCompact and 190 or 220)
+		halo.Size = UDim2.new(1, shouldCompact and -18 or -26, 0, shouldCompact and 200 or 230)
+		haloCorner.CornerRadius = UDim.new(0, shouldCompact and 14 or 17)
+		cardCorner.CornerRadius = UDim.new(0, shouldCompact and 14 or 16)
+		backdropCorner.CornerRadius = UDim.new(0, shouldCompact and 12 or 14)
+		cardStroke.Thickness = shouldCompact and 1.25 or 1.5
+		title.Position = UDim2.fromOffset(shouldCompact and 14 or 18, shouldCompact and 11 or 14)
+		title.Size = UDim2.new(1, shouldCompact and -96 or -112, 0, shouldCompact and 21 or 24)
+		title.TextSize = shouldCompact and 13 or 15
+		copy.Position = UDim2.fromOffset(shouldCompact and 14 or 18, shouldCompact and 35 or 42)
+		copy.Size = UDim2.new(1, shouldCompact and -64 or -78, 0, shouldCompact and 38 or 44)
+		copy.TextSize = shouldCompact and 10 or 12
+		member.Position = UDim2.fromOffset(shouldCompact and 52 or 64, shouldCompact and 80 or 102)
+		member.Size = UDim2.new(1, shouldCompact and -126 or -154, 0, 17)
+		member.TextSize = shouldCompact and 10 or 11
+		gameLabel.Position = UDim2.fromOffset(shouldCompact and 52 or 64, shouldCompact and 98 or 122)
+		gameLabel.Size = UDim2.new(1, shouldCompact and -126 or -154, 0, 17)
+		gameLabel.TextSize = shouldCompact and 10 or 11
+		gameIcon.Position = UDim2.fromOffset(shouldCompact and 14 or 18, shouldCompact and 80 or 102)
+		gameIcon.Size = UDim2.fromOffset(shouldCompact and 28 or 34, shouldCompact and 28 or 34)
+		gameIconCorner.CornerRadius = UDim.new(0, shouldCompact and 7 or 9)
+		profile.Position = UDim2.new(1, shouldCompact and -16 or -22, 0, shouldCompact and 82 or 100)
+		profile.Size = UDim2.fromOffset(shouldCompact and 52 or 64, shouldCompact and 52 or 64)
+		avatarRetry.Position = UDim2.new(1, shouldCompact and -70 or -94, 0, shouldCompact and 84 or 104)
+		avatarRetry.Size = UDim2.fromOffset(shouldCompact and 20 or 24, shouldCompact and 20 or 24)
+		avatarRetry.TextSize = shouldCompact and 13 or 16
+		statusDot.Position = UDim2.new(1, shouldCompact and -11 or -16, 0, shouldCompact and 128 or 150)
+		statusDot.Size = UDim2.fromOffset(shouldCompact and 13 or 16, shouldCompact and 13 or 16)
+		statusLabel.Position = UDim2.fromOffset(shouldCompact and 52 or 64, shouldCompact and 124 or 146)
+		statusLabel.Size = UDim2.new(1, shouldCompact and -126 or -154, 0, 17)
+		statusLabel.TextSize = shouldCompact and 10 or 11
+		progressTrack.Position = UDim2.fromOffset(shouldCompact and 14 or 18, shouldCompact and 145 or 170)
+		progressTrack.Size = UDim2.new(1, shouldCompact and -126 or -154, 0, 6)
+		progressText.Position = UDim2.fromOffset(shouldCompact and 14 or 18, shouldCompact and 156 or 182)
+		progressText.Size = UDim2.new(1, shouldCompact and -126 or -154, 0, shouldCompact and 26 or 32)
+		progressText.TextSize = shouldCompact and 9 or 10
+		languageButton.Position = UDim2.new(1, shouldCompact and -56 or -66, 0, shouldCompact and 10 or 12)
+		languageButton.Size = UDim2.fromOffset(shouldCompact and 38 or 44, shouldCompact and 24 or 28)
+		languageButton.TextSize = shouldCompact and 10 or 11
+		haloToggle.Position = UDim2.new(1, shouldCompact and -12 or -18, 0, shouldCompact and 10 or 14)
+		haloToggle.Size = UDim2.fromOffset(shouldCompact and 26 or 30, shouldCompact and 22 or 24)
+		close.Position = UDim2.new(1, shouldCompact and -7 or -10, 0, shouldCompact and 6 or 8)
+		close.Size = UDim2.fromOffset(shouldCompact and 22 or 26, shouldCompact and 22 or 26)
+		close.TextSize = shouldCompact and 18 or 20
+		if shouldCompact then
+			progressText.Text = currentLanguage == "en" and "Compact mode · update in progress" or "Mode compact · mise à jour en cours"
+		end
+	end
+	applyCompactLayout()
+	if camera then
+		camera:GetPropertyChangedSignal("ViewportSize"):Connect(applyCompactLayout)
+	end
 end
 local function EL2BStopLocally()
 	if EL2B_STOPPED then return end
