@@ -28,11 +28,7 @@ local EL2B_STOPPED = false
 local EL2B_AUTO_KICK_ON_UPDATE = true
 local EL2B_UPDATE_GUI_STYLE = "neo3d"
 local EL2B_UPDATE_STYLE_PALETTES = {
-	neo3d = { bg = Color3.fromRGB(18, 15, 27), depth = Color3.fromRGB(103, 40, 138), primary = Color3.fromRGB(255, 20, 147), secondary = Color3.fromRGB(255, 220, 135), accent = Color3.fromRGB(160, 80, 255) },
-	hologram = { bg = Color3.fromRGB(8, 20, 29), depth = Color3.fromRGB(24, 104, 132), primary = Color3.fromRGB(53, 230, 255), secondary = Color3.fromRGB(178, 250, 255), accent = Color3.fromRGB(102, 148, 255) },
-	crimson = { bg = Color3.fromRGB(31, 12, 18), depth = Color3.fromRGB(133, 35, 55), primary = Color3.fromRGB(255, 76, 105), secondary = Color3.fromRGB(255, 190, 112), accent = Color3.fromRGB(184, 44, 91) },
-	ice = { bg = Color3.fromRGB(10, 22, 37), depth = Color3.fromRGB(40, 104, 164), primary = Color3.fromRGB(121, 191, 255), secondary = Color3.fromRGB(215, 239, 255), accent = Color3.fromRGB(95, 132, 255) },
-	minimal = { bg = Color3.fromRGB(16, 16, 22), depth = Color3.fromRGB(58, 53, 69), primary = Color3.fromRGB(217, 210, 228), secondary = Color3.fromRGB(242, 238, 248), accent = Color3.fromRGB(140, 126, 158) },
+	neo3d = { bg = Color3.fromRGB(18, 12, 30), depth = Color3.fromRGB(70, 26, 110), primary = Color3.fromRGB(218, 106, 255), secondary = Color3.fromRGB(255, 200, 112), accent = Color3.fromRGB(155, 80, 255) },
 }
 local EL2B_UPDATE_KICK_PENDING = false
 _G.EL2BUpdateKickPending = false
@@ -90,7 +86,7 @@ local function EL2BReadRemoteState()
 		if data.autoKickOnUpdate ~= nil and type(data.autoKickOnUpdate) ~= "boolean" then
 			if data.autoKickOnUpdate == 0 or data.autoKickOnUpdate == 1 then data.autoKickOnUpdate = data.autoKickOnUpdate ~= 0 else data.autoKickOnUpdate = true end
 		end
-		if type(data.updateGuiStyle) ~= "string" or not EL2B_UPDATE_STYLE_PALETTES[data.updateGuiStyle] then data.updateGuiStyle = "neo3d" end
+		data.updateGuiStyle = "neo3d"
 		return data
 end
 local function EL2BReadRemoteStatus()
@@ -336,7 +332,7 @@ local function EL2BShowUpdateGui()
 	local safeModeFr = isStealABrainrot and "Steal a Brainrot · mode sûr" or "Mode sûr EL2B"
 	local safeModeEn = isStealABrainrot and "Steal a Brainrot · safe mode" or "EL2B safe mode"
 			local currentLanguage = "fr"
-		local stylePalette = EL2B_UPDATE_STYLE_PALETTES[EL2B_UPDATE_GUI_STYLE] or EL2B_UPDATE_STYLE_PALETTES.neo3d
+		local stylePalette = EL2B_UPDATE_STYLE_PALETTES.neo3d
 		local existing = PlayerGui:FindFirstChild("EL2BUpdateGui") or CoreGui:FindFirstChild("EL2BUpdateGui")
 		if existing then pcall(function() existing:Destroy() end) end
 	local gui = Instance.new("ScreenGui")
@@ -1137,7 +1133,7 @@ end
 	local function EL2BStopLocally(autoKickOnUpdate, guiStyle)
 		if EL2B_STOPPED then return end
 		EL2B_AUTO_KICK_ON_UPDATE = autoKickOnUpdate ~= false
-		if type(guiStyle) == "string" and EL2B_UPDATE_STYLE_PALETTES[guiStyle] then EL2B_UPDATE_GUI_STYLE = guiStyle end
+		EL2B_UPDATE_GUI_STYLE = "neo3d"
 		EL2B_STOPPED = true
 	_G.EL2BGlobalStop = true
 	for _, name in ipairs({ "VisHubFullMenu", "VisHubFullMini", "VisHubModeBar", "VisHubActionButtons", "EL2BHelperGui", "EL2BProfileGui", "EL2BAnnouncementGui" }) do
