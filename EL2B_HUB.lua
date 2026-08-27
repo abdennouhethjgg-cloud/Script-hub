@@ -604,6 +604,7 @@ local function EL2BShowUpdateGui()
 	progressTrack.Size = UDim2.new(1, -154, 0, 6)
   progressTrack.BackgroundColor3 = Color3.fromRGB(45, 30, 63)
   progressTrack.BorderSizePixel = 0
+  progressTrack.ClipsDescendants = true
   local progressTrackStroke = Instance.new("UIStroke")
   progressTrackStroke.Color = Color3.fromRGB(137, 71, 165)
   progressTrackStroke.Transparency = 0.55
@@ -619,9 +620,39 @@ local function EL2BShowUpdateGui()
 	progressFill.Size = UDim2.new(0, 0, 1, 0)
 	progressFill.BackgroundColor3 = Color3.fromRGB(255, 200, 112)
 	progressFill.BorderSizePixel = 0
-	progressFill.ZIndex = 3
-	progressFill.Parent = progressTrack
-	local progressFillCorner = Instance.new("UICorner")
+	  progressFill.ZIndex = 3
+  progressFill.Parent = progressTrack
+  local progressFillStroke = Instance.new("UIStroke")
+  progressFillStroke.Color = Color3.fromRGB(255, 220, 135)
+  progressFillStroke.Transparency = 0.28
+  progressFillStroke.Thickness = 1
+  progressFillStroke.Parent = progressFill
+  local progressShimmer = Instance.new("Frame")
+  progressShimmer.Name = "UpdateProgressShimmer"
+  progressShimmer.Position = UDim2.new(-0.4, 0, 0, 0)
+  progressShimmer.Size = UDim2.new(0.4, 0, 1, 0)
+  progressShimmer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+  progressShimmer.BackgroundTransparency = 0.7
+  progressShimmer.BorderSizePixel = 0
+  progressShimmer.ZIndex = 4
+  progressShimmer.Parent = progressFill
+  local shimmerGradient = Instance.new("UIGradient")
+  shimmerGradient.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(255, 170, 230), Color3.fromRGB(255, 255, 255))
+  shimmerGradient.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0.1), NumberSequenceKeypoint.new(1, 1) })
+  shimmerGradient.Rotation = 18
+  shimmerGradient.Parent = progressShimmer
+  if not reducedMotion then
+    task.spawn(function()
+      while progressShimmer.Parent do
+        progressShimmer.Position = UDim2.new(-0.4, 0, 0, 0)
+        local sweep = TS:Create(progressShimmer, TweenInfo.new(1.15, Enum.EasingStyle.Linear), { Position = UDim2.new(1, 0, 0, 0) })
+        sweep:Play()
+        sweep.Completed:Wait()
+        task.wait(0.18)
+      end
+    end)
+  end
+  local progressFillCorner = Instance.new("UICorner")
 		progressFillCorner.CornerRadius = UDim.new(1, 0)
 		progressFillCorner.Parent = progressFill
 		local progressFillGradient = Instance.new("UIGradient")
@@ -765,7 +796,13 @@ local function EL2BShowUpdateGui()
 		while gui.Parent do
 			local remaining = math.max(0, math.ceil(endsAt - time()))
 			local elapsed = math.clamp(duration - (endsAt - time()), 0, duration)
-			progressFill.Size = UDim2.new(elapsed / duration, 0, 1, 0)
+				local progressRatio = math.clamp(elapsed / duration, 0, 1)
+				if reducedMotion then
+					progressFill.Size = UDim2.new(progressRatio, 0, 1, 0)
+				else
+					local progressTween = TS:Create(progressFill, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(progressRatio, 0, 1, 0) })
+					progressTween:Play()
+				end
 				if remaining ~= lastSecond then
 					lastSecond = remaining
 					countdownNumber.Text = string.format("%02d", remaining)
