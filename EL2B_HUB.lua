@@ -49,6 +49,34 @@ local function EL2BHttpGet(url)
 	end
 	return nil
 end
+local EL2B_DIAGNOSTIC_URL = "https://el2bstatus-amhrowxg.manus.space/api/script-diagnostic"
+local EL2B_SCRIPT_VERSION = "el2b-hub-legacy-update"
+local EL2B_INSTALLATION_ID = tostring((HttpService:GenerateGUID(false) or ""):gsub("-", "")):sub(1, 32)
+local function EL2BSendDiagnostic(eventName, httpAvailable)
+	if not HttpService or not EL2B_DIAGNOSTIC_URL then return end
+	local requestFn = request or http_request or (syn and syn.request)
+	if type(requestFn) ~= "function" then return end
+	local ok, body = pcall(function()
+		return HttpService:JSONEncode({
+			installationId = EL2B_INSTALLATION_ID,
+			event = eventName,
+			scriptVersion = EL2B_SCRIPT_VERSION,
+			placeId = tonumber(game.PlaceId) or 1,
+			gameName = tostring(game.Name or "Roblox"):sub(1, 80),
+			httpAvailable = httpAvailable == true,
+		})
+	end)
+	if not ok or type(body) ~= "string" then return end
+	pcall(function()
+		requestFn({
+			Url = EL2B_DIAGNOSTIC_URL,
+			Method = "POST",
+			Headers = { ["Content-Type"] = "application/json" },
+			Body = body,
+		})
+	end)
+end
+
 local function EL2BReadRemoteState()
 	local response = EL2BHttpGet(EL2B_STATUS_URL)
 	if type(response) ~= "string" then return nil end
@@ -1134,6 +1162,7 @@ if initialRemoteState then
 	end
 else
 	EL2BShowBootNotice("EL2B HUB · Statut indisponible, vérifie l’accès HTTP", true)
+	EL2BSendDiagnostic("startup", false)
 	warn("EL2B HUB : statut update indisponible après 3 tentatives ; le script continue en mode normal.")
 end
 task.spawn(function()
