@@ -60,3 +60,15 @@ Script EL2B HUB corrigé et vérifié pour exécution par `loadstring` :
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/EL2B_HUB.lua"))()
 ```
+
+## RemoteEvent & RemoteFunction Lister
+
+Le script `RemoteLister.lua` affiche dans une interface les `RemoteEvent` et `RemoteFunction` présents dans le jeu, les trie par chemin complet et permet de copier la liste lorsque l’environnement d’exécution fournit `setclipboard` ou `toclipboard`.
+
+Pour charger la version Raw depuis Roblox :
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/RemoteLister.lua"))()
+```
+
+Utilisez ce script uniquement dans des expériences et environnements où vous disposez de l’autorisation nécessaire, conformément aux règles de Roblox et du jeu concerné.
