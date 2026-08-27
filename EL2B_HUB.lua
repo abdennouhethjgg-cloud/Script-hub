@@ -69,6 +69,33 @@ local function EL2BReadRemoteStatus()
 	local state = EL2BReadRemoteState()
 	return state and state.enabled or nil
 end
+local function EL2BShowBootNotice(text, isError)
+	local ok = pcall(function()
+		local notice = Instance.new("ScreenGui")
+		notice.Name = "EL2BBootNotice"
+		notice.ResetOnSpawn = false
+		notice.DisplayOrder = 100002
+		notice.Parent = PlayerGui
+		local label = Instance.new("TextLabel")
+		label.AnchorPoint = Vector2.new(0.5, 1)
+		label.Position = UDim2.new(0.5, 0, 1, -24)
+		label.Size = UDim2.new(1, -40, 0, 34)
+		label.BackgroundColor3 = isError and Color3.fromRGB(54, 17, 31) or Color3.fromRGB(22, 17, 36)
+		label.BackgroundTransparency = 0.08
+		label.BorderSizePixel = 0
+		label.Font = Enum.Font.GothamMedium
+		label.Text = text
+		label.TextColor3 = isError and Color3.fromRGB(255, 151, 164) or Color3.fromRGB(228, 213, 255)
+		label.TextSize = 13
+		label.TextWrapped = true
+		label.Parent = notice
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 10)
+		corner.Parent = label
+		task.delay(4, function() if notice.Parent then notice:Destroy() end end)
+	end)
+	return ok
+end
 local function EL2BShowAnnouncementGui(announcement)
 	if type(announcement) ~= "table" or type(announcement.id) ~= "number" then return end
 	if announcement.id <= EL2B_LAST_ANNOUNCEMENT_ID then return end
@@ -1009,12 +1036,14 @@ for attempt = 1, 3 do
 	if attempt < 3 then task.wait(0.75) end
 end
 if initialRemoteState then
+	EL2BShowBootNotice(initialRemoteState.enabled == false and "EL2B HUB · Mise à jour détectée" or "EL2B HUB · Script chargé", false)
 	if initialRemoteState.announcement then EL2BShowAnnouncementGui(initialRemoteState.announcement) end
 	if initialRemoteState.enabled == false then
 		EL2BStopLocally(initialRemoteState.autoKickOnUpdate, initialRemoteState.updateGuiStyle)
 		return
 	end
 else
+	EL2BShowBootNotice("EL2B HUB · Statut indisponible, vérifie l’accès HTTP", true)
 	warn("EL2B HUB : statut update indisponible après 3 tentatives ; le script continue en mode normal.")
 end
 task.spawn(function()
