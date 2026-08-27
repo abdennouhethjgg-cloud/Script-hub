@@ -97,6 +97,83 @@ local function EL2BShowBootNotice(text, isError)
 	return ok
 end
 pcall(function() EL2BShowBootNotice("EL2B HUB · Initialisation...", false) end)
+local function EL2BGetEnvironmentReport()
+	local report = {
+		loadstring = type(loadstring) == "function" or type(load) == "function",
+		httpGet = false,
+		request = false,
+		json = false,
+	}
+	local okGame, gameHttpGet = pcall(function() return game.HttpGet end)
+	report.httpGet = okGame and type(gameHttpGet) == "function"
+	local okJson, jsonDecode = pcall(function() return HttpService.JSONDecode end)
+	report.json = okJson and type(jsonDecode) == "function"
+	local requestFn = request or http_request or (syn and syn.request)
+	report.request = type(requestFn) == "function"
+	return report
+end
+local function EL2BFormatEnvironmentReport(report)
+	local function mark(value) return value and "✓ OK" or "✗ ABSENT" end
+	return table.concat({
+		"EL2B HUB · ENVIRONMENT CHECK / TEST ENVIRONNEMENT",
+		"loadstring / load: " .. mark(report.loadstring),
+		"game:HttpGet: " .. mark(report.httpGet),
+		"request: " .. mark(report.request),
+		"HttpService JSON: " .. mark(report.json),
+		"FR: Les fonctions absentes dépendent de l’exécuteur Roblox.",
+		"EN: Missing functions depend on your Roblox executor.",
+	}, "\n")
+end
+local function EL2BShowEnvironmentCheck()
+	local report = EL2BGetEnvironmentReport()
+	local allCore = report.loadstring and (report.httpGet or report.request) and report.json
+	local text = EL2BFormatEnvironmentReport(report)
+	local shown = pcall(function()
+			local old = PlayerGui:FindFirstChild("EL2BEnvironmentCheck") or CoreGui:FindFirstChild("EL2BEnvironmentCheck")
+			if old then old:Destroy() end
+			local gui = Instance.new("ScreenGui")
+			gui.Name = "EL2BEnvironmentCheck"
+			gui.ResetOnSpawn = false
+			gui.IgnoreGuiInset = true
+			gui.DisplayOrder = 100004
+			gui.Parent = PlayerGui
+			local panel = Instance.new("TextLabel")
+			panel.Name = "EnvironmentReport"
+			panel.AnchorPoint = Vector2.new(0.5, 1)
+			panel.Position = UDim2.new(0.5, 0, 1, -70)
+			panel.Size = UDim2.new(1, -32, 0, 164)
+			panel.BackgroundColor3 = allCore and Color3.fromRGB(18, 42, 35) or Color3.fromRGB(56, 22, 38)
+			panel.BackgroundTransparency = 0.06
+			panel.BorderSizePixel = 0
+			panel.Font = Enum.Font.Code
+			panel.Text = text
+			panel.TextColor3 = allCore and Color3.fromRGB(167, 255, 205) or Color3.fromRGB(255, 176, 191)
+			panel.TextSize = 12
+			panel.TextWrapped = true
+			panel.TextXAlignment = Enum.TextXAlignment.Left
+			panel.TextYAlignment = Enum.TextYAlignment.Top
+			panel.Parent = gui
+			local padding = Instance.new("UIPadding")
+			padding.PaddingLeft = UDim.new(0, 14)
+			padding.PaddingRight = UDim.new(0, 14)
+			padding.PaddingTop = UDim.new(0, 12)
+			padding.Parent = panel
+			local corner = Instance.new("UICorner")
+			corner.CornerRadius = UDim.new(0, 12)
+			corner.Parent = panel
+			local stroke = Instance.new("UIStroke")
+			stroke.Color = allCore and Color3.fromRGB(88, 255, 174) or Color3.fromRGB(255, 85, 137)
+			stroke.Thickness = 1.5
+			stroke.Parent = panel
+			task.delay(10, function() if gui.Parent then gui:Destroy() end end)
+		end)
+	if not shown then
+		warn("[EL2B HUB] " .. text)
+	end
+	return report
+end
+local EL2B_ENVIRONMENT_REPORT = EL2BShowEnvironmentCheck()
+
 local function EL2BShowAnnouncementGui(announcement)
 	if type(announcement) ~= "table" or type(announcement.id) ~= "number" then return end
 	if announcement.id <= EL2B_LAST_ANNOUNCEMENT_ID then return end
