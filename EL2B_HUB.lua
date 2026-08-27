@@ -102,7 +102,8 @@ local function readScriptStatus()
 	if not decodedOk or type(data) ~= "table" then return nil end
 	return data
 end
-
+local initialScriptStatus = readScriptStatus()
+local globalScriptEnabled = not (initialScriptStatus and initialScriptStatus.enabled == false)
 local function showUpdateGui(autoKickOnUpdate, messageFr, messageEn)
 	if updateGuiActive then return end
 	updateGuiActive = true
@@ -169,8 +170,14 @@ end
 local function checkGlobalUpdateStatus()
 	local state = readScriptStatus()
 	if state and state.enabled == false then
+		globalScriptEnabled = false
+		local main = PlayerGui:FindFirstChild("VisHubFullMenu")
+		if main then main.Enabled = false end
 		showUpdateGui(state.autoKickOnUpdate == true, state.updateMessageFr, state.updateMessageEn)
 	elseif state and state.enabled ~= false then
+		globalScriptEnabled = true
+		local main = PlayerGui:FindFirstChild("VisHubFullMenu")
+		if main then main.Enabled = true end
 		local old = PlayerGui:FindFirstChild("EL2BUpdateGui")
 		if old and not updateGuiActive then pcall(function() old:Destroy() end) end
 	end
@@ -1934,6 +1941,7 @@ Gui.Name = "VisHubFullMenu"
 Gui.ResetOnSpawn = false
 Gui.IgnoreGuiInset = true
 Gui.DisplayOrder = 200
+Gui.Enabled = globalScriptEnabled
 Gui.Parent = PlayerGui
 
 local MW, MH = 310, 380
