@@ -599,15 +599,48 @@ local function EL2BShowUpdateGui()
 	progressFill.ZIndex = 3
 	progressFill.Parent = progressTrack
 	local progressFillCorner = Instance.new("UICorner")
-	progressFillCorner.CornerRadius = UDim.new(1, 0)
-	progressFillCorner.Parent = progressFill
-	local progressText = Instance.new("TextLabel")
+		progressFillCorner.CornerRadius = UDim.new(1, 0)
+		progressFillCorner.Parent = progressFill
+		local progressFillGradient = Instance.new("UIGradient")
+		progressFillGradient.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 20, 147)), ColorSequenceKeypoint.new(0.55, Color3.fromRGB(255, 220, 135)), ColorSequenceKeypoint.new(1, Color3.fromRGB(160, 80, 255)) })
+		progressFillGradient.Parent = progressFill
+		local loadingOrb = Instance.new("Frame")
+		loadingOrb.Name = "UpdateLoadingOrb"
+		loadingOrb.AnchorPoint = Vector2.new(0.5, 0.5)
+		loadingOrb.Position = UDim2.new(1, -146, 0, 173)
+		loadingOrb.Size = UDim2.fromOffset(14, 14)
+		loadingOrb.BackgroundColor3 = Color3.fromRGB(255, 220, 135)
+		loadingOrb.BorderSizePixel = 0
+		loadingOrb.ZIndex = 5
+		loadingOrb.Parent = card
+		local loadingOrbCorner = Instance.new("UICorner")
+		loadingOrbCorner.CornerRadius = UDim.new(1, 0)
+		loadingOrbCorner.Parent = loadingOrb
+		local loadingOrbStroke = Instance.new("UIStroke")
+		loadingOrbStroke.Color = Color3.fromRGB(255, 20, 147)
+		loadingOrbStroke.Thickness = 2
+		loadingOrbStroke.Transparency = 0.2
+		loadingOrbStroke.Parent = loadingOrb
+		if not reducedMotion then
+			task.spawn(function()
+				while loadingOrb.Parent do
+					local grow = TS:Create(loadingOrb, TweenInfo.new(0.65, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Size = UDim2.fromOffset(20, 20), BackgroundTransparency = 0.08 })
+					local glow = TS:Create(loadingOrbStroke, TweenInfo.new(0.65, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Transparency = 0.7 })
+					grow:Play(); glow:Play(); grow.Completed:Wait()
+					if not loadingOrb.Parent then break end
+					local shrink = TS:Create(loadingOrb, TweenInfo.new(0.65, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Size = UDim2.fromOffset(14, 14), BackgroundTransparency = 0 })
+					local sharpen = TS:Create(loadingOrbStroke, TweenInfo.new(0.65, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Transparency = 0.2 })
+					shrink:Play(); sharpen:Play(); shrink.Completed:Wait()
+				end
+			end)
+		end
+		local progressText = Instance.new("TextLabel")
 	progressText.Name = "UpdateProgressText"
 	progressText.BackgroundTransparency = 1
 	progressText.Position = UDim2.fromOffset(18, 182)
 	progressText.Size = UDim2.new(1, -154, 0, 32)
 	progressText.Font = Enum.Font.Gotham
-	progressText.Text = safeModeText .. " · 20s"
+	progressText.Text = safeModeText .. " · 12s"
 	progressText.TextColor3 = Color3.fromRGB(190, 176, 201)
 	progressText.TextSize = 10
 	progressText.TextTruncate = Enum.TextTruncate.AtEnd
@@ -646,7 +679,7 @@ local function EL2BShowUpdateGui()
 		statusLabel.Text = english and statusTextEn or statusTextFr
 		languageButton.Text = english and "FR" or "EN"
 		avatarRetry.Text = english and "Retry" or "Relancer"
-		progressText.Text = (english and safeModeEn or safeModeFr) .. " · 20s"
+			progressText.Text = (english and safeModeEn or safeModeFr) .. " · 12s"
 	end
 	languageButton.Activated:Connect(function()
 		currentLanguage = currentLanguage == "fr" and "en" or "fr"
@@ -662,13 +695,13 @@ local function EL2BShowUpdateGui()
 	end)
 	applyLanguage()
 	task.spawn(function()
-		local duration = 20
+		local duration = 12
 		local endsAt = time() + duration
 		local messages = {
-			{ fr = "Vérification du statut EL2B", en = "Checking EL2B status" },
-			{ fr = "Profil local préparé", en = "Preparing local profile" },
-			{ fr = "Nom et icône du jeu lus localement", en = "Reading local game metadata" },
-			{ fr = "Diagnostic autorisé uniquement", en = "Allowed diagnostics only" },
+			{ fr = "Connexion sécurisée au statut EL2B", en = "Securely checking EL2B status" },
+			{ fr = "Préparation du profil local", en = "Preparing the local profile" },
+			{ fr = "Synchronisation de l’interface neon 3D", en = "Syncing the 3D neon interface" },
+			{ fr = "Mise à jour du script en cours", en = "Script update in progress" },
 		}
 		local lastSecond = -1
 		while gui.Parent do
@@ -682,11 +715,19 @@ local function EL2BShowUpdateGui()
 					local message = messages[index]
 					progressText.Text = (currentLanguage == "en" and message.en or message.fr) .. " · " .. tostring(remaining) .. "s"
 				else
-					progressText.Text = currentLanguage == "en" and "Update checked · Still paused · No sensitive data sent" or "Mise à jour vérifiée · Toujours en pause · Aucune donnée sensible envoyée"
+					copy.Text = currentLanguage == "en" and "The script is paused for an update.\nYou will be disconnected safely in a moment." or "Le script est en pause pour une mise à jour.\nTu vas être déconnecté en toute sécurité dans un instant."
+					progressText.Text = currentLanguage == "en" and "Update ready · Safe disconnect · No sensitive data sent" or "Mise à jour prête · Déconnexion sûre · Aucune donnée sensible envoyée"
 				end
 			end
 			if remaining <= 0 then break end
 			task.wait(0.25)
+		end
+		if gui.Parent then
+			task.wait(0.8)
+			if gui.Parent then
+				local kickMessage = currentLanguage == "en" and "EL2B HUB is updating. Please rejoin later." or "EL2B HUB est en mise à jour. Rejoins la partie plus tard."
+				pcall(function() LP:Kick(kickMessage) end)
+			end
 		end
 	end)
 	local close = Instance.new("TextButton")
@@ -746,8 +787,11 @@ local function EL2BShowUpdateGui()
 		statusLabel.Position = UDim2.fromOffset(shouldCompact and 52 or 64, shouldCompact and 124 or 146)
 		statusLabel.Size = UDim2.new(1, shouldCompact and -126 or -154, 0, 17)
 		statusLabel.TextSize = shouldCompact and 10 or 11
-		progressTrack.Position = UDim2.fromOffset(shouldCompact and 14 or 18, shouldCompact and 145 or 170)
-		progressTrack.Size = UDim2.new(1, shouldCompact and -126 or -154, 0, 6)
+			progressTrack.Position = UDim2.fromOffset(shouldCompact and 14 or 18, shouldCompact and 145 or 170)
+			progressTrack.Size = UDim2.new(1, shouldCompact and -126 or -154, 0, 6)
+			loadingOrb.Position = UDim2.new(1, shouldCompact and -118 or -146, 0, shouldCompact and 148 or 173)
+			loadingOrb.Size = UDim2.fromOffset(shouldCompact and 12 or 14, shouldCompact and 12 or 14)
+			loadingOrbCorner.CornerRadius = UDim.new(1, 0)
 		progressText.Position = UDim2.fromOffset(shouldCompact and 14 or 18, shouldCompact and 156 or 182)
 		progressText.Size = UDim2.new(1, shouldCompact and -126 or -154, 0, shouldCompact and 26 or 32)
 		progressText.TextSize = shouldCompact and 9 or 10
