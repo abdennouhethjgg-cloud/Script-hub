@@ -103,6 +103,9 @@ panel.BorderSizePixel = 0
 panel.Parent = mainGui
 corner(panel, 16)
 stroke(panel, COLORS.purple, 0.2)
+local panelScale = Instance.new("UIScale")
+panelScale.Scale = 1
+panelScale.Parent = panel
 
 local top = Instance.new("Frame")
 top.BackgroundColor3 = COLORS.panel
@@ -113,6 +116,8 @@ top.Parent = panel
 corner(top, 15)
 label(top, "VIS HUB", UDim2.fromOffset(20, 8), UDim2.new(1, -160, 0, 28), 23, COLORS.text).Font = Enum.Font.GothamBold
 label(top, "EL2B SAFE MENU · READY", UDim2.fromOffset(21, 37), UDim2.new(1, -160, 0, 18), 10, COLORS.purple)
+local live = label(top, "LOCAL · STABLE", UDim2.new(1, -170, 0, 22), UDim2.fromOffset(108, 18), 9, COLORS.green)
+live.TextXAlignment = Enum.TextXAlignment.Right
 local close = button(top, "−", UDim2.new(1, -52, 0, 17), UDim2.fromOffset(34, 30), Color3.fromRGB(51, 25, 55))
 close.TextSize = 20
 
@@ -125,11 +130,15 @@ side.Parent = panel
 corner(side, 12)
 stroke(side, Color3.fromRGB(78, 65, 95), 0.35)
 
-local content = Instance.new("Frame")
+local content = Instance.new("ScrollingFrame")
 content.BackgroundColor3 = COLORS.panel
 content.BorderSizePixel = 0
 content.Position = UDim2.fromOffset(170, 78)
 content.Size = UDim2.new(1, -184, 1, -92)
+content.CanvasSize = UDim2.fromOffset(0, 0)
+content.ScrollBarThickness = 4
+content.ScrollBarImageColor3 = COLORS.accent
+content.ScrollingDirection = Enum.ScrollingDirection.Y
 content.Parent = panel
 corner(content, 12)
 stroke(content, Color3.fromRGB(78, 65, 95), 0.35)
@@ -142,6 +151,7 @@ local featureRows = {}
 local function resetRows()
     for _, row in ipairs(featureRows) do row:Destroy() end
     featureRows = {}
+    content.CanvasSize = UDim2.fromOffset(0, 0)
 end
 
 local function addFeatureRow(name, detail, enabledByDefault)
@@ -166,6 +176,7 @@ local function addFeatureRow(name, detail, enabledByDefault)
         end
     end)
     table.insert(featureRows, row)
+    content.CanvasSize = UDim2.fromOffset(0, 78 + (#featureRows * 52))
 end
 
 local function renderPlayer()
@@ -261,5 +272,17 @@ close.Activated:Connect(function()
     miniGui.Enabled = true
 end)
 
+local function refreshScale()
+    local camera = workspace.CurrentCamera
+    local viewport = camera and camera.ViewportSize or Vector2.new(1280, 720)
+    local factor = math.min(viewport.X / 680, viewport.Y / 500)
+    panelScale.Scale = math.clamp(factor, 0.72, 1)
+    live.Text = viewport.X < 620 and "MOBILE · SAFE" or "LOCAL · STABLE"
+end
+
 selectTab("PLAYER")
+refreshScale()
+if workspace.CurrentCamera then
+    workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(refreshScale)
+end
 print("[EL2B HUB] VIS menu safe loaded")
