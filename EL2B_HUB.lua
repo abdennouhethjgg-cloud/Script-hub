@@ -139,9 +139,14 @@ content.CanvasSize = UDim2.fromOffset(0, 0)
 content.ScrollBarThickness = 4
 content.ScrollBarImageColor3 = COLORS.accent
 content.ScrollingDirection = Enum.ScrollingDirection.Y
+content.Active = true
 content.Parent = panel
 corner(content, 12)
 stroke(content, Color3.fromRGB(78, 65, 95), 0.35)
+
+local scrollHint = label(panel, "SCROLL ↓ · FAIS GLISSER POUR VOIR PLUS", UDim2.fromOffset(184, 409), UDim2.new(1, -204, 0, 16), 9, COLORS.purple)
+scrollHint.TextXAlignment = Enum.TextXAlignment.Right
+scrollHint.Visible = false
 
 local tabs = {"PLAYER", "ESP", "SETTINGS"}
 local tabButtons = {}
@@ -151,7 +156,9 @@ local featureRows = {}
 local function resetRows()
     for _, row in ipairs(featureRows) do row:Destroy() end
     featureRows = {}
+    content.CanvasPosition = Vector2.new(0, 0)
     content.CanvasSize = UDim2.fromOffset(0, 0)
+    scrollHint.Visible = false
 end
 
 local function addFeatureRow(name, detail, enabledByDefault)
@@ -165,18 +172,19 @@ local function addFeatureRow(name, detail, enabledByDefault)
     corner(row, 8)
     label(row, name, UDim2.fromOffset(12, 5), UDim2.new(1, -150, 0, 19), 12, COLORS.text)
     label(row, detail, UDim2.fromOffset(12, 24), UDim2.new(1, -150, 0, 15), 9, COLORS.dim)
-    local state = button(row, enabledByDefault and "READY" or "SAFE PLACEHOLDER", UDim2.new(1, -132, 0, 8), UDim2.fromOffset(118, 27), enabledByDefault and Color3.fromRGB(35, 79, 56) or Color3.fromRGB(45, 39, 51))
+    local isOn = enabledByDefault == true
+    local state = button(row, isOn and "ON" or "OFF", UDim2.new(1, -132, 0, 8), UDim2.fromOffset(118, 27), isOn and Color3.fromRGB(35, 100, 62) or Color3.fromRGB(45, 39, 51))
     state.TextSize = 10
-    state.TextColor3 = enabledByDefault and Color3.fromRGB(207, 255, 222) or COLORS.dim
+    state.TextColor3 = isOn and Color3.fromRGB(207, 255, 222) or COLORS.dim
     state.Activated:Connect(function()
-        if enabledByDefault then
-            state.Text = state.Text == "READY" and "LOCAL ON" or "READY"
-        else
-            state.Text = "À VALIDER"
-        end
+        isOn = not isOn
+        state.Text = isOn and "ON · UI" or "OFF"
+        state.BackgroundColor3 = isOn and Color3.fromRGB(35, 100, 62) or Color3.fromRGB(45, 39, 51)
+        state.TextColor3 = isOn and Color3.fromRGB(207, 255, 222) or COLORS.dim
     end)
     table.insert(featureRows, row)
     content.CanvasSize = UDim2.fromOffset(0, 78 + (#featureRows * 52))
+    scrollHint.Visible = #featureRows > 5
 end
 
 local function renderPlayer()
