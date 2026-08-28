@@ -22,7 +22,28 @@ if not LP then
 	repeat task.wait() until Players.LocalPlayer
 	LP = Players.LocalPlayer
 end
-local PlayerGui = LP:WaitForChild("PlayerGui", 30) or LP:FindFirstChild("PlayerGui") or game:GetService("CoreGui")
+local PlayerGui = LP:WaitForChild("PlayerGui", 30) or LP:FindFirstChildOfClass("PlayerGui")
+if not PlayerGui then
+	warn("[EL2B HUB] PlayerGui indisponible : exécution arrêtée proprement.")
+	return
+end
+pcall(function()
+	local startupGui = Instance.new("ScreenGui")
+	startupGui.Name = "EL2BStartupSignal"
+	startupGui.ResetOnSpawn = false
+	startupGui.IgnoreGuiInset = true
+	startupGui.Parent = PlayerGui
+	local startupLabel = Instance.new("TextLabel")
+	startupLabel.Size = UDim2.fromOffset(220, 28)
+	startupLabel.Position = UDim2.new(0.5, -110, 0, 16)
+	startupLabel.BackgroundTransparency = 1
+	startupLabel.Text = "EL2B HUB · STARTING / DÉMARRAGE"
+	startupLabel.TextColor3 = Color3.fromRGB(255, 180, 220)
+	startupLabel.TextSize = 12
+	startupLabel.Font = Enum.Font.GothamMedium
+	startupLabel.Parent = startupGui
+	task.delay(4, function() if startupGui.Parent then startupGui:Destroy() end end)
+end)
 local ONLINE_STATUS_ENDPOINT = "https://el2bstatus-amhrowxg.manus.space/api/script-heartbeat"
 local ONLINE_INSTALLATION_ID = "el2b-" .. HttpService:GenerateGUID(false):gsub("-", ""):sub(1, 32)
 local ONLINE_HEARTBEAT_SECONDS = 45
