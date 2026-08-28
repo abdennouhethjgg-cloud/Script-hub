@@ -148,6 +148,42 @@ local scrollHint = label(panel, "SCROLL ↓ · FAIS GLISSER POUR VOIR PLUS", UDi
 scrollHint.TextXAlignment = Enum.TextXAlignment.Right
 scrollHint.Visible = false
 
+local antiLagEnabled = false
+local savedVisualStates = {}
+local visualClasses = {
+    ParticleEmitter = true,
+    Trail = true,
+    Beam = true,
+    Smoke = true,
+    Fire = true,
+    Sparkles = true,
+}
+
+local function setAntiLag(enabled)
+    antiLagEnabled = enabled == true
+    if antiLagEnabled then
+        for _, object in ipairs(workspace:GetDescendants()) do
+            if visualClasses[object.ClassName] then
+                if savedVisualStates[object] == nil then
+                    savedVisualStates[object] = object.Enabled
+                end
+                object.Enabled = false
+            end
+        end
+        live.Text = "ANTI LAG · ON"
+        live.TextColor3 = COLORS.green
+    else
+        for object, wasEnabled in pairs(savedVisualStates) do
+            if object and object.Parent then
+                object.Enabled = wasEnabled
+            end
+        end
+        savedVisualStates = {}
+        live.Text = "LOCAL · STABLE"
+        live.TextColor3 = COLORS.green
+    end
+end
+
 local tabs = {"PLAYER", "ESP", "SETTINGS"}
 local tabButtons = {}
 local activeTab = "PLAYER"
@@ -178,7 +214,12 @@ local function addFeatureRow(name, detail, enabledByDefault)
     state.TextColor3 = isOn and Color3.fromRGB(207, 255, 222) or COLORS.dim
     state.Activated:Connect(function()
         isOn = not isOn
-        state.Text = isOn and "ON · UI" or "OFF"
+        if name == "Anti Lag" then
+            setAntiLag(isOn)
+            state.Text = isOn and "ON" or "OFF"
+        else
+            state.Text = isOn and "ON · UI" or "OFF"
+        end
         state.BackgroundColor3 = isOn and Color3.fromRGB(35, 100, 62) or Color3.fromRGB(45, 39, 51)
         state.TextColor3 = isOn and Color3.fromRGB(207, 255, 222) or COLORS.dim
     end)
