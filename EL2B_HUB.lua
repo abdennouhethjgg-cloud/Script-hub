@@ -5,6 +5,7 @@
 repeat task.wait() until game:IsLoaded()
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 local LP = Players.LocalPlayer
 if not LP then
@@ -92,7 +93,46 @@ close.TextSize = 12
 close.Text = "Fermer / Close"
 close.Parent = main
 corner(close, 8)
+local mainTransitionId = 0
+local mainVisible = true
+local function tweenMainVisible(visible)
+    mainTransitionId += 1
+    local transitionId = mainTransitionId
+    if visible then
+        mainVisible = true
+        mainGui.Enabled = true
+        main.Size = UDim2.fromOffset(316, 248)
+        main.BackgroundTransparency = 1
+        stroke.Transparency = 1
+        for _, item in ipairs(main:GetDescendants()) do
+            if item:IsA("TextLabel") or item:IsA("TextButton") then item.TextTransparency = 1 end
+        end
+        local tweenInfo = TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        TweenService:Create(main, tweenInfo, {Size = UDim2.fromOffset(330, 260), BackgroundTransparency = 0}):Play()
+        TweenService:Create(stroke, tweenInfo, {Transparency = 0.35}):Play()
+        for _, item in ipairs(main:GetDescendants()) do
+            if item:IsA("TextLabel") or item:IsA("TextButton") then
+                TweenService:Create(item, tweenInfo, {TextTransparency = 0}):Play()
+            end
+        end
+    else
+        mainVisible = false
+        local tweenInfo = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+        TweenService:Create(main, tweenInfo, {Size = UDim2.fromOffset(316, 248), BackgroundTransparency = 1}):Play()
+        TweenService:Create(stroke, tweenInfo, {Transparency = 1}):Play()
+        for _, item in ipairs(main:GetDescendants()) do
+            if item:IsA("TextLabel") or item:IsA("TextButton") then
+                TweenService:Create(item, tweenInfo, {TextTransparency = 1}):Play()
+            end
+        end
+        task.delay(0.2, function()
+            if transitionId == mainTransitionId and not mainVisible then mainGui.Enabled = false end
+        end)
+    end
+end
 close.Activated:Connect(function() mainGui:Destroy() end)
+
+tweenMainVisible(true)
 
 local updateActive = false
 local updateGeneration = 0
@@ -144,19 +184,19 @@ local function applyState(state)
     local enabled = state and state.enabled ~= false and not scheduled
     if enabled then
         updateGeneration += 1
-        if mainGui.Parent then mainGui.Enabled = true end
+        if mainGui.Parent then tweenMainVisible(true) end
         remove(UPDATE_GUI_NAME)
         updateActive = false
         statusLabel.Text = "Statut : script actif / script enabled"
         statusLabel.TextColor3 = Color3.fromRGB(100, 240, 150)
     elseif state then
-        if mainGui.Parent then mainGui.Enabled = false end
+        if mainGui.Parent then tweenMainVisible(false) end
         statusLabel.Text = "Statut : mise à jour / updating"
         statusLabel.TextColor3 = Color3.fromRGB(255, 160, 100)
         showUpdate(state)
     else
         updateGeneration += 1
-        if mainGui.Parent then mainGui.Enabled = true end
+        if mainGui.Parent then tweenMainVisible(true) end
         remove(UPDATE_GUI_NAME)
         updateActive = false
         statusLabel.Text = "Statut : website indisponible / unavailable"
