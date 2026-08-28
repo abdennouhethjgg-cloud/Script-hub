@@ -8,6 +8,10 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local HttpService = game:GetService("HttpService")
+
+local STATUS_URL = "https://el2bstatus-amhrowxg.manus.space/api/script-status"
 
 local player = Players.LocalPlayer
 if not player then
@@ -123,6 +127,9 @@ local metrics = label(top, "FPS --  ·  PING -- ms", UDim2.new(1, -250, 0, 43), 
 metrics.TextXAlignment = Enum.TextXAlignment.Right
 local close = button(top, "−", UDim2.new(1, -52, 0, 17), UDim2.fromOffset(34, 30), Color3.fromRGB(51, 25, 55))
 close.TextSize = 20
+local lockButton = button(top, "LOCK", UDim2.new(1, -112, 0, 17), UDim2.fromOffset(52, 30), Color3.fromRGB(42, 31, 55))
+lockButton.TextSize = 9
+local menuLocked = false
 
 local side = Instance.new("Frame")
 side.BackgroundColor3 = COLORS.panel
@@ -202,8 +209,55 @@ local function showNotice(titleText, bodyText, tone)
     end)
 end
 
+local miniGui
+local updateGui = Instance.new("ScreenGui")
+updateGui.Name = "EL2BUpdateGui"
+updateGui.ResetOnSpawn = false
+updateGui.IgnoreGuiInset = true
+updateGui.Enabled = false
+updateGui.Parent = playerGui
+
+local updateCard = Instance.new("Frame")
+updateCard.AnchorPoint = Vector2.new(0.5, 0.5)
+updateCard.Position = UDim2.new(0.5, 0, 0.5, 0)
+updateCard.Size = UDim2.fromOffset(390, 210)
+updateCard.BackgroundColor3 = COLORS.panel2
+updateCard.BorderSizePixel = 0
+updateCard.Parent = updateGui
+corner(updateCard, 16)
+stroke(updateCard, COLORS.accent, 0.15)
+label(updateCard, "EL2B HUB · UPDATE", UDim2.fromOffset(22, 18), UDim2.new(1, -44, 0, 27), 19, COLORS.text).Font = Enum.Font.GothamBold
+local updateTitle = label(updateCard, "Mise à jour en cours / Update in progress", UDim2.fromOffset(22, 55), UDim2.new(1, -44, 0, 22), 12, COLORS.purple)
+local updateBody = label(updateCard, "Le script est temporairement désactivé.\\nThe script is temporarily disabled.", UDim2.fromOffset(22, 84), UDim2.new(1, -44, 0, 42), 12, COLORS.dim)
+local updateProgress = Instance.new("Frame")
+updateProgress.BackgroundColor3 = COLORS.accent
+updateProgress.BorderSizePixel = 0
+updateProgress.Position = UDim2.fromOffset(22, 145)
+updateProgress.Size = UDim2.fromOffset(0, 8)
+updateProgress.Parent = updateCard
+corner(updateProgress, 5)
+local updateHint = label(updateCard, "En attente du website / Waiting for website", UDim2.fromOffset(22, 165), UDim2.new(1, -44, 0, 20), 10, COLORS.dim)
+
+local function setUpdateVisible(visible, messageFr, messageEn, maintenance)
+    if visible then
+        mainGui.Enabled = false
+        miniGui.Enabled = false
+        updateGui.Enabled = true
+        updateTitle.Text = maintenance and "Admin Abuse · Maintenance" or "Mise à jour en cours / Update in progress"
+        updateBody.Text = (messageFr or "Le script est temporairement désactivé.") .. "\\n" .. (messageEn or "The script is temporarily disabled.")
+        updateHint.Text = maintenance and "Samedi 21:00–21:30 UTC+2" or "En attente du website / Waiting for website"
+        updateProgress.Size = UDim2.fromOffset(250, 8)
+    else
+        updateGui.Enabled = false
+        mainGui.Enabled = true
+        miniGui.Enabled = false
+        updateProgress.Size = UDim2.fromOffset(0, 8)
+    end
+end
+
 local antiLagEnabled = false
 local savedVisualStates = {}
+local savedLightingState
 local visualClasses = {
     ParticleEmitter = true,
     Trail = true,
@@ -216,6 +270,27 @@ local visualClasses = {
 local function setAntiLag(enabled)
     antiLagEnabled = enabled == true
     if antiLagEnabled then
+        if not savedLightingState then
+            savedLightingState = {
+                GlobalShadows = Lighting.GlobalShadows,
+                FogEnd = Lighting.FogEnd,
+                Brightness = Lighting.Brightness,
+                EnvironmentDiffuseScale = Lighting.EnvironmentDiffuseScale,
+                EnvironmentSpecularScale = Lighting.EnvironmentSpecularScale,
+                Effects = {},
+            }
+            for _, effect in ipairs(Lighting:GetChildren()) do
+                if effect:IsA("BloomEffect") or effect:IsA("BlurEffect") or effect:IsA("SunRaysEffect") or effect:IsA("ColorCorrectionEffect") then
+                    savedLightingState.Effects[effect] = effect.Enabled
+                    effect.Enabled = false
+                end
+            end
+        end
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 1000000
+        Lighting.Brightness = 1
+        Lighting.EnvironmentDiffuseScale = 0
+        Lighting.EnvironmentSpecularScale = 0
         for _, object in ipairs(workspace:GetDescendants()) do
             if visualClasses[object.ClassName] then
                 if savedVisualStates[object] == nil then
@@ -233,6 +308,17 @@ local function setAntiLag(enabled)
             end
         end
         savedVisualStates = {}
+        if savedLightingState then
+            Lighting.GlobalShadows = savedLightingState.GlobalShadows
+            Lighting.FogEnd = savedLightingState.FogEnd
+            Lighting.Brightness = savedLightingState.Brightness
+            Lighting.EnvironmentDiffuseScale = savedLightingState.EnvironmentDiffuseScale
+            Lighting.EnvironmentSpecularScale = savedLightingState.EnvironmentSpecularScale
+            for effect, wasEnabled in pairs(savedLightingState.Effects) do
+                if effect and effect.Parent then effect.Enabled = wasEnabled end
+            end
+            savedLightingState = nil
+        end
         live.Text = "LOCAL · STABLE"
         live.TextColor3 = COLORS.green
     end
@@ -266,6 +352,73 @@ metricsConnection = RunService.RenderStepped:Connect(function()
         metricsConnection:Disconnect()
     end
 end)
+
+local websiteMode = "unknown"
+local function syncWebsiteStatus()
+    local ok, raw = pcall(function()
+        return HttpService:GetAsync(STATUS_URL, true)
+    end)
+    if not ok then
+        live.Text = "WEB · OFFLINE"
+        live.TextColor3 = COLORS.yellow
+        if websiteMode ~= "offline" then
+            showNotice("Website indisponible", "La GUI principale reste ouverte / Main GUI stays open.", COLORS.yellow)
+        end
+        websiteMode = "offline"
+        return false
+    end
+
+    local decoded, payload = pcall(function()
+        return HttpService:JSONDecode(raw)
+    end)
+    if not decoded or type(payload) ~= "table" then
+        live.Text = "WEB · INVALID"
+        live.TextColor3 = COLORS.yellow
+        websiteMode = "invalid"
+        return false
+    end
+
+    local maintenance = type(payload.scheduledMaintenance) == "table" and payload.scheduledMaintenance.active == true
+    local updateRequired = payload.enabled ~= true or maintenance
+    if updateRequired then
+        local mode = maintenance and "maintenance" or "update"
+        setUpdateVisible(true, payload.updateMessageFr, payload.updateMessageEn, maintenance)
+        if websiteMode ~= mode then
+            showNotice(maintenance and "Admin Abuse actif" or "Script en mise à jour", maintenance and "La mini-GUI update reste affichée." or "Le statut du website demande une mise à jour.", COLORS.accent)
+        end
+        websiteMode = mode
+        live.Text = maintenance and "WEB · UPDATE" or "WEB · DISABLED"
+        live.TextColor3 = COLORS.yellow
+    else
+        setUpdateVisible(false)
+        if websiteMode ~= "online" then
+            showNotice("Website connecté", "Le script principal est disponible / Main script is ready.", COLORS.green)
+        end
+        websiteMode = "online"
+        live.Text = "WEB · ON"
+        live.TextColor3 = COLORS.green
+    end
+    return true
+end
+
+local installationId = string.format("el2b-%08x%08x%08x", math.random(0, 0xFFFFFF), math.random(0, 0xFFFFFF), math.random(0, 0xFFFFFF))
+local heartbeatState = "unknown"
+local function sendHeartbeat()
+    local ok, response = pcall(function()
+        return HttpService:RequestAsync({
+            Url = STATUS_URL:gsub("/api/script%-status$", "/api/script-heartbeat"),
+            Method = "POST",
+            Headers = { ["Content-Type"] = "application/json" },
+            Body = HttpService:JSONEncode({ installationId = installationId, idleNpcCount = 0 }),
+        })
+    end)
+    if not ok or type(response) ~= "table" or response.Success ~= true then
+        heartbeatState = "offline"
+        return false
+    end
+    heartbeatState = "online"
+    return true
+end
 
 local tabs = {"PLAYER", "ESP", "SETTINGS"}
 local tabButtons = {}
@@ -368,7 +521,7 @@ end
 
 local footer = label(panel, "Base prête · les fonctions seront ajoutées après validation séparée", UDim2.fromOffset(18, 409), UDim2.new(1, -36, 0, 16), 10, COLORS.dim)
 
-local miniGui = Instance.new("ScreenGui")
+miniGui = Instance.new("ScreenGui")
 miniGui.Name = MINI_NAME
 miniGui.ResetOnSpawn = false
 miniGui.IgnoreGuiInset = true
@@ -386,6 +539,7 @@ local dragStart
 local panelStart
  top.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if menuLocked then return end
         dragging = true
         dragStart = input.Position
         panelStart = panel.Position
@@ -402,8 +556,16 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 close.Activated:Connect(function()
+    if updateGui.Enabled then return end
     mainGui.Enabled = false
     miniGui.Enabled = true
+end)
+
+lockButton.Activated:Connect(function()
+    menuLocked = not menuLocked
+    lockButton.Text = menuLocked and "UNLOCK" or "LOCK"
+    lockButton.BackgroundColor3 = menuLocked and Color3.fromRGB(35, 100, 62) or Color3.fromRGB(42, 31, 55)
+    showNotice(menuLocked and "Menu verrouillé" or "Menu déverrouillé", menuLocked and "La position est maintenant fixe." or "Le menu peut à nouveau être déplacé.", menuLocked and COLORS.green or COLORS.yellow)
 end)
 
 local function refreshScale()
@@ -419,4 +581,18 @@ refreshScale()
 if workspace.CurrentCamera then
     workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(refreshScale)
 end
+
+task.spawn(function()
+    task.wait(1)
+    local lastHeartbeat = 0
+    while playerGui.Parent and mainGui.Parent do
+        syncWebsiteStatus()
+        if os.clock() - lastHeartbeat >= 45 then
+            sendHeartbeat()
+            lastHeartbeat = os.clock()
+        end
+        task.wait(15)
+    end
+end)
+
 print("[EL2B HUB] VIS menu safe loaded")
