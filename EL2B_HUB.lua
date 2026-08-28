@@ -189,7 +189,7 @@ local function showUpdate(state)
 end
 local function applyState(state)
     local scheduled = state and state.scheduledMaintenance and state.scheduledMaintenance.active == true
-    local enabled = state and state.enabled ~= false and not scheduled
+    local enabled = state and state.enabled == true and state.manuallyEnabled ~= false and not scheduled
     if enabled then
         updateGeneration += 1
         if mainGui.Parent then tweenMainVisible(true) end
