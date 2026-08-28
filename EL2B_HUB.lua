@@ -727,12 +727,65 @@ lockButton.Activated:Connect(function()
     showNotice(menuLocked and "Menu verrouillé" or "Menu déverrouillé", menuLocked and "La position est maintenant fixe." or "Le menu peut à nouveau être déplacé.", menuLocked and COLORS.green or COLORS.yellow)
 end)
 
+local portraitMode = false
 local function refreshScale()
     local camera = workspace.CurrentCamera
     local viewport = camera and camera.ViewportSize or Vector2.new(1280, 720)
-    local factor = math.min(viewport.X / 680, viewport.Y / 500)
-    panelScale.Scale = math.clamp(factor, 0.72, 1)
-    live.Text = viewport.X < 620 and "MOBILE · SAFE" or "LOCAL · STABLE"
+    portraitMode = viewport.Y > viewport.X
+    if portraitMode then
+        local panelWidth = math.max(300, viewport.X - 20)
+        local panelHeight = math.max(390, math.min(620, viewport.Y - 30))
+        panelScale.Scale = 1
+        panel.Size = UDim2.fromOffset(panelWidth, panelHeight)
+        top.Size = UDim2.new(1, -2, 0, 58)
+        side.Position = UDim2.fromOffset(10, 70)
+        side.Size = UDim2.new(1, -20, 0, 48)
+        content.Position = UDim2.fromOffset(10, 128)
+        content.Size = UDim2.new(1, -20, 1, -156)
+        scrollHint.Position = UDim2.new(0, 14, 1, -24)
+        scrollHint.Size = UDim2.new(1, -28, 0, 16)
+        scrollHint.TextXAlignment = Enum.TextXAlignment.Center
+        footer.Visible = false
+        for index, name in ipairs(tabs) do
+            local tab = tabButtons[name]
+            tab.Position = UDim2.new((index - 1) / 3, 6, 0, 6)
+            tab.Size = UDim2.new(1 / 3, -12, 0, 36)
+            tab.TextSize = 10
+        end
+        live.Text = "MOBILE · SAFE"
+        live.TextSize = 8
+        live.Position = UDim2.new(1, -150, 0, 13)
+        live.Size = UDim2.fromOffset(92, 18)
+        metrics.Position = UDim2.new(1, -215, 0, 36)
+        metrics.Size = UDim2.fromOffset(157, 16)
+        metrics.TextSize = 8
+    else
+        panel.Size = UDim2.fromOffset(620, 430)
+        local factor = math.min(viewport.X / 680, viewport.Y / 500)
+        panelScale.Scale = math.clamp(factor, 0.72, 1)
+        top.Size = UDim2.new(1, -2, 0, 64)
+        side.Position = UDim2.fromOffset(14, 78)
+        side.Size = UDim2.fromOffset(142, 330)
+        content.Position = UDim2.fromOffset(170, 78)
+        content.Size = UDim2.new(1, -184, 1, -92)
+        scrollHint.Position = UDim2.fromOffset(184, 409)
+        scrollHint.Size = UDim2.new(1, -204, 0, 16)
+        scrollHint.TextXAlignment = Enum.TextXAlignment.Right
+        footer.Visible = true
+        for index, name in ipairs(tabs) do
+            local tab = tabButtons[name]
+            tab.Position = UDim2.fromOffset(12, 14 + (index - 1) * 48)
+            tab.Size = UDim2.new(1, -24, 0, 36)
+            tab.TextSize = 11
+        end
+        live.Text = "LOCAL · STABLE"
+        live.TextSize = 9
+        live.Position = UDim2.new(1, -170, 0, 22)
+        live.Size = UDim2.fromOffset(108, 18)
+        metrics.Position = UDim2.new(1, -250, 0, 43)
+        metrics.Size = UDim2.fromOffset(188, 16)
+        metrics.TextSize = 9
+    end
 end
 
 selectTab("PLAYER")
