@@ -25,13 +25,21 @@ local MAIN_GUI_NAME = "EL2BMainGui"
 local function requestFn()
     return (syn and syn.request) or (http and http.request) or http_request or request
 end
+local function decodeStatus(body)
+    local decoded, data = pcall(function() return HttpService:JSONDecode(body or "") end)
+    return decoded and type(data) == "table" and data or nil
+end
 local function readStatus()
     local fn = requestFn()
-    if type(fn) ~= "function" then return nil end
-    local ok, response = pcall(fn, {Url = ENDPOINT, Method = "GET"})
-    if not ok or not response or tonumber(response.StatusCode or response.status_code) ~= 200 then return nil end
-    local decoded, data = pcall(function() return HttpService:JSONDecode(response.Body or response.body or "") end)
-    return decoded and type(data) == "table" and data or nil
+    if type(fn) == "function" then
+        local ok, response = pcall(fn, {Url = ENDPOINT, Method = "GET"})
+        if ok and response and tonumber(response.StatusCode or response.status_code) == 200 then
+            return decodeStatus(response.Body or response.body)
+        end
+    end
+    local ok, body = pcall(function() return game:HttpGet(ENDPOINT) end)
+    if ok and type(body) == "string" then return decodeStatus(body) end
+    return nil
 end
 local function remove(name)
     local item = PlayerGui:FindFirstChild(name)
