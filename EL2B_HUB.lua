@@ -472,7 +472,7 @@ local function setNextEmptyBase(enabled)
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "EL2BNextBaseBillboard"
     billboard.Adornee = anchor
-    billboard.Size = UDim2.fromOffset(210, 78)
+    billboard.Size = UDim2.fromOffset(210, 98)
     billboard.StudsOffset = Vector3.new(0, 8, 0)
     billboard.MaxDistance = 300
     billboard.AlwaysOnTop = true
@@ -484,11 +484,19 @@ local function setNextEmptyBase(enabled)
     nextLabel.Font = Enum.Font.GothamBlack
     nextLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
     nextLabel.TextStrokeTransparency = 0
-    local emptyLabel = label(billboard, "EMPTY BASE", UDim2.fromScale(0, 0.52), UDim2.fromScale(1, 0.4), 16, COLORS.text)
+    local emptyLabel = label(billboard, "EMPTY BASE", UDim2.fromScale(0, 0.38), UDim2.fromScale(1, 0.28), 16, COLORS.text)
     emptyLabel.TextXAlignment = Enum.TextXAlignment.Center
     emptyLabel.Font = Enum.Font.GothamBlack
     emptyLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
     emptyLabel.TextStrokeTransparency = 0
+    local distanceLabel = label(billboard, "DISTANCE: -- m", UDim2.fromScale(0, 0.68), UDim2.fromScale(1, 0.24), 12, COLORS.yellow)
+    distanceLabel.TextXAlignment = Enum.TextXAlignment.Center
+    distanceLabel.Font = Enum.Font.GothamBold
+    distanceLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+    distanceLabel.TextStrokeTransparency = 0
+    local currentTarget
+    local distanceTimer = 0
+    local distanceConnection
 
     local function indexFor(model)
         local ok, box = pcall(function() return model:GetBoundingBox() end)
@@ -517,12 +525,30 @@ local function setNextEmptyBase(enabled)
             if base and base.textLabel and isEmpty(base.textLabel) then target = base break end
         end
         if target then
+            currentTarget = target
             anchor.CFrame = target.cframe
             billboard.Enabled = true
         else
+            currentTarget = nil
             billboard.Enabled = false
+            distanceLabel.Text = "DISTANCE: -- m"
         end
     end
+
+    distanceConnection = RunService.Heartbeat:Connect(function(deltaTime)
+        if not billboard.Enabled or not currentTarget then return end
+        distanceTimer += deltaTime
+        if distanceTimer < 0.25 then return end
+        distanceTimer = 0
+        local character = player.Character
+        local root = character and character:FindFirstChild("HumanoidRootPart")
+        if root then
+            local meters = math.floor(((root.Position - anchor.Position).Magnitude * 0.28) + 0.5)
+            distanceLabel.Text = string.format("DISTANCE: %d m", meters)
+        else
+            distanceLabel.Text = "DISTANCE: -- m"
+        end
+    end)
 
     local function connectText(textLabel)
         if connected[textLabel] then return end
@@ -556,6 +582,7 @@ local function setNextEmptyBase(enabled)
     end))
     nextBaseCleanup = function()
         for _, connection in ipairs(connections) do pcall(function() connection:Disconnect() end) end
+        if distanceConnection then pcall(function() distanceConnection:Disconnect() end) end
         if anchor and anchor.Parent then anchor:Destroy() end
     end
     showNotice("Next Empty Base activé", "Le marqueur apparaît sur la première base vide détectée.", COLORS.green)
