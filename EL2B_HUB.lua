@@ -7,6 +7,7 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 if not player then
@@ -118,6 +119,8 @@ label(top, "VIS HUB", UDim2.fromOffset(20, 8), UDim2.new(1, -160, 0, 28), 23, CO
 label(top, "EL2B SAFE MENU · READY", UDim2.fromOffset(21, 37), UDim2.new(1, -160, 0, 18), 10, COLORS.purple)
 local live = label(top, "LOCAL · STABLE", UDim2.new(1, -170, 0, 22), UDim2.fromOffset(108, 18), 9, COLORS.green)
 live.TextXAlignment = Enum.TextXAlignment.Right
+local metrics = label(top, "FPS --  ·  PING -- ms", UDim2.new(1, -250, 0, 43), UDim2.fromOffset(188, 16), 9, COLORS.dim)
+metrics.TextXAlignment = Enum.TextXAlignment.Right
 local close = button(top, "−", UDim2.new(1, -52, 0, 17), UDim2.fromOffset(34, 30), Color3.fromRGB(51, 25, 55))
 close.TextSize = 20
 
@@ -234,6 +237,35 @@ local function setAntiLag(enabled)
         live.TextColor3 = COLORS.green
     end
 end
+
+local fpsFrames = 0
+local fpsStartedAt = os.clock()
+local metricsConnection
+local function readPing()
+    local ok, value = pcall(function()
+        return player:GetNetworkPing() * 1000
+    end)
+    if ok and type(value) == "number" then
+        return math.max(0, math.floor(value + 0.5))
+    end
+    return nil
+end
+
+metricsConnection = RunService.RenderStepped:Connect(function()
+    fpsFrames += 1
+    local now = os.clock()
+    local elapsed = now - fpsStartedAt
+    if elapsed < 1 then return end
+    local fps = math.floor((fpsFrames / elapsed) + 0.5)
+    local ping = readPing()
+    metrics.Text = string.format("FPS %d  ·  PING %s", fps, ping and (tostring(ping) .. " ms") or "N/A")
+    metrics.TextColor3 = ping and (ping >= 180 and COLORS.yellow or COLORS.green) or COLORS.dim
+    fpsFrames = 0
+    fpsStartedAt = now
+    if not mainGui.Parent then
+        metricsConnection:Disconnect()
+    end
+end)
 
 local tabs = {"PLAYER", "ESP", "SETTINGS"}
 local tabButtons = {}
