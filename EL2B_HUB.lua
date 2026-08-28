@@ -95,7 +95,10 @@ corner(close, 8)
 close.Activated:Connect(function() mainGui:Destroy() end)
 
 local updateActive = false
+local updateGeneration = 0
 local function showUpdate(state)
+    updateGeneration += 1
+    local generation = updateGeneration
     if updateActive then return end
     updateActive = true
     remove(UPDATE_GUI_NAME)
@@ -125,21 +128,22 @@ local function showUpdate(state)
     end
     if seconds <= 0 then seconds = 12 end
     task.spawn(function()
-        while gui.Parent and seconds > 0 do
+        while gui.Parent and generation == updateGeneration and seconds > 0 do
             countdown.Text = string.format("Maintenance · %02d s", seconds)
             task.wait(1)
             seconds -= 1
         end
-        if gui.Parent then countdown.Text = "Update in progress / Mise à jour en cours" end
+        if gui.Parent and generation == updateGeneration then countdown.Text = "Update in progress / Mise à jour en cours" end
         task.wait(1)
-        if gui.Parent then gui:Destroy() end
-        updateActive = false
+        if gui.Parent and generation == updateGeneration then gui:Destroy() end
+        if generation == updateGeneration then updateActive = false end
     end)
 end
 local function applyState(state)
     local scheduled = state and state.scheduledMaintenance and state.scheduledMaintenance.active == true
     local enabled = state and state.enabled ~= false and not scheduled
     if enabled then
+        updateGeneration += 1
         if mainGui.Parent then mainGui.Enabled = true end
         remove(UPDATE_GUI_NAME)
         updateActive = false
@@ -151,6 +155,10 @@ local function applyState(state)
         statusLabel.TextColor3 = Color3.fromRGB(255, 160, 100)
         showUpdate(state)
     else
+        updateGeneration += 1
+        if mainGui.Parent then mainGui.Enabled = true end
+        remove(UPDATE_GUI_NAME)
+        updateActive = false
         statusLabel.Text = "Statut : website indisponible / unavailable"
         statusLabel.TextColor3 = Color3.fromRGB(255, 190, 90)
     end
