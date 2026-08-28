@@ -433,6 +433,134 @@ local function resetRows()
     scrollHint.Visible = false
 end
 
+local nextBaseCleanup
+local function setNextEmptyBase(enabled)
+    if nextBaseCleanup then
+        nextBaseCleanup()
+        nextBaseCleanup = nil
+    end
+    if not enabled then
+        showNotice("Next Empty Base désactivé", "Le marqueur local a été retiré.", COLORS.yellow)
+        return
+    end
+
+    local plots = workspace:FindFirstChild("Plots")
+    if not plots then
+        showNotice("Next Empty Base indisponible", "Le dossier Plots est absent dans cette partie.", COLORS.yellow)
+        return
+    end
+
+    local positions = {
+        Vector3.new(-342.439, 10.399, 113.107),
+        Vector3.new(-342.439, 10.465, 6.107),
+        Vector3.new(-476.752, 10.465, 114.107),
+        Vector3.new(-476.752, 10.465, 7.107),
+        Vector3.new(-342.440, 10.464, 220.107),
+        Vector3.new(-476.752, 10.465, 221.107),
+        Vector3.new(-342.439, 10.465, -100.893),
+        Vector3.new(-476.752, 10.465, -99.893),
+    }
+    local bases, connected, connections = {}, {}, {}
+    local anchor = Instance.new("Part")
+    anchor.Name = "EL2BNextBaseAnchor"
+    anchor.Anchored = true
+    anchor.CanCollide, anchor.CanQuery, anchor.CanTouch = false, false, false
+    anchor.Transparency = 1
+    anchor.Size = Vector3.new(1, 1, 1)
+    anchor.Parent = workspace
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "EL2BNextBaseBillboard"
+    billboard.Adornee = anchor
+    billboard.Size = UDim2.fromOffset(210, 78)
+    billboard.StudsOffset = Vector3.new(0, 8, 0)
+    billboard.MaxDistance = 300
+    billboard.AlwaysOnTop = true
+    billboard.LightInfluence = 0
+    billboard.Enabled = false
+    billboard.Parent = anchor
+    local nextLabel = label(billboard, "▼  NEXT  ▼", UDim2.fromScale(0, 0.05), UDim2.fromScale(1, 0.45), 23, COLORS.green)
+    nextLabel.TextXAlignment = Enum.TextXAlignment.Center
+    nextLabel.Font = Enum.Font.GothamBlack
+    nextLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+    nextLabel.TextStrokeTransparency = 0
+    local emptyLabel = label(billboard, "EMPTY BASE", UDim2.fromScale(0, 0.52), UDim2.fromScale(1, 0.4), 16, COLORS.text)
+    emptyLabel.TextXAlignment = Enum.TextXAlignment.Center
+    emptyLabel.Font = Enum.Font.GothamBlack
+    emptyLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+    emptyLabel.TextStrokeTransparency = 0
+
+    local function indexFor(model)
+        local ok, box = pcall(function() return model:GetBoundingBox() end)
+        if not ok or not box then return nil end
+        local point = box.Position
+        local bestIndex, bestDistance
+        for index, basePosition in ipairs(positions) do
+            local dx, dz = point.X - basePosition.X, point.Z - basePosition.Z
+            local distance = math.sqrt(dx * dx + dz * dz)
+            if not bestDistance or distance < bestDistance then
+                bestIndex, bestDistance = index, distance
+            end
+        end
+        return bestDistance and bestDistance <= 6 and bestIndex or nil
+    end
+
+    local function isEmpty(textLabel)
+        local value = textLabel.Text:gsub("^%s+", ""):gsub("%s+$", "")
+        return value == "Empty Base"
+    end
+
+    local function recompute()
+        local target
+        for index = 1, #positions do
+            local base = bases[index]
+            if base and base.textLabel and isEmpty(base.textLabel) then target = base break end
+        end
+        if target then
+            anchor.CFrame = target.cframe
+            billboard.Enabled = true
+        else
+            billboard.Enabled = false
+        end
+    end
+
+    local function connectText(textLabel)
+        if connected[textLabel] then return end
+        connected[textLabel] = true
+        table.insert(connections, textLabel:GetPropertyChangedSignal("Text"):Connect(recompute))
+    end
+
+    local function scan()
+        for _, plot in ipairs(plots:GetChildren()) do
+            local sign = plot:FindFirstChild("PlotSign")
+            local model = sign and sign:FindFirstChild("Model")
+            local surface = sign and sign:FindFirstChild("SurfaceGui")
+            local frame = surface and surface:FindFirstChild("Frame")
+            local textLabel = frame and frame:FindFirstChild("TextLabel")
+            if model and textLabel then
+                local index = indexFor(model)
+                if index then
+                    local cframe = select(1, model:GetBoundingBox())
+                    bases[index] = { textLabel = textLabel, cframe = cframe }
+                    connectText(textLabel)
+                end
+            end
+        end
+        recompute()
+    end
+
+    scan()
+    table.insert(connections, plots.ChildAdded:Connect(function() task.defer(scan) end))
+    table.insert(connections, plots.DescendantAdded:Connect(function(item)
+        if item:IsA("TextLabel") then task.defer(scan) end
+    end))
+    nextBaseCleanup = function()
+        for _, connection in ipairs(connections) do pcall(function() connection:Disconnect() end) end
+        if anchor and anchor.Parent then anchor:Destroy() end
+    end
+    showNotice("Next Empty Base activé", "Le marqueur apparaît sur la première base vide détectée.", COLORS.green)
+end
+
 local function addFeatureRow(name, detail, enabledByDefault)
     local index = #featureRows
     local row = Instance.new("Frame")
@@ -454,6 +582,9 @@ local function addFeatureRow(name, detail, enabledByDefault)
             setAntiLag(isOn)
             state.Text = isOn and "ON" or "OFF"
             showNotice(isOn and "Anti Lag activé" or "Anti Lag désactivé", isOn and "Effets visuels réduits localement." or "Les effets visuels précédents sont restaurés.", isOn and COLORS.green or COLORS.yellow)
+        elseif name == "Next Empty Base" then
+            setNextEmptyBase(isOn)
+            state.Text = isOn and "ON" or "OFF"
         else
             state.Text = isOn and "ON · UI" or "OFF"
             showNotice(name, isOn and "État visuel activé · action locale en attente." or "État visuel désactivé.", isOn and COLORS.purple or COLORS.yellow)
@@ -476,6 +607,7 @@ local function renderPlayer()
     addFeatureRow("Anti Boogie", "État local · contrôle manuel", false)
     addFeatureRow("Speed · 3 modes", "Normal · Lagger · Custom", false)
     addFeatureRow("Drop Jump / Stand", "Commande locale à définir", false)
+    addFeatureRow("Next Empty Base", "Marqueur local de base vide", false)
     addFeatureRow("Insta V1 / V2", "Commande locale à définir", false)
 end
 
