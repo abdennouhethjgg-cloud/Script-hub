@@ -1,221 +1,190 @@
--- VIS HUB / EL2B HUB · Safe edition
--- Interface standard Roblox + profil local + statut admin optionnel.
--- Aucune automatisation invasive, appel distant ou API d’exécuteur.
+--[=[
+    EL2B HUB · GUI BASE SAFE EDITION
+    Base visuelle prête pour recevoir des fonctions validées une par une.
+    Cette version reste locale et visuelle, sans accès réseau,
+    injection de code, automatisation de jeu ou déconnexion automatique.
+]=]
 
-repeat task.wait() until game:IsLoaded()
 local Players = game:GetService("Players")
-local UIS = game:GetService("UserInputService")
+local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local HttpService = game:GetService("HttpService")
-local LP = Players.LocalPlayer
-if not LP then
+
+local player = Players.LocalPlayer
+if not player then
     warn("[EL2B HUB] LocalPlayer indisponible / unavailable")
     return
 end
-local PlayerGui = LP:WaitForChild("PlayerGui", 15) or LP:FindFirstChildOfClass("PlayerGui")
-if not PlayerGui then
+
+local playerGui = player:WaitForChild("PlayerGui", 15)
+if not playerGui then
     warn("[EL2B HUB] PlayerGui indisponible / unavailable")
     return
 end
 
-local ENDPOINT = "https://el2bstatus-amhrowxg.manus.space/api/script-status"
-local POLL_SECONDS = 15
-local UPDATE_GUI_NAME = "EL2BUpdateGui"
-local MAIN_GUI_NAME = "EL2BMainGui"
-local function requestFn()
-    return (syn and syn.request) or (http and http.request) or http_request or request
-end
-local function decodeStatus(body)
-    local decoded, data = pcall(function() return HttpService:JSONDecode(body or "") end)
-    return decoded and type(data) == "table" and data or nil
-end
-local function readStatus()
-    local fn = requestFn()
-    if type(fn) == "function" then
-        local ok, response = pcall(fn, {Url = ENDPOINT, Method = "GET"})
-        if ok and response and tonumber(response.StatusCode or response.status_code) == 200 then
-            return decodeStatus(response.Body or response.body)
-        end
-    end
-    local ok, body = pcall(function() return game:HttpGet(ENDPOINT) end)
-    if ok and type(body) == "string" then return decodeStatus(body) end
-    return nil
-end
-local function remove(name)
-    local item = PlayerGui:FindFirstChild(name)
-    if item then pcall(function() item:Destroy() end) end
-end
-remove(MAIN_GUI_NAME)
-remove(UPDATE_GUI_NAME)
+local MAIN_NAME = "EL2BHubBaseGui"
+local MINI_NAME = "EL2BHubBaseMini"
 
-local function corner(obj, radius)
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, radius or 10)
-    c.Parent = obj
+local function destroyIfPresent(name)
+    local old = playerGui:FindFirstChild(name)
+    if old then
+        old:Destroy()
+    end
 end
-local function makeLabel(parent, text, pos, size, textSize, color)
+
+destroyIfPresent(MAIN_NAME)
+destroyIfPresent(MINI_NAME)
+
+local function addCorner(parent, radius)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, radius)
+    corner.Parent = parent
+    return corner
+end
+
+local function addStroke(parent, color, transparency)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = color
+    stroke.Transparency = transparency or 0
+    stroke.Thickness = 1
+    stroke.Parent = parent
+    return stroke
+end
+
+local function addLabel(parent, text, position, size, textSize, color)
     local label = Instance.new("TextLabel")
     label.BackgroundTransparency = 1
-    label.Position = pos
+    label.Position = position
     label.Size = size
     label.Font = Enum.Font.Gotham
-    label.TextColor3 = color or Color3.fromRGB(220, 220, 235)
-    label.TextSize = textSize or 13
+    label.Text = text
+    label.TextColor3 = color
+    label.TextSize = textSize
     label.TextWrapped = true
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Text = text
     label.Parent = parent
     return label
 end
 
+local function addButton(parent, text, position, size)
+    local button = Instance.new("TextButton")
+    button.AutoButtonColor = true
+    button.BackgroundColor3 = Color3.fromRGB(32, 25, 48)
+    button.BorderSizePixel = 0
+    button.Font = Enum.Font.GothamSemibold
+    button.Position = position
+    button.Size = size
+    button.Text = text
+    button.TextColor3 = Color3.fromRGB(245, 226, 255)
+    button.TextSize = 12
+    button.Parent = parent
+    addCorner(button, 8)
+    addStroke(button, Color3.fromRGB(151, 76, 197), 0.45)
+    return button
+end
+
 local mainGui = Instance.new("ScreenGui")
-mainGui.Name = MAIN_GUI_NAME
+mainGui.Name = MAIN_NAME
 mainGui.ResetOnSpawn = false
 mainGui.IgnoreGuiInset = true
-mainGui.Parent = PlayerGui
-local main = Instance.new("Frame")
-main.AnchorPoint = Vector2.new(0.5, 0.5)
-main.Position = UDim2.new(0.5, 0, 0.5, 0)
-main.Size = UDim2.fromOffset(330, 260)
-main.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
-main.BorderSizePixel = 0
-main.Parent = mainGui
-corner(main, 14)
-local stroke = Instance.new("UIStroke")
-stroke.Color = Color3.fromRGB(190, 80, 230)
-stroke.Transparency = 0.35
-stroke.Parent = main
-makeLabel(main, "EL2B HUB", UDim2.fromOffset(20, 18), UDim2.new(1, -40, 0, 30), 22, Color3.fromRGB(255, 255, 255)).Font = Enum.Font.GothamBold
-makeLabel(main, "Safe edition · Admin status", UDim2.fromOffset(20, 50), UDim2.new(1, -40, 0, 20), 12, Color3.fromRGB(210, 135, 240))
-local statusLabel = makeLabel(main, "Statut : vérification…", UDim2.fromOffset(20, 82), UDim2.new(1, -40, 0, 38), 14)
-local scheduleLabel = makeLabel(main, "Admin Abuse : samedi 21:00–21:30 (UTC+2)", UDim2.fromOffset(20, 124), UDim2.new(1, -40, 0, 34), 12, Color3.fromRGB(255, 180, 220))
-local profile = makeLabel(main, "Profil : " .. tostring(LP.DisplayName or LP.Name) .. "  ·  UserId " .. tostring(LP.UserId), UDim2.fromOffset(20, 166), UDim2.new(1, -40, 0, 35), 12, Color3.fromRGB(180, 180, 205))
-local close = Instance.new("TextButton")
-close.Position = UDim2.new(1, -112, 1, -42)
-close.Size = UDim2.fromOffset(92, 28)
-close.BackgroundColor3 = Color3.fromRGB(42, 28, 52)
-close.BorderSizePixel = 0
-close.Font = Enum.Font.GothamSemibold
-close.TextColor3 = Color3.fromRGB(255, 220, 245)
-close.TextSize = 12
-close.Text = "Fermer / Close"
-close.Parent = main
-corner(close, 8)
-local mainTransitionId = 0
-local mainVisible = true
-local function tweenMainVisible(visible)
-    mainTransitionId += 1
-    local transitionId = mainTransitionId
-    if visible then
-        mainVisible = true
-        mainGui.Enabled = true
-        main.Size = UDim2.fromOffset(316, 248)
-        main.BackgroundTransparency = 1
-        stroke.Transparency = 1
-        for _, item in ipairs(main:GetDescendants()) do
-            if item:IsA("TextLabel") or item:IsA("TextButton") then item.TextTransparency = 1 end
+mainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+mainGui.Parent = playerGui
+
+local panel = Instance.new("Frame")
+panel.AnchorPoint = Vector2.new(0.5, 0.5)
+panel.Position = UDim2.new(0.5, 0, 0.5, 0)
+panel.Size = UDim2.fromOffset(350, 250)
+panel.BackgroundColor3 = Color3.fromRGB(13, 12, 19)
+panel.BorderSizePixel = 0
+panel.Parent = mainGui
+addCorner(panel, 16)
+addStroke(panel, Color3.fromRGB(210, 74, 238), 0.25)
+
+local header = Instance.new("Frame")
+header.BackgroundColor3 = Color3.fromRGB(25, 19, 35)
+header.BorderSizePixel = 0
+header.Position = UDim2.fromOffset(1, 1)
+header.Size = UDim2.new(1, -2, 0, 58)
+header.Parent = panel
+addCorner(header, 15)
+
+addLabel(header, "EL2B HUB", UDim2.fromOffset(18, 8), UDim2.new(1, -72, 0, 24), 21, Color3.fromRGB(255, 255, 255)).Font = Enum.Font.GothamBold
+addLabel(header, "GUI BASE · SAFE / READY", UDim2.fromOffset(19, 32), UDim2.new(1, -72, 0, 17), 10, Color3.fromRGB(206, 139, 238))
+
+local closeButton = addButton(header, "−", UDim2.new(1, -48, 0, 13), UDim2.fromOffset(34, 30))
+closeButton.TextSize = 20
+
+local statusDot = Instance.new("Frame")
+statusDot.BackgroundColor3 = Color3.fromRGB(75, 224, 133)
+statusDot.BorderSizePixel = 0
+statusDot.Position = UDim2.fromOffset(20, 82)
+statusDot.Size = UDim2.fromOffset(8, 8)
+statusDot.Parent = panel
+addCorner(statusDot, 8)
+
+addLabel(panel, "Interface démarrée / Interface started", UDim2.fromOffset(36, 73), UDim2.new(1, -56, 0, 24), 14, Color3.fromRGB(238, 231, 245))
+addLabel(panel, "Cette base est prête. Les fonctions seront ajoutées après validation.", UDim2.fromOffset(20, 108), UDim2.new(1, -40, 0, 38), 12, Color3.fromRGB(166, 158, 181))
+addLabel(panel, "This base is ready. Features will be added after validation.", UDim2.fromOffset(20, 145), UDim2.new(1, -40, 0, 28), 11, Color3.fromRGB(137, 129, 151))
+
+local readyButton = addButton(panel, "BASE ACTIVE · READY", UDim2.fromOffset(20, 190), UDim2.new(1, -40, 0, 36))
+readyButton.BackgroundColor3 = Color3.fromRGB(41, 91, 68)
+readyButton.TextColor3 = Color3.fromRGB(210, 255, 225)
+readyButton.Activated:Connect(function()
+    readyButton.Text = "EN ATTENTE DES FONCTIONS · WAITING"
+    task.delay(2, function()
+        if readyButton.Parent then
+            readyButton.Text = "BASE ACTIVE · READY"
         end
-        local tweenInfo = TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        TweenService:Create(main, tweenInfo, {Size = UDim2.fromOffset(330, 260), BackgroundTransparency = 0}):Play()
-        TweenService:Create(stroke, tweenInfo, {Transparency = 0.35}):Play()
-        for _, item in ipairs(main:GetDescendants()) do
-            if item:IsA("TextLabel") or item:IsA("TextButton") then
-                TweenService:Create(item, tweenInfo, {TextTransparency = 0}):Play()
+    end)
+end)
+
+local miniGui = Instance.new("ScreenGui")
+miniGui.Name = MINI_NAME
+miniGui.ResetOnSpawn = false
+miniGui.IgnoreGuiInset = true
+miniGui.Enabled = false
+miniGui.Parent = playerGui
+
+local miniButton = addButton(miniGui, "EL2B", UDim2.new(1, -88, 1, -74), UDim2.fromOffset(68, 42))
+miniButton.BackgroundColor3 = Color3.fromRGB(29, 19, 42)
+miniButton.TextSize = 13
+miniButton.Activated:Connect(function()
+    miniGui.Enabled = false
+    mainGui.Enabled = true
+    panel.Size = UDim2.fromOffset(330, 236)
+    TweenService:Create(panel, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(350, 250)}):Play()
+end)
+
+local dragging = false
+local dragStart
+local startPosition
+
+header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPosition = panel.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
             end
-        end
-    else
-        mainVisible = false
-        local tweenInfo = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-        TweenService:Create(main, tweenInfo, {Size = UDim2.fromOffset(316, 248), BackgroundTransparency = 1}):Play()
-        TweenService:Create(stroke, tweenInfo, {Transparency = 1}):Play()
-        for _, item in ipairs(main:GetDescendants()) do
-            if item:IsA("TextLabel") or item:IsA("TextButton") then
-                TweenService:Create(item, tweenInfo, {TextTransparency = 1}):Play()
-            end
-        end
-        task.delay(0.2, function()
-            if transitionId == mainTransitionId and not mainVisible then mainGui.Enabled = false end
         end)
     end
-end
-close.Activated:Connect(function() mainGui:Destroy() end)
-
-tweenMainVisible(true)
-
-local updateActive = false
-local updateGeneration = 0
-local function showUpdate(state)
-    updateGeneration += 1
-    local generation = updateGeneration
-    if updateActive then return end
-    updateActive = true
-    remove(UPDATE_GUI_NAME)
-    local gui = Instance.new("ScreenGui")
-    gui.Name = UPDATE_GUI_NAME
-    gui.ResetOnSpawn = false
-    gui.IgnoreGuiInset = true
-    gui.Parent = PlayerGui
-    local box = Instance.new("Frame")
-    box.AnchorPoint = Vector2.new(0.5, 0.5)
-    box.Position = UDim2.new(0.5, 0, 0.5, 0)
-    box.Size = UDim2.fromOffset(340, 220)
-    box.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
-    box.BorderSizePixel = 0
-    box.Parent = gui
-    corner(box, 14)
-    local line = Instance.new("UIStroke")
-    line.Color = Color3.fromRGB(255, 70, 185)
-    line.Parent = box
-    makeLabel(box, "EL2B HUB · MISE À JOUR", UDim2.fromOffset(20, 18), UDim2.new(1, -40, 0, 30), 19, Color3.fromRGB(255, 255, 255)).Font = Enum.Font.GothamBold
-    makeLabel(box, "UPDATING / SCRIPT TEMPORAIREMENT DÉSACTIVÉ", UDim2.fromOffset(20, 50), UDim2.new(1, -40, 0, 22), 11, Color3.fromRGB(255, 180, 220))
-    local msg = makeLabel(box, (state and state.updateMessageFr or "Mise à jour en cours.") .. "\n" .. (state and state.updateMessageEn or "Update in progress."), UDim2.fromOffset(20, 78), UDim2.new(1, -40, 0, 48), 13)
-    local countdown = makeLabel(box, "État global actif", UDim2.fromOffset(20, 137), UDim2.new(1, -40, 0, 30), 16, Color3.fromRGB(255, 100, 190))
-    local seconds = 0
-    if state and state.scheduledMaintenance and state.scheduledMaintenance.active then
-        seconds = tonumber(state.scheduledMaintenance.secondsRemaining) or 0
-    end
-    if seconds <= 0 then seconds = 12 end
-    task.spawn(function()
-        while gui.Parent and generation == updateGeneration and seconds > 0 do
-            countdown.Text = string.format("Maintenance · %02d s", seconds)
-            task.wait(1)
-            seconds -= 1
-        end
-        if gui.Parent and generation == updateGeneration then countdown.Text = "Update in progress / Mise à jour en cours" end
-        task.wait(1)
-        if gui.Parent and generation == updateGeneration then gui:Destroy() end
-        if generation == updateGeneration then updateActive = false end
-    end)
-end
-local function applyState(state)
-    local scheduled = state and state.scheduledMaintenance and state.scheduledMaintenance.active == true
-    local enabled = state and state.enabled == true and state.manuallyEnabled ~= false and not scheduled
-    if enabled then
-        updateGeneration += 1
-        if mainGui.Parent then tweenMainVisible(true) end
-        remove(UPDATE_GUI_NAME)
-        updateActive = false
-        statusLabel.Text = "Statut : script actif / script enabled"
-        statusLabel.TextColor3 = Color3.fromRGB(100, 240, 150)
-    elseif state then
-        if mainGui.Parent then tweenMainVisible(false) end
-        statusLabel.Text = "Statut : mise à jour / updating"
-        statusLabel.TextColor3 = Color3.fromRGB(255, 160, 100)
-        showUpdate(state)
-    else
-        updateGeneration += 1
-        if mainGui.Parent then tweenMainVisible(true) end
-        remove(UPDATE_GUI_NAME)
-        updateActive = false
-        statusLabel.Text = "Statut : website indisponible / unavailable"
-        statusLabel.TextColor3 = Color3.fromRGB(255, 190, 90)
-    end
-end
-local initial = readStatus()
-applyState(initial)
-task.spawn(function()
-    while task.wait(POLL_SECONDS) do
-        applyState(readStatus())
-    end
 end)
-print("[EL2B HUB] Safe edition loaded successfully")
+
+UserInputService.InputChanged:Connect(function(input)
+    if not dragging then
+        return
+    end
+    if input.UserInputType ~= Enum.UserInputType.MouseMovement and input.UserInputType ~= Enum.UserInputType.Touch then
+        return
+    end
+    local delta = input.Position - dragStart
+    panel.Position = UDim2.new(startPosition.X.Scale, startPosition.X.Offset + delta.X, startPosition.Y.Scale, startPosition.Y.Offset + delta.Y)
+end)
+
+closeButton.Activated:Connect(function()
+    mainGui.Enabled = false
+    miniGui.Enabled = true
+end)
+
+print("[EL2B HUB] GUI base safe loaded / GUI de base chargée")
