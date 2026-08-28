@@ -179,11 +179,18 @@ end
 
 local function checkGlobalUpdateStatus()
 	local state = readScriptStatus()
-	if state and state.enabled == false then
+	local scheduledMaintenance = state and state.scheduledMaintenance and state.scheduledMaintenance.active == true
+	if state and (state.enabled == false or scheduledMaintenance) then
 		globalScriptEnabled = false
 		local main = PlayerGui:FindFirstChild("VisHubFullMenu")
 		if main then main.Enabled = false end
-		showUpdateGui(state.autoKickOnUpdate == true, state.updateMessageFr, state.updateMessageEn)
+		local messageFr = state.updateMessageFr
+		local messageEn = state.updateMessageEn
+		if scheduledMaintenance then
+			messageFr = "Maintenance Admin Abuse programmée samedi 21:00–21:30."
+			messageEn = "Scheduled Admin Abuse maintenance: Saturday 21:00–21:30."
+		end
+		showUpdateGui(state.autoKickOnUpdate == true, messageFr, messageEn)
 	elseif state and state.enabled ~= false then
 		globalScriptEnabled = true
 		local main = PlayerGui:FindFirstChild("VisHubFullMenu")
