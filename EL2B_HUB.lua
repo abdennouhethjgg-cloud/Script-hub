@@ -148,6 +148,57 @@ local scrollHint = label(panel, "SCROLL ↓ · FAIS GLISSER POUR VOIR PLUS", UDi
 scrollHint.TextXAlignment = Enum.TextXAlignment.Right
 scrollHint.Visible = false
 
+local noticeVersion = 0
+local noticeHolder = Instance.new("Frame")
+noticeHolder.Name = "NotificationHolder"
+noticeHolder.AnchorPoint = Vector2.new(1, 0)
+noticeHolder.BackgroundTransparency = 1
+noticeHolder.Position = UDim2.new(1, -18, 0, 78)
+noticeHolder.Size = UDim2.fromOffset(300, 110)
+noticeHolder.Parent = mainGui
+
+local function showNotice(titleText, bodyText, tone)
+    noticeVersion += 1
+    local version = noticeVersion
+    local card = Instance.new("Frame")
+    card.BackgroundColor3 = COLORS.panel2
+    card.BorderSizePixel = 0
+    card.Position = UDim2.new(1, 24, 0, 0)
+    card.Size = UDim2.fromOffset(300, 78)
+    card.Parent = noticeHolder
+    card.ZIndex = 20
+    corner(card, 12)
+    stroke(card, tone or COLORS.purple, 0.15)
+    local marker = Instance.new("Frame")
+    marker.BackgroundColor3 = tone or COLORS.purple
+    marker.BorderSizePixel = 0
+    marker.Position = UDim2.fromOffset(12, 16)
+    marker.Size = UDim2.fromOffset(6, 46)
+    marker.Parent = card
+    marker.ZIndex = 21
+    corner(marker, 4)
+    local title = label(card, titleText, UDim2.fromOffset(29, 11), UDim2.new(1, -72, 0, 22), 13, COLORS.text)
+    title.Font = Enum.Font.GothamBold
+    title.ZIndex = 21
+    local body = label(card, bodyText, UDim2.fromOffset(29, 36), UDim2.new(1, -72, 0, 30), 10, COLORS.dim)
+    body.ZIndex = 21
+    local dismiss = button(card, "×", UDim2.new(1, -38, 0, 17), UDim2.fromOffset(26, 26), Color3.fromRGB(51, 25, 55))
+    dismiss.TextSize = 17
+    dismiss.ZIndex = 21
+    local function hide()
+        if card.Parent then
+            local tween = TweenService:Create(card, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(1, 24, 0, 0)})
+            tween:Play()
+            tween.Completed:Connect(function() if card.Parent then card:Destroy() end end)
+        end
+    end
+    dismiss.Activated:Connect(hide)
+    TweenService:Create(card, TweenInfo.new(0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position = UDim2.new(1, -300, 0, 0)}):Play()
+    task.delay(3.5, function()
+        if version == noticeVersion then hide() end
+    end)
+end
+
 local antiLagEnabled = false
 local savedVisualStates = {}
 local visualClasses = {
@@ -217,8 +268,10 @@ local function addFeatureRow(name, detail, enabledByDefault)
         if name == "Anti Lag" then
             setAntiLag(isOn)
             state.Text = isOn and "ON" or "OFF"
+            showNotice(isOn and "Anti Lag activé" or "Anti Lag désactivé", isOn and "Effets visuels réduits localement." or "Les effets visuels précédents sont restaurés.", isOn and COLORS.green or COLORS.yellow)
         else
             state.Text = isOn and "ON · UI" or "OFF"
+            showNotice(name, isOn and "État visuel activé · action locale en attente." or "État visuel désactivé.", isOn and COLORS.purple or COLORS.yellow)
         end
         state.BackgroundColor3 = isOn and Color3.fromRGB(35, 100, 62) or Color3.fromRGB(45, 39, 51)
         state.TextColor3 = isOn and Color3.fromRGB(207, 255, 222) or COLORS.dim
