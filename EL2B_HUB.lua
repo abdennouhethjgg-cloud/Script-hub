@@ -226,6 +226,7 @@ local function heading(page, titleValue, bodyValue)
 end
 local selectedPlayer
 local refreshPlayerList
+local refreshPlayerStats
 local statusFilter = "ALL"
 local maxDistance = 0
 local RandomTools = {
@@ -292,7 +293,7 @@ local function renderPlayer()
     row(playerPage, "Notifications", "Messages bilingues du menu", "notifications", function(on) notice(on and "Notifications ON" or "Notifications OFF", "Préférence locale enregistrée.", on and C.green or C.yellow) end)
     row(playerPage, "FPS / Ping", "Métriques locales légères", "metrics", function(on) metrics.Visible = on; notice(on and "Metrics ON" or "Metrics OFF", "Affichage FPS/ping local.", on and C.green or C.yellow) end)
 
-    local playersPanel = make("Frame", { Position = UDim2.fromOffset(10, 110), Size = UDim2.new(1, -20, 0, 214), BackgroundColor3 = C.row, BorderSizePixel = 0 }, playerPage)
+    local playersPanel = make("Frame", { Position = UDim2.fromOffset(10, 110), Size = UDim2.new(1, -20, 0, 254), BackgroundColor3 = C.row, BorderSizePixel = 0 }, playerPage)
     corner(playersPanel, 8)
     text(playersPanel, "PLAYERS · " .. tostring(game.Name), UDim2.fromOffset(11, 4), UDim2.new(1, -22, 0, 17), C.white, Enum.Font.GothamBold).TextSize = 10
     text(playersPanel, "PLACE " .. tostring(game.PlaceId) .. " · SERVER " .. string.sub(game.JobId, 1, 8), UDim2.fromOffset(11, 20), UDim2.new(1, -22, 0, 12), C.pink, Enum.Font.Gotham).TextSize = 8
@@ -301,11 +302,19 @@ local function renderPlayer()
     local statusButton = btn(playersPanel, "STATUS: " .. statusFilter, UDim2.fromOffset(96, 37), UDim2.fromOffset(118, 24), C.purple)
     statusButton.TextSize = 9
     local filterHint = text(playersPanel, "0 = distance illimitée", UDim2.fromOffset(218, 37), UDim2.new(1, -226, 0, 24), C.dim, Enum.Font.Gotham); filterHint.TextSize = 8
-    local list = make("ScrollingFrame", { Position = UDim2.fromOffset(8, 68), Size = UDim2.new(1, -16, 1, -76), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 3, ScrollBarImageColor3 = C.pink, CanvasSize = UDim2.fromOffset(0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y }, playersPanel)
+    local statsBar = make("Frame", { Position = UDim2.fromOffset(8, 66), Size = UDim2.new(1, -16, 0, 30), BackgroundTransparency = 1 }, playersPanel)
+    local totalStat = text(statsBar, "TOTAL 0", UDim2.fromScale(0, 0), UDim2.fromScale(0.33, 1), C.pink, Enum.Font.GothamBold); totalStat.TextSize = 9
+    local aliveStat = text(statsBar, "ALIVE 0", UDim2.fromScale(0.34, 0), UDim2.fromScale(0.33, 1), C.green, Enum.Font.GothamBold); aliveStat.TextSize = 9
+    local averageStat = text(statsBar, "AVG --m", UDim2.fromScale(0.68, 0), UDim2.fromScale(0.32, 1), C.yellow, Enum.Font.GothamBold); averageStat.TextSize = 9; averageStat.TextXAlignment = Enum.TextXAlignment.Right
+    local list = make("ScrollingFrame", { Position = UDim2.fromOffset(8, 101), Size = UDim2.new(1, -16, 1, -109), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 3, ScrollBarImageColor3 = C.pink, CanvasSize = UDim2.fromOffset(0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y }, playersPanel)
     local layout = make("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.Name }, list)
     refreshPlayerList = function()
         for _, child in ipairs(list:GetChildren()) do if not child:IsA("UIListLayout") then child:Destroy() end end
         local localRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        local totalCount, aliveCount, distanceSum, distanceCount = #Players:GetPlayers(), 0, 0, 0
+        for _, p in ipairs(Players:GetPlayers()) do local h = p.Character and p.Character:FindFirstChildOfClass("Humanoid"); if h and h.Health > 0 then aliveCount += 1 end; local r = p.Character and p.Character:FindFirstChild("HumanoidRootPart"); if localRoot and r then distanceSum += (localRoot.Position - r.Position).Magnitude; distanceCount += 1 end end
+        totalStat.Text, aliveStat.Text = "TOTAL " .. tostring(totalCount), "ALIVE " .. tostring(aliveCount)
+        averageStat.Text = distanceCount > 0 and string.format("AVG %dm", math.floor(distanceSum / distanceCount + 0.5)) or "AVG --m"
         local visibleCount = 0
         for _, target in ipairs(Players:GetPlayers()) do
             local targetRoot = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
@@ -452,7 +461,7 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
-local frames, elapsed, balanceTimer = 0, 0, 0
+local frames, elapsed, balanceTimer, playerStatsTimer = 0, 0, 0, 0
 local function updateBalance()
     local leaderstats = player:FindFirstChild("leaderstats")
     local value = leaderstats and (leaderstats:FindFirstChild("Cash") or leaderstats:FindFirstChild("Money") or leaderstats:FindFirstChild("Coins") or leaderstats:FindFirstChild("Points"))
@@ -460,8 +469,9 @@ local function updateBalance()
 end
 updateBalance()
 RunService.Heartbeat:Connect(function(dt)
-    frames += 1; elapsed += dt; balanceTimer += dt
+    frames += 1; elapsed += dt; balanceTimer += dt; playerStatsTimer += dt
     if balanceTimer >= 1 then balanceTimer = 0; updateBalance() end
+    if playerStatsTimer >= 1 then playerStatsTimer = 0; if refreshPlayerList then refreshPlayerList() end end
     if elapsed < 1 then return end
     local fps = math.floor(frames / elapsed + 0.5); frames, elapsed = 0, 0
     local ping = "--"
