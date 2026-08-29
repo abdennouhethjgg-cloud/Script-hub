@@ -287,6 +287,16 @@ local RandomTools = {
     getPlayerListState = function() return refreshPlayerList and "READY" or "WAITING" end,
     getRandomNumber = function() return math.random(1, 999) end,
     getLocalOnlyLabel = function() return "LOCAL" end,
+    getAliveRatio = function() local total = #Players:GetPlayers(); return total > 0 and math.floor((RandomTools.getAliveCount() / total) * 100 + 0.5) or 0 end,
+    getOwnHealth = function() local h = player.Character and player.Character:FindFirstChildOfClass("Humanoid"); return h and math.floor(h.Health + 0.5) or 0 end,
+    getOwnMaxHealth = function() local h = player.Character and player.Character:FindFirstChildOfClass("Humanoid"); return h and math.floor(h.MaxHealth + 0.5) or 0 end,
+    getOwnHumanoidState = function() local h = player.Character and player.Character:FindFirstChildOfClass("Humanoid"); return h and h:GetState().Name or "NONE" end,
+    getOwnRootHeight = function() local r = player.Character and player.Character:FindFirstChild("HumanoidRootPart"); return r and math.floor(r.Position.Y + 0.5) or 0 end,
+    getPanelPosition = function() return string.format("%.2f,%.2f", panel.Position.X.Scale, panel.Position.Y.Scale) end,
+    getCurrentFilterCount = function() local count = 0; if refreshPlayerList then return #Players:GetPlayers() end; return count end,
+    getAudioSummary = function() return featureState.audio and string.format("ON %d%%", math.floor(notificationVolume * 100 + 0.5)) or "OFF" end,
+    getUiSummary = function() return string.format("%s · %s", activePage or "NONE", panel.Visible and "VISIBLE" or "HIDDEN") end,
+    getSelectedDisplay = function() return selectedPlayer and selectedPlayer.DisplayName or "NONE" end,
 }
 local function renderPlayer()
     heading(playerPage, "PLAYER", "Outils locaux et diagnostics sûrs.")
