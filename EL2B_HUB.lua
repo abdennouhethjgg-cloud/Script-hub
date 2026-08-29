@@ -30,9 +30,9 @@ gui.DisplayOrder = 100
 gui.Parent = playerGui
 
 local C = {
-    bg = Color3.fromRGB(13, 13, 18), panel = Color3.fromRGB(22, 21, 29), row = Color3.fromRGB(30, 28, 39),
-    pink = Color3.fromRGB(255, 20, 147), purple = Color3.fromRGB(171, 91, 255), white = Color3.fromRGB(245, 240, 255),
-    dim = Color3.fromRGB(165, 157, 180), green = Color3.fromRGB(74, 225, 125), yellow = Color3.fromRGB(255, 207, 83), red = Color3.fromRGB(240, 92, 112),
+    bg = Color3.fromRGB(9, 4, 15), panel = Color3.fromRGB(20, 7, 27), row = Color3.fromRGB(32, 9, 39),
+    pink = Color3.fromRGB(255, 20, 170), purple = Color3.fromRGB(255, 45, 215), white = Color3.fromRGB(255, 235, 250),
+    dim = Color3.fromRGB(195, 125, 180), green = Color3.fromRGB(74, 225, 125), yellow = Color3.fromRGB(255, 207, 83), red = Color3.fromRGB(255, 82, 145),
 }
 local function make(className, props, parent)
     local obj = Instance.new(className)
