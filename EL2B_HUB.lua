@@ -228,6 +228,65 @@ local selectedPlayer
 local refreshPlayerList
 local statusFilter = "ALL"
 local maxDistance = 0
+local RandomTools = {
+    getPlayerCount = function() return #Players:GetPlayers() end,
+    getGameName = function() return tostring(game.Name) end,
+    getPlaceId = function() return tostring(game.PlaceId) end,
+    getServerId = function() return string.sub(game.JobId, 1, 8) end,
+    getLocalName = function() return player.DisplayName end,
+    getUserId = function() return tostring(player.UserId) end,
+    getPlayerNames = function() local names = {}; for _, p in ipairs(Players:GetPlayers()) do names[#names + 1] = p.Name end; return table.concat(names, ", ") end,
+    getAliveCount = function() local n = 0; for _, p in ipairs(Players:GetPlayers()) do local h = p.Character and p.Character:FindFirstChildOfClass("Humanoid"); if h and h.Health > 0 then n += 1 end end; return n end,
+    getCharacterState = function() return player.Character and "READY" or "NO CHARACTER" end,
+    getCameraWidth = function() local c = workspace.CurrentCamera; return c and math.floor(c.ViewportSize.X) or 0 end,
+    getCameraHeight = function() local c = workspace.CurrentCamera; return c and math.floor(c.ViewportSize.Y) or 0 end,
+    getViewportArea = function() local c = workspace.CurrentCamera; return c and math.floor(c.ViewportSize.X * c.ViewportSize.Y) or 0 end,
+    getClock = function() return os.date("%H:%M:%S") end,
+    getDate = function() return os.date("%Y-%m-%d") end,
+    getTouchMode = function() return UserInputService.TouchEnabled end,
+    getKeyboardMode = function() return UserInputService.KeyboardEnabled end,
+    getAudioEnabled = function() return featureState.audio end,
+    getAudioVolume = function() return math.floor(notificationVolume * 100 + 0.5) end,
+    getSoundId = function() return notificationSoundId end,
+    getNotificationsEnabled = function() return featureState.notifications end,
+    getMetricsEnabled = function() return featureState.metrics end,
+    getCompactEnabled = function() return featureState.compact end,
+    getAntiLagEnabled = function() return featureState.antiLag end,
+    getNextBaseEnabled = function() return featureState.nextBase end,
+    getStatusFilter = function() return statusFilter end,
+    getDistanceFilter = function() return maxDistance end,
+    getSelectedPlayer = function() return selectedPlayer and selectedPlayer.Name or "NONE" end,
+    getBalanceName = function() local s = player:FindFirstChild("leaderstats"); return s and (s:FindFirstChild("Cash") or s:FindFirstChild("Money") or s:FindFirstChild("Coins") or s:FindFirstChild("Points")) and "AVAILABLE" or "N/A" end,
+    getBalanceValue = function() local s = player:FindFirstChild("leaderstats"); local v = s and (s:FindFirstChild("Cash") or s:FindFirstChild("Money") or s:FindFirstChild("Coins") or s:FindFirstChild("Points")); return v and tostring(v.Value) or "--" end,
+    getNearestPlayer = function() local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart"); local best, bestD; if not root then return "NONE" end; for _, p in ipairs(Players:GetPlayers()) do if p ~= player then local r = p.Character and p.Character:FindFirstChild("HumanoidRootPart"); if r then local d = (root.Position - r.Position).Magnitude; if not bestD or d < bestD then best, bestD = p.Name, d end end end end; return best or "NONE" end,
+    getNearestDistance = function() local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart"); local best; if not root then return "--" end; for _, p in ipairs(Players:GetPlayers()) do if p ~= player then local r = p.Character and p.Character:FindFirstChild("HumanoidRootPart"); if r then local d = (root.Position - r.Position).Magnitude; if not best or d < best then best = d end end end end; return best and math.floor(best + 0.5) or "--" end,
+    getPlayersWithCharacters = function() local n = 0; for _, p in ipairs(Players:GetPlayers()) do if p.Character then n += 1 end end; return n end,
+    getLocalPosition = function() local r = player.Character and player.Character:FindFirstChild("HumanoidRootPart"); return r and tostring(r.Position) or "N/A" end,
+    getJobIdLength = function() return #game.JobId end,
+    getPlaceNameLength = function() return #tostring(game.Name) end,
+    getGuiName = function() return gui.Name end,
+    getPanelVisible = function() return panel.Visible end,
+    getActivePage = function() return activePage or "NONE" end,
+    getAccentColor = function() return string.format("%d,%d,%d", math.floor(C.pink.R * 255), math.floor(C.pink.G * 255), math.floor(C.pink.B * 255)) end,
+    getMaxPlayers = function() return tostring(Players.MaxPlayers) end,
+    getPlaceVersion = function() return tostring(game.PlaceVersion) end,
+    getSafeMode = function() return "LOCAL ONLY" end,
+    getScriptVersion = function() return "VIS HUB SAFE 1.0" end,
+    getServerSummary = function() return string.format("%s · %d/%s", tostring(game.Name), #Players:GetPlayers(), tostring(Players.MaxPlayers)) end,
+    getFilterSummary = function() return string.format("%s · %dm", statusFilter, maxDistance) end,
+    getRandomTip = function() local tips = { "Menu local prêt.", "Préférences audio sauvegardées.", "Accent cyber rose actif.", "Aucune action distante exécutée." }; return tips[math.random(1, #tips)] end,
+    getUptime = function() return string.format("%.0fs", os.clock()) end,
+    getMemoryNote = function() return "diagnostic local indisponible" end,
+    getConnectionNote = function() return "aucune connexion distante" end,
+    getSelectionNote = function() return selectedPlayer and "joueur sélectionné" or "aucune sélection" end,
+    getFilterMode = function() return maxDistance > 0 and "DISTANCE" or statusFilter ~= "ALL" and "STATUS" or "ALL" end,
+    getWorldName = function() return tostring(workspace.Name) end,
+    getCameraAvailable = function() return workspace.CurrentCamera ~= nil end,
+    getCharacterParts = function() local c = player.Character; return c and #c:GetDescendants() or 0 end,
+    getPlayerListState = function() return refreshPlayerList and "READY" or "WAITING" end,
+    getRandomNumber = function() return math.random(1, 999) end,
+    getLocalOnlyLabel = function() return "LOCAL" end,
+}
 local function renderPlayer()
     heading(playerPage, "PLAYER", "Outils locaux et diagnostics sûrs.")
     row(playerPage, "Notifications", "Messages bilingues du menu", "notifications", function(on) notice(on and "Notifications ON" or "Notifications OFF", "Préférence locale enregistrée.", on and C.green or C.yellow) end)
@@ -346,7 +405,7 @@ local function renderSettings()
     end)
     randomNoticeButton.Activated:Connect(function()
         local tips = { "Menu local prêt.", "Préférences audio sauvegardées.", "Accent cyber rose actif.", "Aucune action distante exécutée." }
-        notice("Random notice", tips[math.random(1, #tips)], C.pink)
+        notice("Random notice", RandomTools.getRandomTip() .. " · #" .. tostring(RandomTools.getRandomNumber()), C.pink)
     end)
     accentButton.Activated:Connect(function()
         local accents = { Color3.fromRGB(255, 20, 170), Color3.fromRGB(255, 55, 145), Color3.fromRGB(236, 46, 255), Color3.fromRGB(255, 105, 190) }
