@@ -233,8 +233,9 @@ local function renderPlayer()
 
     local playersPanel = make("Frame", { Position = UDim2.fromOffset(10, 110), Size = UDim2.new(1, -20, 0, 160), BackgroundColor3 = C.row, BorderSizePixel = 0 }, playerPage)
     corner(playersPanel, 8)
-    text(playersPanel, "PLAYERS · LOCAL VIEW", UDim2.fromOffset(11, 5), UDim2.new(1, -22, 0, 18), C.white, Enum.Font.GothamBold).TextSize = 11
-    local list = make("ScrollingFrame", { Position = UDim2.fromOffset(8, 28), Size = UDim2.new(1, -16, 1, -36), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 3, ScrollBarImageColor3 = C.pink, CanvasSize = UDim2.fromOffset(0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y }, playersPanel)
+    text(playersPanel, "PLAYERS · " .. tostring(game.Name), UDim2.fromOffset(11, 4), UDim2.new(1, -22, 0, 17), C.white, Enum.Font.GothamBold).TextSize = 10
+    text(playersPanel, "PLACE " .. tostring(game.PlaceId) .. " · SERVER " .. string.sub(game.JobId, 1, 8), UDim2.fromOffset(11, 20), UDim2.new(1, -22, 0, 12), C.pink, Enum.Font.Gotham).TextSize = 8
+    local list = make("ScrollingFrame", { Position = UDim2.fromOffset(8, 36), Size = UDim2.new(1, -16, 1, -44), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 3, ScrollBarImageColor3 = C.pink, CanvasSize = UDim2.fromOffset(0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y }, playersPanel)
     local layout = make("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.Name }, list)
     refreshPlayerList = function()
         for _, child in ipairs(list:GetChildren()) do if not child:IsA("UIListLayout") then child:Destroy() end end
