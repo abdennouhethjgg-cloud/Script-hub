@@ -90,12 +90,23 @@ local settingsPage = newPage("SETTINGS")
 local function clear(page)
     for _, child in ipairs(page:GetChildren()) do child:Destroy() end
 end
-local featureState = { notifications = true, metrics = true, antiLag = false, nextBase = false, compact = false }
+local featureState = { notifications = true, metrics = true, antiLag = false, nextBase = false, compact = false, audio = true }
 local nextCleanup
 local antiLagOriginal = {}
 
+local feedbackSound = Instance.new("Sound")
+feedbackSound.Name = "VisHubFeedback"
+feedbackSound.SoundId = "rbxassetid://113671164765342"
+feedbackSound.Volume = 0.25
+feedbackSound.Looped = false
+feedbackSound.Parent = gui
+local function playFeedback()
+    if featureState.audio then pcall(function() feedbackSound:Play() end) end
+end
+
 local function notice(titleValue, bodyValue, color)
     if not featureState.notifications then return end
+    playFeedback()
     local card = make("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -18, 1, 70), Size = UDim2.fromOffset(300, 70), BackgroundColor3 = C.panel, BorderSizePixel = 0, ZIndex = 20 }, gui)
     corner(card, 10)
     make("UIStroke", { Color = color or C.pink, Thickness = 1.2 }, card)
@@ -205,7 +216,8 @@ end
 local function renderSettings()
     heading(settingsPage, "SETTINGS", "Réglages d’affichage de la GUI.")
     row(settingsPage, "Compact mode", "Adaptation portrait mobile", "compact", function(on) panel.Size = on and UDim2.fromOffset(360, 390) or UDim2.fromOffset(650, 430); notice(on and "Compact ON" or "Compact OFF", "Taille du menu ajustée.", on and C.green or C.yellow) end)
-    local info = text(settingsPage, "Les fonctions distantes de la script fournie sont volontairement exclues de cette édition sûre.", UDim2.fromOffset(12, 170), UDim2.new(1, -24, 0, 48), C.dim, Enum.Font.Gotham); info.TextWrapped = true; info.TextSize = 10
+    row(settingsPage, "Audio feedback", "Son local des notifications", "audio", function(on) if not on then pcall(function() feedbackSound:Stop() end) end; notice(on and "Audio ON" or "Audio OFF", "Préférence audio locale.", on and C.green or C.yellow) end)
+    local info = text(settingsPage, "Les fonctions distantes de la script fournie sont volontairement exclues de cette édition sûre.", UDim2.fromOffset(12, 220), UDim2.new(1, -24, 0, 48), C.dim, Enum.Font.Gotham); info.TextWrapped = true; info.TextSize = 10
 end
 local function select(name)
     activePage = name
@@ -220,6 +232,25 @@ for index, name in ipairs({ "PLAYER", "ESP", "SETTINGS" }) do
 end
 close.Activated:Connect(function() panel.Visible = false; mini.Visible = true end)
 mini.Activated:Connect(function() mini.Visible = false; panel.Visible = true end)
+
+local dragging, dragInput, dragStart, panelStart
+header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true; dragStart = input.Position; panelStart = panel.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
+header.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        panel.Position = UDim2.new(panelStart.X.Scale, panelStart.X.Offset + delta.X, panelStart.Y.Scale, panelStart.Y.Offset + delta.Y)
+    end
+end)
 
 local frames, elapsed = 0, 0
 RunService.Heartbeat:Connect(function(dt)
