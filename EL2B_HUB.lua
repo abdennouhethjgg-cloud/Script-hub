@@ -73,6 +73,8 @@ local status = text(header, "LOCAL · READY", UDim2.new(1, -190, 0, 10), UDim2.f
 status.TextXAlignment = Enum.TextXAlignment.Right
 local metrics = text(header, "FPS --  ·  PING -- ms", UDim2.new(1, -240, 0, 33), UDim2.fromOffset(170, 16), C.dim, Enum.Font.Gotham)
 metrics.TextXAlignment = Enum.TextXAlignment.Right
+local balance = text(header, "CASH --", UDim2.new(1, -360, 0, 10), UDim2.fromOffset(105, 18), C.pink, Enum.Font.GothamBold)
+balance.TextXAlignment = Enum.TextXAlignment.Right
 local close = btn(header, "×", UDim2.new(1, -43, 0, 14), UDim2.fromOffset(28, 28), C.row)
 close.TextSize = 18
 
@@ -303,9 +305,16 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
-local frames, elapsed = 0, 0
+local frames, elapsed, balanceTimer = 0, 0, 0
+local function updateBalance()
+    local leaderstats = player:FindFirstChild("leaderstats")
+    local value = leaderstats and (leaderstats:FindFirstChild("Cash") or leaderstats:FindFirstChild("Money") or leaderstats:FindFirstChild("Coins") or leaderstats:FindFirstChild("Points"))
+    if value then balance.Text = "CASH " .. tostring(value.Value) else balance.Text = "CASH --" end
+end
+updateBalance()
 RunService.Heartbeat:Connect(function(dt)
-    frames += 1; elapsed += dt
+    frames += 1; elapsed += dt; balanceTimer += dt
+    if balanceTimer >= 1 then balanceTimer = 0; updateBalance() end
     if elapsed < 1 then return end
     local fps = math.floor(frames / elapsed + 0.5); frames, elapsed = 0, 0
     local ping = "--"
