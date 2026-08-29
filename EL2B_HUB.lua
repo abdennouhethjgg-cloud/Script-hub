@@ -54,7 +54,7 @@ local function btn(parent, value, position, size, color)
 end
 
 local configPath = "VisHub_local_config.json"
-local config = { panelX = 0.5, panelY = 0.5, audio = true, volume = 0.25, soundId = "rbxassetid://113671164765342" }
+local config = { panelX = 0.5, panelY = 0.5, audio = true, volume = 0.25, soundId = "rbxassetid://113671164765342", memoryThreshold = 500 }
 local hasFileStore = typeof(readfile) == "function" and typeof(writefile) == "function" and typeof(isfile) == "function"
 if hasFileStore and isfile(configPath) then
     pcall(function()
@@ -76,6 +76,8 @@ local metrics = text(header, "FPS --  ·  PING -- ms", UDim2.new(1, -240, 0, 33)
 metrics.TextXAlignment = Enum.TextXAlignment.Right
 local balance = text(header, "CASH --", UDim2.new(1, -360, 0, 10), UDim2.fromOffset(105, 18), C.pink, Enum.Font.GothamBold)
 balance.TextXAlignment = Enum.TextXAlignment.Right
+local memoryThreshold = math.max(50, tonumber(config.memoryThreshold) or 500)
+local memoryAlertActive = false
 local memory = text(header, "MEM -- MB", UDim2.new(1, -360, 0, 33), UDim2.fromOffset(105, 16), C.yellow, Enum.Font.GothamBold)
 memory.TextXAlignment = Enum.TextXAlignment.Right
 local close = btn(header, "×", UDim2.new(1, -43, 0, 14), UDim2.fromOffset(28, 28), C.row)
@@ -122,7 +124,7 @@ featureState.audio = config.audio ~= false
 saveConfig = function()
     if not hasFileStore then return end
     config.panelX, config.panelY = panel.Position.X.Scale, panel.Position.Y.Scale
-    config.audio, config.volume, config.soundId = featureState.audio, notificationVolume, notificationSoundId
+    config.audio, config.volume, config.soundId, config.memoryThreshold = featureState.audio, notificationVolume, notificationSoundId, memoryThreshold
     task.defer(function() pcall(function() writefile(configPath, HttpService:JSONEncode(config)) end) end)
 end
 local function playFeedback()
@@ -463,7 +465,14 @@ local function renderSettings()
         for tabName, tab in pairs(tabButtons) do tab.BackgroundColor3 = tabName == activePage and C.pink or C.row end
         notice("Cyber accent", "Accent rose aléatoire appliqué.", C.pink)
     end)
-    local info = text(settingsPage, "Fonctions locales : accent rose aléatoire, recentrage, actualisation des joueurs et notifications aléatoires. Aucun achat, téléportation ou remote.", UDim2.fromOffset(12, 292), UDim2.new(1, -24, 0, 42), C.dim, Enum.Font.Gotham); info.TextWrapped = true; info.TextSize = 10
+    local thresholdBox = make("TextBox", { Text = tostring(math.floor(memoryThreshold)), PlaceholderText = "500", ClearTextOnFocus = false, Position = UDim2.fromOffset(12, 326), Size = UDim2.fromOffset(110, 26), BackgroundColor3 = C.bg, BorderSizePixel = 0, TextColor3 = C.white, PlaceholderColor3 = C.dim, TextSize = 10, Font = Enum.Font.Gotham, TextXAlignment = Enum.TextXAlignment.Center }, settingsPage)
+    corner(thresholdBox, 6)
+    local thresholdApply = btn(settingsPage, "MEM LIMIT (MB)", UDim2.fromOffset(130, 326), UDim2.fromOffset(140, 26), C.purple)
+    thresholdApply.Activated:Connect(function()
+        local value = tonumber(thresholdBox.Text)
+        if value then memoryThreshold = math.max(50, value); thresholdBox.Text = tostring(math.floor(memoryThreshold)); saveConfig(); notice("Memory limit updated", "Alerte à " .. tostring(math.floor(memoryThreshold)) .. " MB.", C.pink) end
+    end)
+    local info = text(settingsPage, "Seuil mémoire local : l’indicateur passe en rouge et une notification apparaît lorsque la limite est dépassée.", UDim2.fromOffset(12, 360), UDim2.new(1, -24, 0, 42), C.dim, Enum.Font.Gotham); info.TextWrapped = true; info.TextSize = 10
 end
 local function select(name)
     activePage = name
@@ -511,7 +520,15 @@ RunService.Heartbeat:Connect(function(dt)
     if balanceTimer >= 1 then
         balanceTimer = 0; updateBalance()
         local ok, value = pcall(function() return Stats:GetTotalMemoryUsageMb() end)
-        memory.Text = ok and string.format("MEM %.1f MB", value) or "MEM -- MB"
+        if ok then
+            local critical = value >= memoryThreshold
+            memory.TextColor3 = critical and C.red or C.yellow
+            memory.Text = critical and string.format("MEM ALERT %.1f", value) or string.format("MEM %.1f MB", value)
+            if critical and not memoryAlertActive then notice("Memory critical", string.format("Utilisation %.1f MB · limite %d MB.", value, memoryThreshold), C.red) end
+            memoryAlertActive = critical
+        else
+            memory.TextColor3, memory.Text = C.yellow, "MEM -- MB"
+        end
     end
     if playerStatsTimer >= 1 then playerStatsTimer = 0; if refreshPlayerList then refreshPlayerList() end end
     if elapsed < 1 then return end
