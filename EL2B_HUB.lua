@@ -226,24 +226,43 @@ local function heading(page, titleValue, bodyValue)
 end
 local selectedPlayer
 local refreshPlayerList
+local statusFilter = "ALL"
+local maxDistance = 0
 local function renderPlayer()
     heading(playerPage, "PLAYER", "Outils locaux et diagnostics sûrs.")
     row(playerPage, "Notifications", "Messages bilingues du menu", "notifications", function(on) notice(on and "Notifications ON" or "Notifications OFF", "Préférence locale enregistrée.", on and C.green or C.yellow) end)
     row(playerPage, "FPS / Ping", "Métriques locales légères", "metrics", function(on) metrics.Visible = on; notice(on and "Metrics ON" or "Metrics OFF", "Affichage FPS/ping local.", on and C.green or C.yellow) end)
 
-    local playersPanel = make("Frame", { Position = UDim2.fromOffset(10, 110), Size = UDim2.new(1, -20, 0, 160), BackgroundColor3 = C.row, BorderSizePixel = 0 }, playerPage)
+    local playersPanel = make("Frame", { Position = UDim2.fromOffset(10, 110), Size = UDim2.new(1, -20, 0, 214), BackgroundColor3 = C.row, BorderSizePixel = 0 }, playerPage)
     corner(playersPanel, 8)
     text(playersPanel, "PLAYERS · " .. tostring(game.Name), UDim2.fromOffset(11, 4), UDim2.new(1, -22, 0, 17), C.white, Enum.Font.GothamBold).TextSize = 10
     text(playersPanel, "PLACE " .. tostring(game.PlaceId) .. " · SERVER " .. string.sub(game.JobId, 1, 8), UDim2.fromOffset(11, 20), UDim2.new(1, -22, 0, 12), C.pink, Enum.Font.Gotham).TextSize = 8
-    local list = make("ScrollingFrame", { Position = UDim2.fromOffset(8, 36), Size = UDim2.new(1, -16, 1, -44), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 3, ScrollBarImageColor3 = C.pink, CanvasSize = UDim2.fromOffset(0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y }, playersPanel)
+    local distanceBox = make("TextBox", { Text = maxDistance > 0 and tostring(maxDistance) or "0", PlaceholderText = "MAX DIST", ClearTextOnFocus = false, Position = UDim2.fromOffset(8, 37), Size = UDim2.fromOffset(82, 24), BackgroundColor3 = C.bg, BorderSizePixel = 0, TextColor3 = C.white, PlaceholderColor3 = C.dim, TextSize = 9, Font = Enum.Font.Gotham, TextXAlignment = Enum.TextXAlignment.Center }, playersPanel)
+    corner(distanceBox, 6)
+    local statusButton = btn(playersPanel, "STATUS: " .. statusFilter, UDim2.fromOffset(96, 37), UDim2.fromOffset(118, 24), C.purple)
+    statusButton.TextSize = 9
+    local filterHint = text(playersPanel, "0 = distance illimitée", UDim2.fromOffset(218, 37), UDim2.new(1, -226, 0, 24), C.dim, Enum.Font.Gotham); filterHint.TextSize = 8
+    local list = make("ScrollingFrame", { Position = UDim2.fromOffset(8, 68), Size = UDim2.new(1, -16, 1, -76), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 3, ScrollBarImageColor3 = C.pink, CanvasSize = UDim2.fromOffset(0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y }, playersPanel)
     local layout = make("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.Name }, list)
     refreshPlayerList = function()
         for _, child in ipairs(list:GetChildren()) do if not child:IsA("UIListLayout") then child:Destroy() end end
+        local localRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        local visibleCount = 0
         for _, target in ipairs(Players:GetPlayers()) do
+            local targetRoot = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+            local humanoid = target.Character and target.Character:FindFirstChildOfClass("Humanoid")
+            local alive = humanoid and humanoid.Health > 0
+            local distance = localRoot and targetRoot and (localRoot.Position - targetRoot.Position).Magnitude or nil
+            local status = alive and "ALIVE" or "NO CHARACTER"
+            local matchesDistance = maxDistance <= 0 or (distance and distance <= maxDistance)
+            local matchesStatus = statusFilter == "ALL" or (statusFilter == "ALIVE" and alive) or (statusFilter == "NO CHARACTER" and not alive)
+            if matchesDistance and matchesStatus then
+            visibleCount += 1
             local item = make("Frame", { Name = target.Name, Size = UDim2.new(1, -4, 0, 28), BackgroundColor3 = target == selectedPlayer and C.pink or C.bg, BorderSizePixel = 0 }, list)
             corner(item, 7)
-            local label = text(item, target.DisplayName .. "  @" .. target.Name, UDim2.fromOffset(9, 0), UDim2.new(1, -48, 1, 0), C.white, Enum.Font.Gotham)
-            label.TextSize = 10
+            local distanceText = distance and string.format(" · %dm", math.floor(distance + 0.5)) or " · --m"
+            local label = text(item, target.DisplayName .. "  @" .. target.Name .. distanceText, UDim2.fromOffset(9, 0), UDim2.new(1, -48, 1, 0), C.white, Enum.Font.Gotham)
+            label.TextSize = 9
             local info = btn(item, "i", UDim2.new(1, -34, 0.5, -11), UDim2.fromOffset(22, 22), C.purple)
             info.TextSize = 12
             info.Activated:Connect(function()
@@ -251,8 +270,24 @@ local function renderPlayer()
                 notice("Player selected", target.DisplayName .. " · local information only.", C.pink)
                 if refreshPlayerList then refreshPlayerList() end
             end)
+            end
+        end
+        if visibleCount == 0 then
+            local empty = text(list, "Aucun joueur ne correspond au filtre.", UDim2.fromOffset(6, 0), UDim2.new(1, -12, 0, 24), C.dim, Enum.Font.Gotham)
+            empty.TextSize = 9
         end
     end
+    distanceBox.FocusLost:Connect(function()
+        local value = tonumber(distanceBox.Text)
+        maxDistance = value and math.max(0, value) or 0
+        distanceBox.Text = maxDistance > 0 and tostring(math.floor(maxDistance)) or "0"
+        refreshPlayerList()
+    end)
+    statusButton.Activated:Connect(function()
+        statusFilter = statusFilter == "ALL" and "ALIVE" or statusFilter == "ALIVE" and "NO CHARACTER" or "ALL"
+        statusButton.Text = "STATUS: " .. statusFilter
+        refreshPlayerList()
+    end)
     refreshPlayerList()
 end
 Players.PlayerAdded:Connect(function() if refreshPlayerList then refreshPlayerList() end end)
