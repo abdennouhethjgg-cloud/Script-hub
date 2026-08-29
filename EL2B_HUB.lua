@@ -298,10 +298,20 @@ local function renderSettings()
     plus.Activated:Connect(function() updateVolume(notificationVolume + 0.05) end)
     local resetButton = btn(settingsPage, "RESET POSITION", UDim2.fromOffset(12, 218), UDim2.fromOffset(130, 28), C.bg)
     local accentButton = btn(settingsPage, "RANDOM ACCENT", UDim2.fromOffset(150, 218), UDim2.fromOffset(130, 28), C.purple)
+    local refreshButton = btn(settingsPage, "REFRESH PLAYERS", UDim2.fromOffset(12, 252), UDim2.fromOffset(130, 28), C.bg)
+    local randomNoticeButton = btn(settingsPage, "RANDOM NOTICE", UDim2.fromOffset(150, 252), UDim2.fromOffset(130, 28), C.pink)
     resetButton.Activated:Connect(function()
         panel.Position = UDim2.fromScale(0.5, 0.5)
         saveConfig()
         notice("Position reset", "Le panneau a été recentré.", C.pink)
+    end)
+    refreshButton.Activated:Connect(function()
+        if refreshPlayerList then refreshPlayerList() end
+        notice("Players refreshed", tostring(#Players:GetPlayers()) .. " joueur(s) dans ce serveur.", C.pink)
+    end)
+    randomNoticeButton.Activated:Connect(function()
+        local tips = { "Menu local prêt.", "Préférences audio sauvegardées.", "Accent cyber rose actif.", "Aucune action distante exécutée." }
+        notice("Random notice", tips[math.random(1, #tips)], C.pink)
     end)
     accentButton.Activated:Connect(function()
         local accents = { Color3.fromRGB(255, 20, 170), Color3.fromRGB(255, 55, 145), Color3.fromRGB(236, 46, 255), Color3.fromRGB(255, 105, 190) }
@@ -312,7 +322,7 @@ local function renderSettings()
         for tabName, tab in pairs(tabButtons) do tab.BackgroundColor3 = tabName == activePage and C.pink or C.row end
         notice("Cyber accent", "Accent rose aléatoire appliqué.", C.pink)
     end)
-    local info = text(settingsPage, "Fonctions locales : accent rose aléatoire et recentrage du panneau. Aucun achat, téléportation ou remote.", UDim2.fromOffset(12, 258), UDim2.new(1, -24, 0, 42), C.dim, Enum.Font.Gotham); info.TextWrapped = true; info.TextSize = 10
+    local info = text(settingsPage, "Fonctions locales : accent rose aléatoire, recentrage, actualisation des joueurs et notifications aléatoires. Aucun achat, téléportation ou remote.", UDim2.fromOffset(12, 292), UDim2.new(1, -24, 0, 42), C.dim, Enum.Font.Gotham); info.TextWrapped = true; info.TextSize = 10
 end
 local function select(name)
     activePage = name
