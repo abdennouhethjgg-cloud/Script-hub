@@ -5,6 +5,7 @@
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
+local Stats = game:GetService("Stats")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
@@ -75,6 +76,8 @@ local metrics = text(header, "FPS --  ·  PING -- ms", UDim2.new(1, -240, 0, 33)
 metrics.TextXAlignment = Enum.TextXAlignment.Right
 local balance = text(header, "CASH --", UDim2.new(1, -360, 0, 10), UDim2.fromOffset(105, 18), C.pink, Enum.Font.GothamBold)
 balance.TextXAlignment = Enum.TextXAlignment.Right
+local memory = text(header, "MEM -- MB", UDim2.new(1, -360, 0, 33), UDim2.fromOffset(105, 16), C.yellow, Enum.Font.GothamBold)
+memory.TextXAlignment = Enum.TextXAlignment.Right
 local close = btn(header, "×", UDim2.new(1, -43, 0, 14), UDim2.fromOffset(28, 28), C.row)
 close.TextSize = 18
 
@@ -279,7 +282,7 @@ local RandomTools = {
     getFilterSummary = function() return string.format("%s · %dm", statusFilter, maxDistance) end,
     getRandomTip = function() local tips = { "Menu local prêt.", "Préférences audio sauvegardées.", "Accent cyber rose actif.", "Aucune action distante exécutée." }; return tips[math.random(1, #tips)] end,
     getUptime = function() return string.format("%.0fs", os.clock()) end,
-    getMemoryNote = function() return "diagnostic local indisponible" end,
+    getMemoryNote = function() local ok, value = pcall(function() return Stats:GetTotalMemoryUsageMb() end); return ok and string.format("%.1f MB", value) or "--" end,
     getConnectionNote = function() return "aucune connexion distante" end,
     getSelectionNote = function() return selectedPlayer and "joueur sélectionné" or "aucune sélection" end,
     getFilterMode = function() return maxDistance > 0 and "DISTANCE" or statusFilter ~= "ALL" and "STATUS" or "ALL" end,
@@ -505,7 +508,11 @@ end
 updateBalance()
 RunService.Heartbeat:Connect(function(dt)
     frames += 1; elapsed += dt; balanceTimer += dt; playerStatsTimer += dt
-    if balanceTimer >= 1 then balanceTimer = 0; updateBalance() end
+    if balanceTimer >= 1 then
+        balanceTimer = 0; updateBalance()
+        local ok, value = pcall(function() return Stats:GetTotalMemoryUsageMb() end)
+        memory.Text = ok and string.format("MEM %.1f MB", value) or "MEM -- MB"
+    end
     if playerStatsTimer >= 1 then playerStatsTimer = 0; if refreshPlayerList then refreshPlayerList() end end
     if elapsed < 1 then return end
     local fps = math.floor(frames / elapsed + 0.5); frames, elapsed = 0, 0
