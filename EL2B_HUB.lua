@@ -150,11 +150,10 @@ local function findEmptyBase()
     if not plots then return nil end
     for _, plot in ipairs(plots:GetChildren()) do
         local sign = plot:FindFirstChild("PlotSign")
-        local surface = sign and sign:FindFirstChild("SurfaceGui")
-        local frame = surface and surface:FindFirstChild("Frame")
-        local label = frame and frame:FindFirstChild("TextLabel")
-        if label and tostring(label.Text):lower():find("empty base", 1, true) then
-            local ok, box = pcall(function() return plot:GetBoundingBox() end)
+        local label = sign and sign:FindFirstChild("TextLabel", true)
+        if label and tostring(label.Text):lower():gsub("^%s+", ""):gsub("%s+$", "") == "empty base" then
+            local source = sign:FindFirstChild("Model", true) or plot
+            local ok, box = pcall(function() return source:GetBoundingBox() end)
             if ok and box then return box.Position end
         end
     end
@@ -164,7 +163,7 @@ local function setNextBase(on)
     clearNextBase()
     if not on then notice("Next Empty Base OFF", "Marqueur retiré.", C.dim); return end
     local marker = make("Part", { Name = "VisHubNextBaseMarker", Anchored = true, CanCollide = false, Transparency = 1, Size = Vector3.new(1, 1, 1) }, workspace)
-    local tag = make("BillboardGui", { Adornee = marker, Size = UDim2.fromOffset(220, 82), StudsOffset = Vector3.new(0, 7, 0), AlwaysOnTop = true, MaxDistance = 300 }, marker)
+    local tag = make("BillboardGui", { Adornee = marker, Size = UDim2.fromOffset(220, 82), StudsOffset = Vector3.new(0, 7, 0), AlwaysOnTop = true, MaxDistance = math.huge, LightInfluence = 0 }, marker)
     text(tag, "▼ NEXT ▼", UDim2.fromScale(0, 0), UDim2.fromScale(1, 0.42), C.green, Enum.Font.GothamBlack).TextXAlignment = Enum.TextXAlignment.Center
     text(tag, "EMPTY BASE", UDim2.fromScale(0, 0.4), UDim2.fromScale(1, 0.3), C.white, Enum.Font.GothamBold).TextXAlignment = Enum.TextXAlignment.Center
     local dist = text(tag, "DISTANCE: -- m", UDim2.fromScale(0, 0.7), UDim2.fromScale(1, 0.25), C.yellow, Enum.Font.GothamBold); dist.TextXAlignment = Enum.TextXAlignment.Center
