@@ -64,7 +64,7 @@ end
 local saveConfig
 local panel = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(tonumber(config.panelX) or 0.5, tonumber(config.panelY) or 0.5), Size = UDim2.fromOffset(650, 430), BackgroundColor3 = C.panel, BorderSizePixel = 0 }, gui)
 corner(panel, 14)
-make("UIStroke", { Color = C.purple, Thickness = 1.5, Transparency = 0.15 }, panel)
+local panelStroke = make("UIStroke", { Color = C.purple, Thickness = 1.5, Transparency = 0.15 }, panel)
 local header = make("Frame", { Position = UDim2.fromOffset(1, 1), Size = UDim2.new(1, -2, 0, 62), BackgroundColor3 = C.bg, BorderSizePixel = 0 }, panel)
 corner(header, 14)
 text(header, "VIS HUB", UDim2.fromOffset(18, 8), UDim2.fromOffset(180, 25), C.white, Enum.Font.GothamBlack).TextSize = 20
@@ -296,7 +296,23 @@ local function renderSettings()
     testSound.Activated:Connect(function() playFeedback() end)
     minus.Activated:Connect(function() updateVolume(notificationVolume - 0.05) end)
     plus.Activated:Connect(function() updateVolume(notificationVolume + 0.05) end)
-    local info = text(settingsPage, "Les fonctions distantes de la script fournie sont volontairement exclues de cette édition sûre.", UDim2.fromOffset(12, 218), UDim2.new(1, -24, 0, 48), C.dim, Enum.Font.Gotham); info.TextWrapped = true; info.TextSize = 10
+    local resetButton = btn(settingsPage, "RESET POSITION", UDim2.fromOffset(12, 218), UDim2.fromOffset(130, 28), C.bg)
+    local accentButton = btn(settingsPage, "RANDOM ACCENT", UDim2.fromOffset(150, 218), UDim2.fromOffset(130, 28), C.purple)
+    resetButton.Activated:Connect(function()
+        panel.Position = UDim2.fromScale(0.5, 0.5)
+        saveConfig()
+        notice("Position reset", "Le panneau a été recentré.", C.pink)
+    end)
+    accentButton.Activated:Connect(function()
+        local accents = { Color3.fromRGB(255, 20, 170), Color3.fromRGB(255, 55, 145), Color3.fromRGB(236, 46, 255), Color3.fromRGB(255, 105, 190) }
+        local accent = accents[math.random(1, #accents)]
+        C.pink, C.purple = accent, accent:Lerp(Color3.new(1, 1, 1), 0.18)
+        panelStroke.Color = C.purple
+        mini.BackgroundColor3, content.ScrollBarImageColor3 = C.purple, C.pink
+        for tabName, tab in pairs(tabButtons) do tab.BackgroundColor3 = tabName == activePage and C.pink or C.row end
+        notice("Cyber accent", "Accent rose aléatoire appliqué.", C.pink)
+    end)
+    local info = text(settingsPage, "Fonctions locales : accent rose aléatoire et recentrage du panneau. Aucun achat, téléportation ou remote.", UDim2.fromOffset(12, 258), UDim2.new(1, -24, 0, 42), C.dim, Enum.Font.Gotham); info.TextWrapped = true; info.TextSize = 10
 end
 local function select(name)
     activePage = name
