@@ -3,6 +3,7 @@
 -- Les fonctions distantes ou invasives de la script fournie ne sont pas incluses.
 
 local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -51,7 +52,17 @@ local function btn(parent, value, position, size, color)
     return b
 end
 
-local panel = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(650, 430), BackgroundColor3 = C.panel, BorderSizePixel = 0 }, gui)
+local configPath = "VisHub_local_config.json"
+local config = { panelX = 0.5, panelY = 0.5, audio = true, volume = 0.25, soundId = "rbxassetid://113671164765342" }
+local hasFileStore = typeof(readfile) == "function" and typeof(writefile) == "function" and typeof(isfile) == "function"
+if hasFileStore and isfile(configPath) then
+    pcall(function()
+        local saved = HttpService:JSONDecode(readfile(configPath))
+        if type(saved) == "table" then for key in pairs(config) do if saved[key] ~= nil then config[key] = saved[key] end end end
+    end)
+end
+local saveConfig
+local panel = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(tonumber(config.panelX) or 0.5, tonumber(config.panelY) or 0.5), Size = UDim2.fromOffset(650, 430), BackgroundColor3 = C.panel, BorderSizePixel = 0 }, gui)
 corner(panel, 14)
 make("UIStroke", { Color = C.purple, Thickness = 1.5, Transparency = 0.15 }, panel)
 local header = make("Frame", { Position = UDim2.fromOffset(1, 1), Size = UDim2.new(1, -2, 0, 62), BackgroundColor3 = C.bg, BorderSizePixel = 0 }, panel)
@@ -94,12 +105,21 @@ local featureState = { notifications = true, metrics = true, antiLag = false, ne
 local nextCleanup
 local antiLagOriginal = {}
 
+local notificationSoundId = tostring(config.soundId or "rbxassetid://113671164765342")
+local notificationVolume = math.clamp(tonumber(config.volume) or 0.25, 0, 1)
 local feedbackSound = Instance.new("Sound")
 feedbackSound.Name = "VisHubFeedback"
-feedbackSound.SoundId = "rbxassetid://113671164765342"
-feedbackSound.Volume = 0.25
+feedbackSound.SoundId = notificationSoundId
+feedbackSound.Volume = notificationVolume
 feedbackSound.Looped = false
 feedbackSound.Parent = gui
+featureState.audio = config.audio ~= false
+saveConfig = function()
+    if not hasFileStore then return end
+    config.panelX, config.panelY = panel.Position.X.Scale, panel.Position.Y.Scale
+    config.audio, config.volume, config.soundId = featureState.audio, notificationVolume, notificationSoundId
+    task.defer(function() pcall(function() writefile(configPath, HttpService:JSONEncode(config)) end) end)
+end
 local function playFeedback()
     if featureState.audio then pcall(function() feedbackSound:Play() end) end
 end
@@ -216,8 +236,38 @@ end
 local function renderSettings()
     heading(settingsPage, "SETTINGS", "Réglages d’affichage de la GUI.")
     row(settingsPage, "Compact mode", "Adaptation portrait mobile", "compact", function(on) panel.Size = on and UDim2.fromOffset(360, 390) or UDim2.fromOffset(650, 430); notice(on and "Compact ON" or "Compact OFF", "Taille du menu ajustée.", on and C.green or C.yellow) end)
-    row(settingsPage, "Audio feedback", "Son local des notifications", "audio", function(on) if not on then pcall(function() feedbackSound:Stop() end) end; notice(on and "Audio ON" or "Audio OFF", "Préférence audio locale.", on and C.green or C.yellow) end)
-    local info = text(settingsPage, "Les fonctions distantes de la script fournie sont volontairement exclues de cette édition sûre.", UDim2.fromOffset(12, 220), UDim2.new(1, -24, 0, 48), C.dim, Enum.Font.Gotham); info.TextWrapped = true; info.TextSize = 10
+    row(settingsPage, "Audio feedback", "Son local des notifications", "audio", function(on) if not on then pcall(function() feedbackSound:Stop() end) end; saveConfig(); notice(on and "Audio ON" or "Audio OFF", "Préférence audio locale.", on and C.green or C.yellow) end)
+
+    local audioPanel = make("Frame", { Position = UDim2.fromOffset(10, 110), Size = UDim2.new(1, -20, 0, 92), BackgroundColor3 = C.row, BorderSizePixel = 0 }, settingsPage)
+    corner(audioPanel, 8)
+    text(audioPanel, "Custom notification sound", UDim2.fromOffset(11, 5), UDim2.new(1, -22, 0, 18), C.white, Enum.Font.GothamBold).TextSize = 11
+    local soundBox = make("TextBox", { Text = notificationSoundId, PlaceholderText = "rbxassetid://...", ClearTextOnFocus = false, Position = UDim2.fromOffset(10, 29), Size = UDim2.new(1, -140, 0, 27), BackgroundColor3 = C.bg, BorderSizePixel = 0, TextColor3 = C.white, PlaceholderColor3 = C.dim, TextSize = 10, Font = Enum.Font.Gotham, TextXAlignment = Enum.TextXAlignment.Left }, audioPanel)
+    corner(soundBox, 6)
+    local applySound = btn(audioPanel, "APPLY", UDim2.new(1, -120, 0, 29), UDim2.fromOffset(52, 27), C.purple)
+    local testSound = btn(audioPanel, "TEST", UDim2.new(1, -62, 0, 29), UDim2.fromOffset(52, 27), C.green)
+    local volumeLabel = text(audioPanel, string.format("Volume: %d%%", math.floor(notificationVolume * 100 + 0.5)), UDim2.fromOffset(11, 62), UDim2.fromOffset(100, 20), C.dim, Enum.Font.Gotham)
+    local minus = btn(audioPanel, "−", UDim2.fromOffset(120, 60), UDim2.fromOffset(26, 24), C.bg)
+    local plus = btn(audioPanel, "+", UDim2.fromOffset(152, 60), UDim2.fromOffset(26, 24), C.bg)
+    local function updateVolume(value)
+        notificationVolume = math.clamp(value, 0, 1)
+        feedbackSound.Volume = notificationVolume
+        saveConfig()
+        volumeLabel.Text = string.format("Volume: %d%%", math.floor(notificationVolume * 100 + 0.5))
+    end
+    applySound.Activated:Connect(function()
+        local value = soundBox.Text:match("^%s*(.-)%s*$")
+        if value and value ~= "" then
+            notificationSoundId = value
+            feedbackSound.SoundId = notificationSoundId
+            config.soundId = notificationSoundId
+            saveConfig()
+            notice("Sound updated", "Identifiant audio local appliqué.", C.green)
+        end
+    end)
+    testSound.Activated:Connect(function() playFeedback() end)
+    minus.Activated:Connect(function() updateVolume(notificationVolume - 0.05) end)
+    plus.Activated:Connect(function() updateVolume(notificationVolume + 0.05) end)
+    local info = text(settingsPage, "Les fonctions distantes de la script fournie sont volontairement exclues de cette édition sûre.", UDim2.fromOffset(12, 218), UDim2.new(1, -24, 0, 48), C.dim, Enum.Font.Gotham); info.TextWrapped = true; info.TextSize = 10
 end
 local function select(name)
     activePage = name
@@ -249,6 +299,7 @@ UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         local delta = input.Position - dragStart
         panel.Position = UDim2.new(panelStart.X.Scale, panelStart.X.Offset + delta.X, panelStart.Y.Scale, panelStart.Y.Offset + delta.Y)
+        saveConfig()
     end
 end)
 
