@@ -1,159 +1,254 @@
--- EL2B HUB · Clean GUI Base
--- Base volontairement minimale avant réception de la prochaine script.
+-- VIS HUB · Safe Local Edition
+-- Menu local : GUI, notifications, FPS/ping, Anti Lag visuel et Next Empty Base.
+-- Les fonctions distantes ou invasives de la script fournie ne sont pas incluses.
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
 
 local player = Players.LocalPlayer
 if not player then
-    warn("[EL2B HUB] Joueur local indisponible")
+    warn("[VIS HUB] LocalPlayer indisponible")
     return
 end
-
 local playerGui = player:WaitForChild("PlayerGui", 10)
 if not playerGui then
-    warn("[EL2B HUB] PlayerGui indisponible")
+    warn("[VIS HUB] PlayerGui indisponible")
     return
 end
 
-local oldGui = playerGui:FindFirstChild("EL2BCleanBase")
-if oldGui then
-    oldGui:Destroy()
+local old = playerGui:FindFirstChild("VisHubSafeMenu")
+if old then old:Destroy() end
+local gui = Instance.new("ScreenGui")
+gui.Name = "VisHubSafeMenu"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.DisplayOrder = 100
+gui.Parent = playerGui
+
+local C = {
+    bg = Color3.fromRGB(13, 13, 18), panel = Color3.fromRGB(22, 21, 29), row = Color3.fromRGB(30, 28, 39),
+    pink = Color3.fromRGB(255, 20, 147), purple = Color3.fromRGB(171, 91, 255), white = Color3.fromRGB(245, 240, 255),
+    dim = Color3.fromRGB(165, 157, 180), green = Color3.fromRGB(74, 225, 125), yellow = Color3.fromRGB(255, 207, 83), red = Color3.fromRGB(240, 92, 112),
+}
+local function make(className, props, parent)
+    local obj = Instance.new(className)
+    for key, value in pairs(props) do obj[key] = value end
+    obj.Parent = parent
+    return obj
+end
+local function corner(obj, radius)
+    make("UICorner", { CornerRadius = UDim.new(0, radius) }, obj)
+end
+local function text(parent, value, position, size, color, font)
+    return make("TextLabel", { BackgroundTransparency = 1, Text = value, Position = position, Size = size, TextColor3 = color or C.white, TextSize = 12, Font = font or Enum.Font.Gotham, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Center }, parent)
+end
+local function btn(parent, value, position, size, color)
+    local b = make("TextButton", { BackgroundColor3 = color or C.row, BorderSizePixel = 0, Text = value, Position = position, Size = size, TextColor3 = C.white, TextSize = 11, Font = Enum.Font.GothamBold, AutoButtonColor = true }, parent)
+    corner(b, 8)
+    return b
 end
 
-local function create(className, properties, parent)
-    local object = Instance.new(className)
-    for key, value in pairs(properties) do
-        object[key] = value
+local panel = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(650, 430), BackgroundColor3 = C.panel, BorderSizePixel = 0 }, gui)
+corner(panel, 14)
+make("UIStroke", { Color = C.purple, Thickness = 1.5, Transparency = 0.15 }, panel)
+local header = make("Frame", { Position = UDim2.fromOffset(1, 1), Size = UDim2.new(1, -2, 0, 62), BackgroundColor3 = C.bg, BorderSizePixel = 0 }, panel)
+corner(header, 14)
+text(header, "VIS HUB", UDim2.fromOffset(18, 8), UDim2.fromOffset(180, 25), C.white, Enum.Font.GothamBlack).TextSize = 20
+text(header, "SAFE LOCAL EDITION", UDim2.fromOffset(19, 34), UDim2.fromOffset(180, 16), C.pink, Enum.Font.GothamBold).TextSize = 9
+local status = text(header, "LOCAL · READY", UDim2.new(1, -190, 0, 10), UDim2.fromOffset(120, 18), C.green, Enum.Font.GothamBold)
+status.TextXAlignment = Enum.TextXAlignment.Right
+local metrics = text(header, "FPS --  ·  PING -- ms", UDim2.new(1, -240, 0, 33), UDim2.fromOffset(170, 16), C.dim, Enum.Font.Gotham)
+metrics.TextXAlignment = Enum.TextXAlignment.Right
+local close = btn(header, "×", UDim2.new(1, -43, 0, 14), UDim2.fromOffset(28, 28), C.row)
+close.TextSize = 18
+
+local tabsFrame = make("Frame", { Position = UDim2.fromOffset(14, 76), Size = UDim2.fromOffset(145, 330), BackgroundColor3 = C.bg, BorderSizePixel = 0 }, panel)
+corner(tabsFrame, 10)
+local content = make("ScrollingFrame", { Position = UDim2.fromOffset(173, 76), Size = UDim2.new(1, -187, 1, -98), BackgroundColor3 = C.bg, BorderSizePixel = 0, ScrollBarThickness = 5, ScrollBarImageColor3 = C.pink, CanvasSize = UDim2.fromOffset(0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollingDirection = Enum.ScrollingDirection.Y }, panel)
+corner(content, 10)
+local hint = text(panel, "SCROLL · TOUCH / MOUSE", UDim2.new(1, -245, 1, -22), UDim2.fromOffset(220, 16), C.dim, Enum.Font.GothamBold)
+hint.TextXAlignment = Enum.TextXAlignment.Right
+local mini = btn(gui, "VIS", UDim2.new(1, -88, 1, -62), UDim2.fromOffset(70, 40), C.purple)
+mini.Visible = false
+
+local pages = {}
+local tabButtons = {}
+local activePage
+local function newPage(name)
+    local page = make("Frame", { Name = name, Size = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1, Visible = false }, content)
+    page.AutomaticSize = Enum.AutomaticSize.Y
+    pages[name] = page
+    return page
+end
+local playerPage = newPage("PLAYER")
+local espPage = newPage("ESP")
+local settingsPage = newPage("SETTINGS")
+
+local function clear(page)
+    for _, child in ipairs(page:GetChildren()) do child:Destroy() end
+end
+local featureState = { notifications = true, metrics = true, antiLag = false, nextBase = false, compact = false }
+local nextCleanup
+local antiLagOriginal = {}
+
+local function notice(titleValue, bodyValue, color)
+    if not featureState.notifications then return end
+    local card = make("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -18, 1, 70), Size = UDim2.fromOffset(300, 70), BackgroundColor3 = C.panel, BorderSizePixel = 0, ZIndex = 20 }, gui)
+    corner(card, 10)
+    make("UIStroke", { Color = color or C.pink, Thickness = 1.2 }, card)
+    text(card, titleValue, UDim2.fromOffset(14, 10), UDim2.new(1, -50, 0, 20), color or C.pink, Enum.Font.GothamBold).ZIndex = 21
+    text(card, bodyValue, UDim2.fromOffset(14, 32), UDim2.new(1, -24, 0, 28), C.white, Enum.Font.Gotham).ZIndex = 21
+    local x = btn(card, "×", UDim2.new(1, -31, 0, 9), UDim2.fromOffset(22, 22), C.row); x.ZIndex = 22
+    local function remove() if card.Parent then card:Destroy() end end
+    x.Activated:Connect(remove)
+    TweenService:Create(card, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Position = UDim2.new(1, -18, 1, -18) }):Play()
+    task.delay(3.5, remove)
+end
+
+local function clearNextBase()
+    if nextCleanup then nextCleanup() end
+    nextCleanup = nil
+end
+local function findEmptyBase()
+    local plots = workspace:FindFirstChild("Plots")
+    if not plots then return nil end
+    for _, plot in ipairs(plots:GetChildren()) do
+        local sign = plot:FindFirstChild("PlotSign")
+        local surface = sign and sign:FindFirstChild("SurfaceGui")
+        local frame = surface and surface:FindFirstChild("Frame")
+        local label = frame and frame:FindFirstChild("TextLabel")
+        if label and tostring(label.Text):lower():find("empty base", 1, true) then
+            local ok, box = pcall(function() return plot:GetBoundingBox() end)
+            if ok and box then return box.Position end
+        end
     end
-    object.Parent = parent
-    return object
+    return nil
+end
+local function setNextBase(on)
+    clearNextBase()
+    if not on then notice("Next Empty Base OFF", "Marqueur retiré.", C.dim); return end
+    local marker = make("Part", { Name = "VisHubNextBaseMarker", Anchored = true, CanCollide = false, Transparency = 1, Size = Vector3.new(1, 1, 1) }, workspace)
+    local tag = make("BillboardGui", { Adornee = marker, Size = UDim2.fromOffset(220, 82), StudsOffset = Vector3.new(0, 7, 0), AlwaysOnTop = true, MaxDistance = 300 }, marker)
+    text(tag, "▼ NEXT ▼", UDim2.fromScale(0, 0), UDim2.fromScale(1, 0.42), C.green, Enum.Font.GothamBlack).TextXAlignment = Enum.TextXAlignment.Center
+    text(tag, "EMPTY BASE", UDim2.fromScale(0, 0.4), UDim2.fromScale(1, 0.3), C.white, Enum.Font.GothamBold).TextXAlignment = Enum.TextXAlignment.Center
+    local dist = text(tag, "DISTANCE: -- m", UDim2.fromScale(0, 0.7), UDim2.fromScale(1, 0.25), C.yellow, Enum.Font.GothamBold); dist.TextXAlignment = Enum.TextXAlignment.Center
+    local target = findEmptyBase()
+    if target then marker.Position = target else tag.Enabled = false end
+    local timer = 0
+    local connection = RunService.Heartbeat:Connect(function(dt)
+        timer += dt
+        if timer < 0.4 then return end
+        timer = 0
+        local newTarget = findEmptyBase()
+        if newTarget then
+            marker.Position = newTarget
+            tag.Enabled = true
+            local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            if root then dist.Text = string.format("DISTANCE: %d m", math.floor((root.Position - newTarget).Magnitude * 0.28 + 0.5)) end
+        else tag.Enabled = false end
+    end)
+    nextCleanup = function() pcall(function() connection:Disconnect() end); if marker.Parent then marker:Destroy() end end
+    notice("Next Empty Base ON", target and "Marqueur local activé." or "Aucune base vide détectée.", target and C.green or C.yellow)
 end
 
-local function round(object, radius)
-    create("UICorner", { CornerRadius = UDim.new(0, radius) }, object)
+local function setAntiLag(on)
+    if on then
+        antiLagOriginal = {}
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
+                antiLagOriginal[obj] = obj.Enabled
+                obj.Enabled = false
+            end
+        end
+        notice("Anti Lag ON", "Effets visuels locaux réduits.", C.green)
+    else
+        for obj, wasEnabled in pairs(antiLagOriginal) do if obj and obj.Parent then obj.Enabled = wasEnabled end end
+        antiLagOriginal = {}
+        notice("Anti Lag OFF", "Effets visuels restaurés.", C.yellow)
+    end
 end
 
-local gui = create("ScreenGui", {
-    Name = "EL2BCleanBase",
-    ResetOnSpawn = false,
-    IgnoreGuiInset = true,
-    DisplayOrder = 100,
-}, playerGui)
-
-local panel = create("Frame", {
-    Name = "Panel",
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    Position = UDim2.fromScale(0.5, 0.5),
-    Size = UDim2.fromOffset(390, 220),
-    BackgroundColor3 = Color3.fromRGB(18, 17, 25),
-    BorderSizePixel = 0,
-}, gui)
-round(panel, 14)
-
-local stroke = create("UIStroke", {
-    Color = Color3.fromRGB(184, 76, 255),
-    Thickness = 1.5,
-    Transparency = 0.15,
-}, panel)
-
-local title = create("TextLabel", {
-    Name = "Title",
-    Position = UDim2.fromOffset(20, 18),
-    Size = UDim2.new(1, -40, 0, 30),
-    BackgroundTransparency = 1,
-    Text = "EL2B HUB",
-    TextColor3 = Color3.fromRGB(245, 238, 255),
-    TextSize = 22,
-    Font = Enum.Font.GothamBold,
-    TextXAlignment = Enum.TextXAlignment.Left,
-}, panel)
-
-local status = create("TextLabel", {
-    Name = "Status",
-    Position = UDim2.fromOffset(20, 53),
-    Size = UDim2.new(1, -40, 0, 22),
-    BackgroundTransparency = 1,
-    Text = "SAFE BASE · READY",
-    TextColor3 = Color3.fromRGB(101, 255, 171),
-    TextSize = 12,
-    Font = Enum.Font.GothamMedium,
-    TextXAlignment = Enum.TextXAlignment.Left,
-}, panel)
-
-local message = create("TextLabel", {
-    Name = "Message",
-    Position = UDim2.fromOffset(20, 88),
-    Size = UDim2.new(1, -40, 0, 48),
-    BackgroundTransparency = 1,
-    Text = "Base propre chargée.\nLes prochaines fonctions seront ajoutées séparément.",
-    TextColor3 = Color3.fromRGB(191, 184, 204),
-    TextSize = 13,
-    Font = Enum.Font.Gotham,
-    TextWrapped = true,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    TextYAlignment = Enum.TextYAlignment.Center,
-}, panel)
-
-local close = create("TextButton", {
-    Name = "Close",
-    Position = UDim2.fromOffset(20, 155),
-    Size = UDim2.new(1, -40, 0, 40),
-    BackgroundColor3 = Color3.fromRGB(38, 29, 55),
-    BorderSizePixel = 0,
-    Text = "FERMER / CLOSE",
-    TextColor3 = Color3.fromRGB(255, 244, 255),
-    TextSize = 13,
-    Font = Enum.Font.GothamBold,
-    AutoButtonColor = true,
-}, panel)
-round(close, 9)
-
-local mini = create("TextButton", {
-    Name = "MiniButton",
-    AnchorPoint = Vector2.new(1, 1),
-    Position = UDim2.new(1, -18, 1, -18),
-    Size = UDim2.fromOffset(72, 42),
-    BackgroundColor3 = Color3.fromRGB(118, 43, 178),
-    BorderSizePixel = 0,
-    Text = "EL2B",
-    TextColor3 = Color3.fromRGB(255, 255, 255),
-    TextSize = 13,
-    Font = Enum.Font.GothamBold,
-    Visible = false,
-}, gui)
-round(mini, 12)
-
-local function showPanel()
-    mini.Visible = false
-    panel.Visible = true
-    panel.Size = UDim2.fromOffset(370, 205)
-    TweenService:Create(panel, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = UDim2.fromOffset(390, 220),
-    }):Play()
+local function row(page, name, detail, key, callback)
+    local index = #page:GetChildren()
+    local item = make("Frame", { Position = UDim2.fromOffset(10, 10 + index * 50), Size = UDim2.new(1, -20, 0, 42), BackgroundColor3 = C.row, BorderSizePixel = 0 }, page)
+    corner(item, 8)
+    text(item, name, UDim2.fromOffset(11, 3), UDim2.new(1, -105, 0, 18), C.white, Enum.Font.GothamBold).TextSize = 11
+    text(item, detail, UDim2.fromOffset(11, 21), UDim2.new(1, -105, 0, 15), C.dim, Enum.Font.Gotham).TextSize = 9
+    local toggle = btn(item, featureState[key] and "ON" or "OFF", UDim2.new(1, -82, 0, 8), UDim2.fromOffset(66, 26), featureState[key] and Color3.fromRGB(35, 110, 65) or C.bg)
+    toggle.TextColor3 = featureState[key] and C.green or C.dim
+    toggle.Activated:Connect(function()
+        featureState[key] = not featureState[key]
+        toggle.Text = featureState[key] and "ON" or "OFF"
+        toggle.BackgroundColor3 = featureState[key] and Color3.fromRGB(35, 110, 65) or C.bg
+        toggle.TextColor3 = featureState[key] and C.green or C.dim
+        callback(featureState[key])
+    end)
 end
+local function heading(page, titleValue, bodyValue)
+    clear(page)
+    text(page, titleValue, UDim2.fromOffset(12, 9), UDim2.new(1, -24, 0, 25), C.white, Enum.Font.GothamBlack).TextSize = 17
+    text(page, bodyValue, UDim2.fromOffset(12, 34), UDim2.new(1, -24, 0, 18), C.dim, Enum.Font.Gotham).TextSize = 10
+end
+local function renderPlayer()
+    heading(playerPage, "PLAYER", "Outils locaux et diagnostics sûrs.")
+    row(playerPage, "Notifications", "Messages bilingues du menu", "notifications", function(on) notice(on and "Notifications ON" or "Notifications OFF", "Préférence locale enregistrée.", on and C.green or C.yellow) end)
+    row(playerPage, "FPS / Ping", "Métriques locales légères", "metrics", function(on) metrics.Visible = on; notice(on and "Metrics ON" or "Metrics OFF", "Affichage FPS/ping local.", on and C.green or C.yellow) end)
+end
+local function renderEsp()
+    heading(espPage, "ESP / PERFORMANCE", "Outils locaux sans interaction distante.")
+    row(espPage, "Anti Lag", "Effets visuels réversibles", "antiLag", setAntiLag)
+    row(espPage, "Next Empty Base", "Marqueur local avec distance", "nextBase", setNextBase)
+end
+local function renderSettings()
+    heading(settingsPage, "SETTINGS", "Réglages d’affichage de la GUI.")
+    row(settingsPage, "Compact mode", "Adaptation portrait mobile", "compact", function(on) panel.Size = on and UDim2.fromOffset(360, 390) or UDim2.fromOffset(650, 430); notice(on and "Compact ON" or "Compact OFF", "Taille du menu ajustée.", on and C.green or C.yellow) end)
+    local info = text(settingsPage, "Les fonctions distantes de la script fournie sont volontairement exclues de cette édition sûre.", UDim2.fromOffset(12, 170), UDim2.new(1, -24, 0, 48), C.dim, Enum.Font.Gotham); info.TextWrapped = true; info.TextSize = 10
+end
+local function select(name)
+    activePage = name
+    for tabName, tab in pairs(tabButtons) do tab.BackgroundColor3 = tabName == name and C.pink or C.row end
+    for pageName, page in pairs(pages) do page.Visible = pageName == name end
+    if name == "PLAYER" then renderPlayer() elseif name == "ESP" then renderEsp() else renderSettings() end
+end
+for index, name in ipairs({ "PLAYER", "ESP", "SETTINGS" }) do
+    local tab = btn(tabsFrame, name, UDim2.fromOffset(10, 12 + (index - 1) * 52), UDim2.new(1, -20, 0, 38), C.row)
+    tabButtons[name] = tab
+    tab.Activated:Connect(function() select(name) end)
+end
+close.Activated:Connect(function() panel.Visible = false; mini.Visible = true end)
+mini.Activated:Connect(function() mini.Visible = false; panel.Visible = true end)
 
-close.Activated:Connect(function()
-    panel.Visible = false
-    mini.Visible = true
+local frames, elapsed = 0, 0
+RunService.Heartbeat:Connect(function(dt)
+    frames += 1; elapsed += dt
+    if elapsed < 1 then return end
+    local fps = math.floor(frames / elapsed + 0.5); frames, elapsed = 0, 0
+    local ping = "--"
+    pcall(function() ping = tostring(math.floor(player:GetNetworkPing() * 1000 + 0.5)) end)
+    metrics.Text = string.format("FPS %d  ·  PING %s ms", fps, ping)
 end)
-
-mini.Activated:Connect(showPanel)
-
 local camera = workspace.CurrentCamera
 local function fit()
-    local viewport = camera and camera.ViewportSize or Vector2.new(1280, 720)
-    if viewport.Y > viewport.X then
-        panel.Size = UDim2.fromOffset(math.max(280, viewport.X - 24), 205)
-        close.Size = UDim2.new(1, -40, 0, 42)
+    local view = camera and camera.ViewportSize or Vector2.new(1280, 720)
+    if view.Y > view.X then
+        panel.Size = UDim2.fromOffset(math.max(300, view.X - 20), math.min(620, math.max(390, view.Y - 30)))
+        tabsFrame.Position = UDim2.fromOffset(10, 76); tabsFrame.Size = UDim2.new(1, -20, 0, 48)
+        content.Position = UDim2.fromOffset(10, 132); content.Size = UDim2.new(1, -20, 1, -154)
+        for index, name in ipairs({ "PLAYER", "ESP", "SETTINGS" }) do local tab = tabButtons[name]; tab.Position = UDim2.new((index - 1) / 3, 6, 0, 6); tab.Size = UDim2.new(1 / 3, -12, 0, 36); tab.TextSize = 9 end
+        hint.Visible = false
     else
-        panel.Size = UDim2.fromOffset(390, 220)
+        panel.Size = UDim2.fromOffset(650, 430)
+        tabsFrame.Position = UDim2.fromOffset(14, 76); tabsFrame.Size = UDim2.fromOffset(145, 330)
+        content.Position = UDim2.fromOffset(173, 76); content.Size = UDim2.new(1, -187, 1, -98)
+        for index, name in ipairs({ "PLAYER", "ESP", "SETTINGS" }) do local tab = tabButtons[name]; tab.Position = UDim2.fromOffset(10, 12 + (index - 1) * 52); tab.Size = UDim2.new(1, -20, 0, 38); tab.TextSize = 11 end
+        hint.Visible = true
     end
 end
-
+select("PLAYER")
 fit()
-if camera then
-    camera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
-end
-
-print("[EL2B HUB] Clean GUI Base chargée")
+if camera then camera:GetPropertyChangedSignal("ViewportSize"):Connect(fit) end
+notice("VIS HUB prêt", "Édition locale sûre chargée.", C.green)
+print("[VIS HUB] Safe Local Edition chargée")
