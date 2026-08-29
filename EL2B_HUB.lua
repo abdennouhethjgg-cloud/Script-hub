@@ -230,8 +230,8 @@ RunService.Heartbeat:Connect(function(dt)
     pcall(function() ping = tostring(math.floor(player:GetNetworkPing() * 1000 + 0.5)) end)
     metrics.Text = string.format("FPS %d  ·  PING %s ms", fps, ping)
 end)
-local camera = workspace.CurrentCamera
 local function fit()
+    local camera = workspace.CurrentCamera
     local view = camera and camera.ViewportSize or Vector2.new(1280, 720)
     if view.Y > view.X then
         panel.Size = UDim2.fromOffset(math.max(300, view.X - 20), math.min(620, math.max(390, view.Y - 30)))
@@ -240,7 +240,7 @@ local function fit()
         for index, name in ipairs({ "PLAYER", "ESP", "SETTINGS" }) do local tab = tabButtons[name]; tab.Position = UDim2.new((index - 1) / 3, 6, 0, 6); tab.Size = UDim2.new(1 / 3, -12, 0, 36); tab.TextSize = 9 end
         hint.Visible = false
     else
-        panel.Size = UDim2.fromOffset(650, 430)
+        panel.Size = featureState.compact and UDim2.fromOffset(360, 390) or UDim2.fromOffset(650, 430)
         tabsFrame.Position = UDim2.fromOffset(14, 76); tabsFrame.Size = UDim2.fromOffset(145, 330)
         content.Position = UDim2.fromOffset(173, 76); content.Size = UDim2.new(1, -187, 1, -98)
         for index, name in ipairs({ "PLAYER", "ESP", "SETTINGS" }) do local tab = tabButtons[name]; tab.Position = UDim2.fromOffset(10, 12 + (index - 1) * 52); tab.Size = UDim2.new(1, -20, 0, 38); tab.TextSize = 11 end
@@ -249,6 +249,8 @@ local function fit()
 end
 select("PLAYER")
 fit()
+local camera = workspace.CurrentCamera
 if camera then camera:GetPropertyChangedSignal("ViewportSize"):Connect(fit) end
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(fit)
 notice("VIS HUB prêt", "Édition locale sûre chargée.", C.green)
 print("[VIS HUB] Safe Local Edition chargée")
