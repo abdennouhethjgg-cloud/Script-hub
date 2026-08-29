@@ -225,11 +225,38 @@ local function heading(page, titleValue, bodyValue)
     text(page, titleValue, UDim2.fromOffset(12, 9), UDim2.new(1, -24, 0, 25), C.white, Enum.Font.GothamBlack).TextSize = 17
     text(page, bodyValue, UDim2.fromOffset(12, 34), UDim2.new(1, -24, 0, 18), C.dim, Enum.Font.Gotham).TextSize = 10
 end
+local selectedPlayer
+local refreshPlayerList
 local function renderPlayer()
     heading(playerPage, "PLAYER", "Outils locaux et diagnostics sûrs.")
     row(playerPage, "Notifications", "Messages bilingues du menu", "notifications", function(on) notice(on and "Notifications ON" or "Notifications OFF", "Préférence locale enregistrée.", on and C.green or C.yellow) end)
     row(playerPage, "FPS / Ping", "Métriques locales légères", "metrics", function(on) metrics.Visible = on; notice(on and "Metrics ON" or "Metrics OFF", "Affichage FPS/ping local.", on and C.green or C.yellow) end)
+
+    local playersPanel = make("Frame", { Position = UDim2.fromOffset(10, 110), Size = UDim2.new(1, -20, 0, 160), BackgroundColor3 = C.row, BorderSizePixel = 0 }, playerPage)
+    corner(playersPanel, 8)
+    text(playersPanel, "PLAYERS · LOCAL VIEW", UDim2.fromOffset(11, 5), UDim2.new(1, -22, 0, 18), C.white, Enum.Font.GothamBold).TextSize = 11
+    local list = make("ScrollingFrame", { Position = UDim2.fromOffset(8, 28), Size = UDim2.new(1, -16, 1, -36), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 3, ScrollBarImageColor3 = C.pink, CanvasSize = UDim2.fromOffset(0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y }, playersPanel)
+    local layout = make("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.Name }, list)
+    refreshPlayerList = function()
+        for _, child in ipairs(list:GetChildren()) do if not child:IsA("UIListLayout") then child:Destroy() end end
+        for _, target in ipairs(Players:GetPlayers()) do
+            local item = make("Frame", { Name = target.Name, Size = UDim2.new(1, -4, 0, 28), BackgroundColor3 = target == selectedPlayer and C.pink or C.bg, BorderSizePixel = 0 }, list)
+            corner(item, 7)
+            local label = text(item, target.DisplayName .. "  @" .. target.Name, UDim2.fromOffset(9, 0), UDim2.new(1, -48, 1, 0), C.white, Enum.Font.Gotham)
+            label.TextSize = 10
+            local info = btn(item, "i", UDim2.new(1, -34, 0.5, -11), UDim2.fromOffset(22, 22), C.purple)
+            info.TextSize = 12
+            info.Activated:Connect(function()
+                selectedPlayer = target
+                notice("Player selected", target.DisplayName .. " · local information only.", C.pink)
+                if refreshPlayerList then refreshPlayerList() end
+            end)
+        end
+    end
+    refreshPlayerList()
 end
+Players.PlayerAdded:Connect(function() if refreshPlayerList then refreshPlayerList() end end)
+Players.PlayerRemoving:Connect(function(target) if target == selectedPlayer then selectedPlayer = nil end; if refreshPlayerList then refreshPlayerList() end end)
 local function renderEsp()
     heading(espPage, "ESP / PERFORMANCE", "Outils locaux sans interaction distante.")
     row(espPage, "Anti Lag", "Effets visuels réversibles", "antiLag", setAntiLag)
