@@ -229,6 +229,8 @@ local refreshPlayerList
 local refreshPlayerStats
 local statusFilter = "ALL"
 local maxDistance = 0
+local fpsHistory, pingHistory = {}, {}
+local performanceChartRefresh
 local RandomTools = {
     getPlayerCount = function() return #Players:GetPlayers() end,
     getGameName = function() return tostring(game.Name) end,
@@ -374,6 +376,29 @@ local function renderEsp()
     heading(espPage, "ESP / PERFORMANCE", "Outils locaux sans interaction distante.")
     row(espPage, "Anti Lag", "Effets visuels réversibles", "antiLag", setAntiLag)
     row(espPage, "Next Empty Base", "Marqueur local avec distance", "nextBase", setNextBase)
+    local chart = make("Frame", { Position = UDim2.fromOffset(10, 110), Size = UDim2.new(1, -20, 0, 172), BackgroundColor3 = C.row, BorderSizePixel = 0 }, espPage)
+    corner(chart, 8)
+    local chartTitle = text(chart, "PERFORMANCE · FPS / PING", UDim2.fromOffset(10, 5), UDim2.new(1, -20, 0, 18), C.white, Enum.Font.GothamBold); chartTitle.TextSize = 10
+    local current = text(chart, "FPS --   PING -- ms", UDim2.fromOffset(10, 24), UDim2.new(1, -20, 0, 16), C.pink, Enum.Font.Gotham); current.TextSize = 9
+    local bars = {}
+    for index = 1, 24 do
+        local slot = make("Frame", { Position = UDim2.new((index - 1) / 24, 2, 0, 46), Size = UDim2.new(1 / 24, -4, 1, -54), BackgroundColor3 = C.bg, BorderSizePixel = 0 }, chart)
+        corner(slot, 3)
+        local fpsBar = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.fromScale(1, 0), BackgroundColor3 = C.pink, BorderSizePixel = 0 }, slot); corner(fpsBar, 3)
+        local pingBar = make("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.fromScale(1, 1), Size = UDim2.fromScale(0.42, 0), BackgroundColor3 = C.purple, BorderSizePixel = 0 }, slot); corner(pingBar, 3)
+        bars[index] = { fps = fpsBar, ping = pingBar }
+    end
+    performanceChartRefresh = function()
+        local lastFps, lastPing = fpsHistory[#fpsHistory] or 0, pingHistory[#pingHistory] or 0
+        current.Text = string.format("FPS %s   PING %s ms", lastFps > 0 and tostring(lastFps) or "--", lastPing > 0 and tostring(lastPing) or "--")
+        for index, pair in ipairs(bars) do
+            local fps = fpsHistory[index] or 0
+            local ping = pingHistory[index] or 0
+            pair.fps.Size = UDim2.fromScale(1, math.clamp(fps / 120, 0, 1))
+            pair.ping.Size = UDim2.fromScale(0.42, math.clamp(ping / 300, 0, 1))
+        end
+    end
+    performanceChartRefresh()
 end
 local function renderSettings()
     heading(settingsPage, "SETTINGS", "Réglages d’affichage de la GUI.")
@@ -484,9 +509,13 @@ RunService.Heartbeat:Connect(function(dt)
     if playerStatsTimer >= 1 then playerStatsTimer = 0; if refreshPlayerList then refreshPlayerList() end end
     if elapsed < 1 then return end
     local fps = math.floor(frames / elapsed + 0.5); frames, elapsed = 0, 0
-    local ping = "--"
-    pcall(function() ping = tostring(math.floor(player:GetNetworkPing() * 1000 + 0.5)) end)
-    metrics.Text = string.format("FPS %d  ·  PING %s ms", fps, ping)
+    local pingValue = 0
+    pcall(function() pingValue = math.floor(player:GetNetworkPing() * 1000 + 0.5) end)
+    table.insert(fpsHistory, fps); table.insert(pingHistory, pingValue)
+    if #fpsHistory > 24 then table.remove(fpsHistory, 1) end
+    if #pingHistory > 24 then table.remove(pingHistory, 1) end
+    if performanceChartRefresh then performanceChartRefresh() end
+    metrics.Text = string.format("FPS %d  ·  PING %s ms", fps, pingValue > 0 and tostring(pingValue) or "--")
 end)
 local function fit()
     local camera = workspace.CurrentCamera
