@@ -383,7 +383,7 @@ local function renderEsp()
     row(espPage, "Next Empty Base", "Marqueur local avec distance", "nextBase", setNextBase)
     local chart = make("Frame", { Position = UDim2.fromOffset(10, 110), Size = UDim2.new(1, -20, 0, 172), BackgroundColor3 = C.row, BorderSizePixel = 0 }, espPage)
     corner(chart, 8)
-    local chartTitle = text(chart, "PERFORMANCE · FPS / PING", UDim2.fromOffset(10, 5), UDim2.new(1, -20, 0, 18), C.white, Enum.Font.GothamBold); chartTitle.TextSize = 10
+    local chartTitle = text(chart, "PERFORMANCE · FPS / PING · SAFE MONITOR", UDim2.fromOffset(10, 5), UDim2.new(1, -20, 0, 18), C.white, Enum.Font.GothamBold); chartTitle.TextSize = 10
     local current = text(chart, "FPS --   PING -- ms", UDim2.fromOffset(10, 24), UDim2.new(1, -20, 0, 16), C.pink, Enum.Font.Gotham); current.TextSize = 9
     local bars = {}
     for index = 1, 24 do
@@ -404,6 +404,7 @@ local function renderEsp()
         end
     end
     performanceChartRefresh()
+    local monitorStatus = text(espPage, "SAFE MONITOR ACTIVE · LOCAL DATA ONLY · NO REMOTE ACTIONS", UDim2.fromOffset(10, 290), UDim2.new(1, -20, 0, 18), C.green, Enum.Font.GothamBold); monitorStatus.TextSize = 9
 end
 local function renderSettings()
     heading(settingsPage, "SETTINGS", "Réglages d’affichage de la GUI.")
