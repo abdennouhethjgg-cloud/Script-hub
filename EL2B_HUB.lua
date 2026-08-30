@@ -1,6 +1,6 @@
 -- deobfed by solar
--- ts leak is from rift hub babyessss
--- discord.gg/rifthub
+-- EL2B HUB — script principal
+-- Version corrigée et sécurisée : les actions distantes sensibles restent désactivées par défaut.
 
 local Players           = game:GetService("Players")
 local CollectionService = game:GetService("CollectionService")
@@ -34,7 +34,10 @@ local function startFlashLagger()
     pcall(function()
         settings().Network.IncomingReplicationLag = strength
     end)
-    if laggerConn then laggerConn:Disconnect() laggerConn = nil end
+    if laggerConn then
+        pcall(task.cancel, laggerConn)
+        laggerConn = nil
+    end
     laggerConn = task.delay(2.5, function()
         pcall(function() settings().Network.IncomingReplicationLag = 0 end)
         laggerConn = nil
@@ -43,7 +46,7 @@ end
 
 local function stopFlashLagger()
     if laggerConn then
-        pcall(function() laggerConn:Disconnect() end)
+        pcall(task.cancel, laggerConn)
         laggerConn = nil
     end
     pcall(function() settings().Network.IncomingReplicationLag = 0 end)
@@ -124,7 +127,7 @@ local function findPlayerButton(targetPlayer)
 				local lbl = desc:FindFirstChildWhichIsA("TextLabel", true)
 				if lbl then t = lbl.Text end
 			end
-			if t == targetPlayer.DisplayName or string.find(t, targetPlayer.DisplayName) or t == targetPlayer.Name or string.find(t, targetPlayer.Name) then
+			if t == targetPlayer.DisplayName or string.find(t, targetPlayer.DisplayName, 1, true) or t == targetPlayer.Name or string.find(t, targetPlayer.Name, 1, true) then
 				return desc
 			end
 		end
@@ -180,7 +183,7 @@ local function triggerLaserOnTarget(targetPlayer)
     return false
 end
 -- ==========================================
--- QUICK PICKUP (from Gamma Hub)
+-- QUICK PICKUP — EL2B HUB
 -- ==========================================
 local QuickPickup = {
     set = function(enabled)
@@ -192,7 +195,7 @@ local QuickPickup = {
     stop = function() return true end,
 }
 -- ==========================================
--- (Rest of the Kay Hub code remains unchanged)
+-- Fonctions restantes du script EL2B HUB
 -- ==========================================
 
 local TinyState = { Enabled = false }
@@ -627,7 +630,7 @@ local function waitForStealPrompt()
     table.insert(ActiveConnections, connection)
     while not found and not thisScriptStopped do task.wait(0.05) end
     if connection then pcall(function() connection:Disconnect() end) end
-    return true
+    return found and not thisScriptStopped
 end
 
 local charAddedConn = LocalPlayer.CharacterAdded:Connect(function(newChar)
@@ -1313,7 +1316,7 @@ NOX_SCRIPT_GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 NOX_SCRIPT_GUI.IgnoreGuiInset = false
 NOX_SCRIPT_GUI.Parent         = PlayerGui
 
--- ── Bandeau Kay PvP (style Gamma) ───────────────────────────────────────────
+-- ── Bandeau EL2B HUB ─────────────────────────────────────────────────────────
 do
     local BN_W  = isMob and 310 or 420
     local BN_H  = isMob and 38  or 52
@@ -1329,7 +1332,7 @@ do
     local BADGE_W = isMob and 64 or 88
 
     local banner = Instance.new("Frame")
-    banner.Name                   = "KayHubBanner"
+    banner.Name                   = "EL2BHubBanner"
     banner.AnchorPoint            = Vector2.new(0.5, 0)
     banner.Size                   = UDim2.new(0, BN_W, 0, BN_H)
     banner.Position               = UDim2.new(0.5, 0, 0, 8)
@@ -1409,7 +1412,7 @@ do
     hubLabel.Size               = UDim2.new(0, D1_X - HUB_X - 6, 0, isMob and 18 or 24)
     hubLabel.Position           = UDim2.new(0, HUB_X, 0, isMob and 3 or 5)
     hubLabel.BackgroundTransparency = 1
-    hubLabel.Text               = "Kay Hub"
+    hubLabel.Text               = "EL2B HUB"
     hubLabel.TextColor3         = Color3.fromRGB(255, 255, 255)
     hubLabel.TextSize           = isMob and 10 or 14
     hubLabel.Font               = Enum.Font.GothamBold
@@ -1791,7 +1794,7 @@ do
     local REJOIN, rejoinAccent = mkActionBtn("REJOIN", "REJOIN [J]", 4)
 
     -- Stocker REJOIN pour utilisation plus tard
-    _G._KayRejoinBtn = REJOIN
+    _G._EL2BRejoinBtn = REJOIN
 end
 
 -- Frame13 : dummy conservé pour compatibilité
@@ -3366,7 +3369,7 @@ toggleRow(ScrollMisc, "Quick Admin Panel", _G.QuickAP, function(v)
     if qapPanel then qapPanel.Visible = v end
 end)
 
--- Quick Pickup (from Gamma Hub)
+-- Quick Pickup — EL2B HUB
 toggleRow(ScrollMisc, "Quick Pickup", _G.QuickPickup, function(v)
     _G.QuickPickup = v
     QuickPickup.set(v)
@@ -3758,7 +3761,7 @@ end
 hookButton(FLASHTP)
 hookButton(BLOCK)
 hookButton(RESET)
-hookButton(_G._KayRejoinBtn)
+hookButton(_G._EL2BRejoinBtn)
 
 local function flashBar(bar)
     bar.BackgroundColor3 = C.accentHi
@@ -3878,7 +3881,7 @@ task.defer(function()
     if lbl then lbl.Text = "BLOCK [" .. keyNames.block .. "]" end
     lbl = RESET:FindFirstChildOfClass("TextLabel")
     if lbl then lbl.Text = "RESET [" .. keyNames.reset .. "]" end
-    local rejoinBtnRef = _G._KayRejoinBtn
+    local rejoinBtnRef = _G._EL2BRejoinBtn
     if rejoinBtnRef then
         lbl = rejoinBtnRef:FindFirstChildOfClass("TextLabel")
         if lbl then lbl.Text = "REJOIN [" .. keyNames.rejoin .. "]" end
@@ -3933,7 +3936,7 @@ task.defer(function()
     attachKeybindRightClick(BLOCK,   "block", "BLOCK")
     attachKeybindRightClick(RESET,   "reset", "RESET")
 
-    local rejoinBtn = _G._KayRejoinBtn
+    local rejoinBtn = _G._EL2BRejoinBtn
     if rejoinBtn then
         rejoinBtn.MouseButton1Click:Connect(function()
             local acc = rejoinBtn:FindFirstChild("AccentBar")
@@ -3979,7 +3982,7 @@ do
     applyTitleStyle(FLASHTP)
     applyTitleStyle(BLOCK)
     applyTitleStyle(RESET)
-    applyTitleStyle(_G._KayRejoinBtn)
+    applyTitleStyle(_G._EL2BRejoinBtn)
 
     table.insert(ActiveConnections, RunService.Heartbeat:Connect(function()
         local rot = (tick()*100)%360
