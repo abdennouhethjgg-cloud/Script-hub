@@ -478,6 +478,26 @@ local function renderSettings()
         if value then memoryThreshold = math.max(50, value); thresholdBox.Text = tostring(math.floor(memoryThreshold)); saveConfig(); notice("Memory limit updated", "Alerte à " .. tostring(math.floor(memoryThreshold)) .. " MB.", C.pink) end
     end)
     local info = text(settingsPage, "Seuil mémoire local : l’indicateur passe en rouge et une notification apparaît lorsque la limite est dépassée.", UDim2.fromOffset(12, 360), UDim2.new(1, -24, 0, 42), C.dim, Enum.Font.Gotham); info.TextWrapped = true; info.TextSize = 10
+    local aiPanel = make("Frame", { Position = UDim2.fromOffset(10, 410), Size = UDim2.new(1, -20, 0, 112), BackgroundColor3 = C.row, BorderSizePixel = 0 }, settingsPage)
+    corner(aiPanel, 8)
+    text(aiPanel, "LOCAL AI · DIAGNOSTIC ASSISTANT", UDim2.fromOffset(11, 6), UDim2.new(1, -22, 0, 18), C.white, Enum.Font.GothamBold).TextSize = 10
+    local aiInput = make("TextBox", { Text = "help", PlaceholderText = "fps, ping, memory, players, game", ClearTextOnFocus = false, Position = UDim2.fromOffset(10, 30), Size = UDim2.new(1, -116, 0, 26), BackgroundColor3 = C.bg, BorderSizePixel = 0, TextColor3 = C.white, PlaceholderColor3 = C.dim, TextSize = 9, Font = Enum.Font.Gotham, TextXAlignment = Enum.TextXAlignment.Left }, aiPanel)
+    corner(aiInput, 6)
+    local aiRun = btn(aiPanel, "ASK", UDim2.new(1, -96, 0, 30), UDim2.fromOffset(86, 26), C.purple)
+    local aiOutput = text(aiPanel, "Assistant local prêt. Tape help pour les commandes.", UDim2.fromOffset(10, 64), UDim2.new(1, -20, 0, 38), C.pink, Enum.Font.Gotham); aiOutput.TextWrapped = true; aiOutput.TextSize = 9
+    local function answerLocal(query)
+        local q = tostring(query or ""):lower():match("^%s*(.-)%s*$")
+        if q == "help" or q == "aide" or q == "" then return "Commandes : fps · ping · memory · players · game · status" end
+        if q:find("fps", 1, true) then return "FPS actuel : " .. tostring(metrics.Text):match("FPS[^·]*") end
+        if q:find("ping", 1, true) then return "Ping actuel : " .. tostring(metrics.Text):match("PING.*") end
+        if q:find("memory", 1, true) or q:find("mémoire", 1, true) then return "Mémoire : " .. tostring(memory.Text) end
+        if q:find("players", 1, true) or q:find("joueurs", 1, true) then return "Joueurs : " .. tostring(#Players:GetPlayers()) .. " · actifs : " .. tostring(RandomTools.getAliveCount()) end
+        if q == "game" or q:find("jeu", 1, true) then return "Jeu : " .. tostring(game.Name) .. " · PlaceId : " .. tostring(game.PlaceId) end
+        if q == "status" then return "Statut : " .. tostring(status.Text) .. " · profil : " .. RandomTools.getExperienceProfile() end
+        return "Commande inconnue. Tape help pour voir les commandes locales."
+    end
+    aiRun.Activated:Connect(function() aiOutput.Text = answerLocal(aiInput.Text); notice("Local AI", "Diagnostic hors ligne exécuté.", C.pink) end)
+    aiInput.FocusLost:Connect(function(enterPressed) if enterPressed then aiOutput.Text = answerLocal(aiInput.Text) end end)
 end
 local function select(name)
     activePage = name
