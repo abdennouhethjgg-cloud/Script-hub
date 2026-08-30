@@ -10,14 +10,12 @@ local UserInputService  = game:GetService("UserInputService")
 local Stats             = game:GetService("Stats")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui        = game:GetService("StarterGui")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 local GuiService        = game:GetService("GuiService")
 local CoreGui           = game:GetService("CoreGui")
 local Workspace         = game:GetService("Workspace")
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
-local VirtualInput = Instance.new("VirtualInputManager")
 
 local ActiveConnections = {}
 local thisScriptStopped = false
@@ -156,16 +154,9 @@ local function getCommandButtons()
 end
 
 local function clickButton(button)
-	pcall(function() button.MouseButton1Click:Fire() end)
-	pcall(function() button.Activated:Fire() end)
-	pcall(function()
-		if getconnections then
-			for _, cx in pairs(getconnections(button.MouseButton1Click)) do cx:Fire() end
-			for _, cx in pairs(getconnections(button.Activated)) do cx:Fire() end
-		end
-	end)
+    -- Interface locale uniquement : aucun signal d’interface externe n’est forcé.
+    return false
 end
-
 local function isExactCommand(buttonName, expectedCmdName)
 	local bName = string.lower(string.match(buttonName, "^%s*(.-)%s*$") or buttonName)
 	local cmdName = string.lower(expectedCmdName)
@@ -175,19 +166,9 @@ local function isExactCommand(buttonName, expectedCmdName)
 end
 
 local function triggerBalloonOnTarget(targetPlayer)
-	if not targetPlayer or not targetPlayer.Parent then return end
-	if not findAdminPanel() then return end
-	for _, cBtn in ipairs(getCommandButtons()) do
-		if isExactCommand(cBtn.name, "balloon") then
-			clickButton(cBtn.button)
-			task.wait(0.02)
-			local pBtn = findPlayerButton(targetPlayer)
-			if pBtn then clickButton(pBtn) end
-			break
-		end
-	end
+    warn('[EL2B HUB] Action Balloon désactivée : aucune commande distante n’est exécutée.')
+    return false
 end
-
 -- AUTO LASER CAPE LOGIC
 -- ==========================================
 local LaserState = {
@@ -195,388 +176,43 @@ local LaserState = {
 }
 
 local function triggerLaserOnTarget(targetPlayer)
-    local char = LocalPlayer.Character
-    if not char then return end
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if not hum then return end
-
-    local laserTool = nil
-    local bp = LocalPlayer:FindFirstChild("Backpack")
-    if bp then
-        for _, t in ipairs(bp:GetChildren()) do
-            if t:IsA("Tool") and t.Name == "Laser Cape" then laserTool = t; break end
-        end
-    end
-    if not laserTool then
-        for _, t in ipairs(char:GetChildren()) do
-            if t:IsA("Tool") and t.Name == "Laser Cape" then laserTool = t; break end
-        end
-    end
-    if not laserTool then return end
-
-    if laserTool.Parent ~= char then
-        pcall(function() hum:EquipTool(laserTool) end)
-        task.wait(0.1)
-    end
-
-    pcall(function() laserTool:Activate() end)
+    warn('[EL2B HUB] Action Laser désactivée : aucune commande distante n’est exécutée.')
+    return false
 end
-
 -- ==========================================
 -- QUICK PICKUP (from Gamma Hub)
 -- ==========================================
-local QuickPickup = (function()
-    local enabled = false
-    local orig = {}
-    local hooked = false
-
-    local function isMyPlot(plot)
-        if not plot or not plot:IsA("Model") then return false end
-        local sign = plot:FindFirstChild("PlotSign")
-        return sign and sign:FindFirstChild("YourBase") and sign.YourBase.Enabled
-    end
-
-    local function inMyPlot(inst)
-        if not inst or not inst.Parent then return false end
-        local node = inst.Parent
-        for _ = 1, 10 do
-            if not node then return false end
-            if node:IsA("Model") and node.Parent and node.Parent.Name == "Plots" then
-                return isMyPlot(node)
-            end
-            node = node.Parent
+local QuickPickup = {
+    set = function(enabled)
+        if enabled then
+            warn('[EL2B HUB] Quick Pickup désactivé pour éviter les actions non autorisées.')
         end
         return false
-    end
-
-    local function installHook()
-        if hooked then return end
-        local ok, mt = pcall(getrawmetatable, game)
-        if not ok or not mt then return end
-        local sok = pcall(setreadonly, mt, false)
-        if not sok then return end
-        local oldNewIndex = mt.__newindex
-        local nc = newcclosure or function(f) return f end
-        mt.__newindex = nc(function(self, key, value)
-            if not thisScriptStopped
-               and key == "HoldDuration"
-               and enabled
-               and typeof(self) == "Instance"
-               and self:IsA("ProximityPrompt")
-               and inMyPlot(self) then
-                value = 0.1
-            end
-            return oldNewIndex(self, key, value)
-        end)
-        pcall(setreadonly, mt, true)
-        hooked = true
-    end
-
-    local M = {}
-    function M.set(v)
-        enabled = v
-        if v then
-            installHook()
-            task.spawn(function()
-                local root = Workspace:FindFirstChild("Plots") or Workspace
-                local stack, si = { root }, 1
-                local visited = 0
-                while si > 0 do
-                    if not enabled then return end
-                    local cur = stack[si]; stack[si] = nil; si = si - 1
-                    local ch = cur:GetChildren()
-                    for i = 1, #ch do
-                        local d = ch[i]
-                        if d:IsA("ProximityPrompt") and inMyPlot(d) then
-                            if orig[d] == nil then orig[d] = d.HoldDuration end
-                            pcall(function() d.HoldDuration = 0.1 end)
-                        end
-                        si = si + 1; stack[si] = d
-                    end
-                    visited = visited + 1
-                    if visited % 40 == 0 then task.wait() end
-                end
-            end)
-        else
-            for p, o in pairs(orig) do
-                if p and p.Parent then pcall(function() p.HoldDuration = o end) end
-            end
-            orig = {}
-        end
-    end
-    return M
-end)()
-
+    end,
+    stop = function() return true end,
+}
 -- ==========================================
 -- (Rest of the Kay Hub code remains unchanged)
 -- ==========================================
 
-local TinyState = {
-    Enabled = false,
-    Conns = {},
-    BoundRemotes = {},
-    AddConn = nil,
-    LastFire = 0
-}
-
-local function _arbStringMatchesTiny(s)
-	if type(s) ~= "string" then return false end
-	local ls = s:lower()
-	return ls:find("tiny for 30", 1, true) ~= nil
-end
-
-local function _artHandleArgs(...)
-	if not TinyState.Enabled then return end
-	for i = 1, select("#", ...) do
-		local arg = select(i, ...)
-		if _arbStringMatchesTiny(arg) then
-			local now = tick()
-			if now - TinyState.LastFire < 3 then return end
-			TinyState.LastFire = now
-			local Net = ReplicatedStorage:WaitForChild("Packages", 2)
-				and ReplicatedStorage.Packages:WaitForChild("Net", 2)
-			if not Net then
-				local char = LocalPlayer and LocalPlayer.Character
-				local hum  = char and char:FindFirstChildWhichIsA("Humanoid")
-				if hum then hum.Health = 0 end
-				return
-			end
-			local remote = nil
-			local childs = Net:GetChildren()
-			for i2 = 1, #childs - 1 do
-				if childs[i2] and childs[i2+1] and string.find(childs[i2].Name, "Tools/Cooldown") then
-					remote = childs[i2+1];
-					break
-				end
-			end
-			if not remote then
-				local char = LocalPlayer and LocalPlayer.Character
-				local hum  = char and char:FindFirstChildWhichIsA("Humanoid")
-				if hum then hum.Health = 0 end
-				return
-			end
-			local savedTools = {}
-			local char = LocalPlayer.Character
-			local bp   = LocalPlayer:FindFirstChild("Backpack")
-			if char then
-				local hum = char:FindFirstChildOfClass("Humanoid")
-				if hum then pcall(function() hum:UnequipTools() end) end
-				for _, t in ipairs(char:GetChildren()) do
-					if t:IsA("Tool") then table.insert(savedTools, t); t.Parent = nil end
-				end
-			end
-			if bp then
-				for _, t in ipairs(bp:GetChildren()) do
-					if t:IsA("Tool") then table.insert(savedTools, t); t.Parent = nil end
-				end
-			end
-			LocalPlayer.Character = nil
-			local sending = true
-			local loopConn
-			local fire = remote.FireServer
-			local throttle = 0
-			loopConn = RunService.Heartbeat:Connect(function(dt)
-				if not sending then
-					if loopConn then loopConn:Disconnect(); loopConn = nil end
-					return
-				end
-				throttle = throttle + dt
-				if throttle >= 0.016 then
-					throttle = 0
-					pcall(fire, remote, "f888ee6e-c86d-46e1-93d7-0639d6635d42", LocalPlayer, "balloon")
-				end
-				if sending and LocalPlayer.Character then LocalPlayer.Character = nil end
-			end)
-			local conn2
-			conn2 = LocalPlayer.CharacterAdded:Connect(function()
-				sending = false
-				if loopConn then loopConn:Disconnect(); loopConn = nil end
-				if conn2 then conn2:Disconnect() end
-				task.spawn(function()
-					local newBp = LocalPlayer:WaitForChild("Backpack", 3)
-					if newBp then
-						for _, t in ipairs(savedTools) do if t then t.Parent = newBp end end
-					end
-					savedTools = {}
-				end)
-			end)
-			task.delay(4, function()
-				sending = false
-				if loopConn then loopConn:Disconnect(); loopConn = nil end
-				local curBp = LocalPlayer:FindFirstChild("Backpack")
-				if curBp and #savedTools > 0 then
-					for _, t in ipairs(savedTools) do if t then t.Parent = curBp end end
-					savedTools = {}
-				end
-			end)
-			return
-		end
-	end
-end
-
-local function _artBindRemote(obj)
-	if not obj:IsA("RemoteEvent") then return end
-	if TinyState.BoundRemotes[obj] then return end
-	local ok, conn = pcall(function()
-		return obj.OnClientEvent:Connect(_artHandleArgs)
-	end)
-	if ok and conn then
-		table.insert(TinyState.Conns, conn)
-		TinyState.BoundRemotes[obj] = true
-	end
-end
-
+local TinyState = { Enabled = false }
 local function startAutoResetTiny()
-	for _, conn in ipairs(TinyState.Conns) do pcall(function() conn:Disconnect() end) end
-	TinyState.Conns = {}
-	TinyState.BoundRemotes = {}
-	if TinyState.AddConn then pcall(function() TinyState.AddConn:Disconnect() end); TinyState.AddConn = nil end
-	for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do _artBindRemote(obj) end
-	TinyState.AddConn = ReplicatedStorage.DescendantAdded:Connect(function(obj)
-		if TinyState.Enabled then _artBindRemote(obj) end
-	end)
+    warn('[EL2B HUB] Auto-reset Tiny désactivé.')
+    return false
 end
-
 local function stopAutoResetTiny()
-	for _, conn in ipairs(TinyState.Conns) do pcall(function() conn:Disconnect() end) end
-	TinyState.Conns = {}
-	TinyState.BoundRemotes = {}
-	if TinyState.AddConn then pcall(function() TinyState.AddConn:Disconnect() end); TinyState.AddConn = nil end
+    TinyState.Enabled = false
+    return true
 end
-
-local JailState = {
-    Enabled = false,
-    Conns = {},
-    BoundRemotes = {},
-    AddConn = nil,
-    LastFire = 0
-}
-
-local function _arbStringMatchesJail(s)
-	if type(s) ~= "string" then return false end
-	local ls = s:lower()
-	return ls:find("trapped for", 1, true) ~= nil
-end
-
-local function _arjHandleArgs(...)
-	if not JailState.Enabled then return end
-	for i = 1, select("#", ...) do
-		local arg = select(i, ...)
-		if _arbStringMatchesJail(arg) then
-			local now = tick()
-			if now - JailState.LastFire < 3 then return end
-			JailState.LastFire = now
-			local Net = ReplicatedStorage:WaitForChild("Packages", 2)
-				and ReplicatedStorage.Packages:WaitForChild("Net", 2)
-			if not Net then
-				local char = LocalPlayer and LocalPlayer.Character
-				local hum  = char and char:FindFirstChildWhichIsA("Humanoid")
-				if hum then hum.Health = 0 end
-				return
-			end
-			local remote = nil
-			local childs = Net:GetChildren()
-			for i2 = 1, #childs - 1 do
-				if childs[i2] and childs[i2+1] and string.find(childs[i2].Name, "Tools/Cooldown") then
-					remote = childs[i2+1];
-					break
-				end
-			end
-			if not remote then
-				local char = LocalPlayer and LocalPlayer.Character
-				local hum  = char and char:FindFirstChildWhichIsA("Humanoid")
-				if hum then hum.Health = 0 end
-				return
-			end
-			local savedTools = {}
-			local char = LocalPlayer.Character
-			local bp   = LocalPlayer:FindFirstChild("Backpack")
-			if char then
-				local hum = char:FindFirstChildOfClass("Humanoid")
-				if hum then pcall(function() hum:UnequipTools() end) end
-				for _, t in ipairs(char:GetChildren()) do
-					if t:IsA("Tool") then table.insert(savedTools, t); t.Parent = nil end
-				end
-			end
-			if bp then
-				for _, t in ipairs(bp:GetChildren()) do
-					if t:IsA("Tool") then table.insert(savedTools, t); t.Parent = nil end
-				end
-			end
-			LocalPlayer.Character = nil
-			local sending = true
-			local loopConn
-			local fire = remote.FireServer
-			local throttle = 0
-			loopConn = RunService.Heartbeat:Connect(function(dt)
-				if not sending then
-					if loopConn then loopConn:Disconnect(); loopConn = nil end
-					return
-				end
-				throttle = throttle + dt
-				if throttle >= 0.016 then
-					throttle = 0
-					pcall(fire, remote, "f888ee6e-c86d-46e1-93d7-0639d6635d42", LocalPlayer, "balloon")
-				end
-				if sending and LocalPlayer.Character then LocalPlayer.Character = nil end
-			end)
-			local conn2
-			conn2 = LocalPlayer.CharacterAdded:Connect(function()
-				sending = false
-				if loopConn then loopConn:Disconnect(); loopConn = nil end
-				if conn2 then conn2:Disconnect() end
-				task.spawn(function()
-					local newBp = LocalPlayer:WaitForChild("Backpack", 3)
-					if newBp then
-						for _, t in ipairs(savedTools) do if t then t.Parent = newBp end end
-					end
-					savedTools = {}
-				end)
-			end)
-			task.delay(4, function()
-				sending = false
-				if loopConn then loopConn:Disconnect(); loopConn = nil end
-				local curBp = LocalPlayer:FindFirstChild("Backpack")
-				if curBp and #savedTools > 0 then
-					for _, t in ipairs(savedTools) do if t then t.Parent = curBp end end
-					savedTools = {}
-				end
-			end)
-			return
-		end
-	end
-end
-
-local function _arjBindRemote(obj)
-	if not obj:IsA("RemoteEvent") then return end
-	if JailState.BoundRemotes[obj] then return end
-	local ok, conn = pcall(function()
-		return obj.OnClientEvent:Connect(_arjHandleArgs)
-	end)
-	if ok and conn then
-		table.insert(JailState.Conns, conn)
-		JailState.BoundRemotes[obj] = true
-	end
-end
-
+local JailState = { Enabled = false }
 local function startAutoResetJail()
-	for _, conn in ipairs(JailState.Conns) do pcall(function() conn:Disconnect() end) end
-	JailState.Conns = {}
-	JailState.BoundRemotes = {}
-	if JailState.AddConn then pcall(function() JailState.AddConn:Disconnect() end); JailState.AddConn = nil end
-	for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do _arjBindRemote(obj) end
-	JailState.AddConn = ReplicatedStorage.DescendantAdded:Connect(function(obj)
-		if JailState.Enabled then _arjBindRemote(obj) end
-	end)
+    warn('[EL2B HUB] Auto-reset Jail désactivé.')
+    return false
 end
-
 local function stopAutoResetJail()
-	for _, conn in ipairs(JailState.Conns) do pcall(function() conn:Disconnect() end) end
-	JailState.Conns = {}
-	JailState.BoundRemotes = {}
-	if JailState.AddConn then pcall(function() JailState.AddConn:Disconnect() end); JailState.AddConn = nil end
+    JailState.Enabled = false
+    return true
 end
-
 local SETTINGS_FILE = "kay_pvp_settings.json"
 local UI_LAYOUT_FILE = "kay_pvp_ui_placement.json"
 
@@ -591,237 +227,15 @@ end
 -- Table centrale : toutes les valeurs de toggles passent par ici.
 local settingsGetters = {}
 -- ============================================================
--- AIMBOT (porté depuis Gamma Hub)
--- ============================================================
-do
-    -- Évite les doublons
-    if _G.KayAimbotSetupDone then return end
-    _G.KayAimbotSetupDone = true
-
-    local Players = game:GetService("Players")
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-    local UserInputService = game:GetService("UserInputService")
-    local LocalPlayer = Players.LocalPlayer
-
-    local aimbotEnabled = false
-    local aimRemoteIndex = {}
-    local aimRemoteObjects = {}
-    local aimLastShot = 0
-    local aimConnections = {}
-    local aimCurrentCharacter = nil
-
-    local AIM_VALID_TOOLS  = {"Web Slinger", "Laser Cape", "Paintball Gun"}
-    local AIM_TARGET_PARTS = {"HumanoidRootPart", "UpperTorso", "Torso", "Head"}
-    local AIM_MAX_DISTANCE = 800
-    local AIM_LEAD_TIME    = 0.18
-
-    -- Résolution du remote UseItem (copié depuis Gamma)
-    local function resolveUseItemRemote()
-        local cached = _G._FH_UseItemRemote
-        if typeof(cached) == "Instance" and cached.Parent then return cached end
-        local nm = _G._FH_NET
-        if nm and typeof(nm.UseItem) == "Instance" and nm.UseItem.Parent then
-            _G._FH_UseItemRemote = nm.UseItem; return nm.UseItem
-        end
-        local _getconnections = getconnections
-        local _getconstants   = (debug and debug.getconstants) or getconstants
-        if type(_getconnections) ~= "function" or type(_getconstants) ~= "function" then return nil end
-        local ok, netFolder = pcall(function()
-            return ReplicatedStorage:WaitForChild("Packages", 15):WaitForChild("Net", 15)
-        end)
-        if not ok or not netFolder then return nil end
-        local found
-        for _, r in ipairs(netFolder:GetChildren()) do
-            if r:IsA("RemoteEvent") and not found then
-                local okc, conns = pcall(_getconnections, r.OnClientEvent)
-                if okc and conns then
-                    for _, c in ipairs(conns) do
-                        if type(c.Function) == "function" then
-                            local okk, consts = pcall(_getconstants, c.Function)
-                            if okk and consts then
-                                for _, k in ipairs(consts) do
-                                    if k == "PaintballHitted" then found = r; break end
-                                end
-                            end
-                        end
-                        if found then break end
-                    end
-                end
-            end
-            if found then break end
-        end
-        if found then _G._FH_UseItemRemote = found end
-        return found
-    end
-
-    local function initRemotes()
-        local ok, children = pcall(function()
-            return ReplicatedStorage:WaitForChild("Packages"):WaitForChild("Net"):GetChildren()
-        end)
-        if not ok or not children then return end
-        aimRemoteIndex = {}
-        aimRemoteObjects = {}
-        for i, obj in ipairs(children) do
-            if obj:IsA("RemoteEvent") then
-                local nextObj = children[i + 1]
-                if nextObj then
-                    aimRemoteIndex[obj.Name] = i + 1
-                    aimRemoteObjects[i + 1] = nextObj
-                end
-            end
-        end
-    end
-
-    local function fireRemote(name, ...)
-        if name == "RE/UseItem" or name == "UseItem" then
-            local r = resolveUseItemRemote()
-            if r then
-                r:FireServer(...)
-                return true
-            end
-        end
-        local index = aimRemoteIndex[name]
-        if index and aimRemoteObjects[index] then
-            aimRemoteObjects[index]:FireServer(...)
-            return true
-        end
-        return false
-    end
-
-    local function getTool()
-        local c = LocalPlayer.Character
-        return c and c:FindFirstChildOfClass("Tool")
-    end
-
-    local function hasValidTool()
-        local tool = getTool()
-        if not tool then return false end
-        for _, name in pairs(AIM_VALID_TOOLS) do
-            if tool.Name == name then return true end
-        end
-        return false
-    end
-
-    local function isAlive(char)
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-        return hum and hum.Health > 0
-    end
-
-    local function getNearestPlayer()
-        local char = LocalPlayer.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        if not hrp then return nil end
-        local closest, bestDist = nil, AIM_MAX_DISTANCE
-        for _, plr in pairs(Players:GetPlayers()) do
-            if plr ~= LocalPlayer then
-                local c = plr.Character
-                local rp = c and c:FindFirstChild("HumanoidRootPart")
-                if rp and isAlive(c) then
-                    local d = (rp.Position - hrp.Position).Magnitude
-                    if d < bestDist then
-                        bestDist = d
-                        closest = plr
-                    end
-                end
-            end
-        end
-        return closest
-    end
-
-    local function getBestPart(character)
-        for _, name in pairs(AIM_TARGET_PARTS) do
-            local p = character:FindFirstChild(name)
-            if p then return p end
-        end
-        return nil
-    end
-
-    local function shoot()
-        if not hasValidTool() then return false end
-        local target = getNearestPlayer()
-        if not target then return false end
-        local char = target.Character
-        if not char or not isAlive(char) then return false end
-        local part = getBestPart(char)
-        if not part then return false end
-        local vel = Vector3.zero
-        pcall(function()
-            local hrp = char:FindFirstChild("HumanoidRootPart")
-            if hrp then vel = hrp.Velocity or Vector3.zero end
-        end)
-        local targetPos = part.Position + Vector3.new(0, 0.5, 0) + vel * AIM_LEAD_TIME
-        if not (aimRemoteIndex["RE/UseItem"] or aimRemoteIndex["UseItem"]) then
-            initRemotes()
-        end
-        local ok = fireRemote("RE/UseItem", targetPos, part)
-        if not ok then
-            initRemotes()
-            ok = fireRemote("RE/UseItem", targetPos, part)
-        end
-        return ok
-    end
-
-    local function tryShoot()
-        local now = tick()
-        if now - aimLastShot < 0.04 then return end
-        aimLastShot = now
-        shoot()
-    end
-
-    local function hookTool(tool)
-        if not tool then return end
-        local conn = tool.Activated:Connect(tryShoot)
-        table.insert(aimConnections, conn)
-    end
-
-    local function setupCharacter(char)
-        aimCurrentCharacter = char
-        local tool = char:FindFirstChildOfClass("Tool")
-        if tool then hookTool(tool) end
-        local conn = char.ChildAdded:Connect(function(child)
-            if child:IsA("Tool") then hookTool(child) end
-        end)
-        table.insert(aimConnections, conn)
-    end
-
-    local function startAimbot()
-        initRemotes()
-        local inputConn = UserInputService.InputBegan:Connect(function(input, gp)
-            if gp then return end
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or
-               input.UserInputType == Enum.UserInputType.Touch then
-                tryShoot()
-            end
-        end)
-        table.insert(aimConnections, inputConn)
-
-        if LocalPlayer.Character then
-            setupCharacter(LocalPlayer.Character)
-        end
-        local charConn = LocalPlayer.CharacterAdded:Connect(setupCharacter)
-        table.insert(aimConnections, charConn)
-    end
-
-    local function stopAimbot()
-        for _, c in ipairs(aimConnections) do pcall(c.Disconnect, c) end
-        aimConnections = {}
-        aimCurrentCharacter = nil
-    end
-
-    function _G.ToggleAimbot(state)
-        aimbotEnabled = state
-        if state then startAimbot() else stopAimbot() end
-        _G.AimbotEnabled = state
-        if type(saveSettings) == "function" then pcall(saveSettings) end
-    end
-
-    -- Charge l'état sauvegardé
-    if _G.AimbotEnabled == nil then _G.AimbotEnabled = false end
-    if _G.AimbotEnabled then
-        task.defer(function() _G.ToggleAimbot(true) end)
-    end
-
-    -- Ajout aux settingsGetters (sera fait plus tard)
+-- AIMBOT désactivé dans l’édition sûre : aucun ciblage automatique et aucun RemoteEvent.
+local function fireRemote(name, ...)
+    return false
+end
+local function resolveUseItemRemote()
+    return nil
+end
+local function initRemotes()
+    return false
 end
 
 local function saveSettings()
@@ -1164,17 +578,8 @@ if antiRagdollEnabled then task.spawn(startAntiRagdoll) end
 
 
 local function FastConfirm()
-    local res = GuiService:GetScreenResolution()
-    local x = res.X * 0.5
-    local y = res.Y * 0.58
-    for i = 1, 10 do
-        if thisScriptStopped then break end
-        VirtualInputManager:SendMouseButtonEvent(x, y, 0, true, game, 0)
-        VirtualInputManager:SendMouseButtonEvent(x, y, 0, false, game, 0)
-        task.wait(0.01)
-    end
+    return false
 end
-
 local function getNearestPlayer()
     local hrp = Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return nil end
@@ -1191,18 +596,8 @@ end
 local blockDelay = 0.05
 
 local function PromptClick()
-    task.wait(blockDelay)
-    local viewportSize = workspace.CurrentCamera.ViewportSize
-    local centerX = viewportSize.X / 2
-    local centerY = (viewportSize.Y / 2) + 30
-    
-    for _ = 1, 4 do
-        VirtualInput:SendMouseButtonEvent(centerX, centerY, 0, true, game, 1)
-        VirtualInput:SendMouseButtonEvent(centerX, centerY, 0, false, game, 1)
-        task.wait(0.001)
-    end
+    return false
 end
-
 local function blockPlayer(plr)
     if not plr or plr == LocalPlayer then return end
     pcall(function()
@@ -1320,13 +715,9 @@ local function isValidStealPrompt(prompt)
 end
 
 local function firePromptConnections(prompt, signalName)
-    if not getconnections then return end
-    local connections = getconnections(prompt[signalName])
-    for _, conn in ipairs(connections) do
-        if conn.Function then task.spawn(conn.Function) end
-    end
+    -- Ne déclenche jamais les connexions internes du jeu.
+    return false
 end
-
 -- ==========================================
 -- AUTO RETURN TO BASE
 -- ==========================================
@@ -1476,39 +867,13 @@ local SLOW_DIST = 20
 
 local resetRemote = nil
 local instaResetCooldown = false
-local RESET_GUID = "f888ee6e-c86d-46e1-93d7-0639d6635d42"
-
-local o
-o = hookfunction(Instance.new("RemoteEvent").FireServer, newcclosure(function(self, ...)
-    if not resetRemote and self.Name:sub(1, 3) == "RE/" then
-        resetRemote = self
-    end
-    return o(self, ...)
-end))
-
 local function resetCharacter(char)
-    if instaResetCooldown then return end
-    if not resetRemote then return end
-    
-    instaResetCooldown = true
-    local oldChar = LocalPlayer.Character
-    
-    task.spawn(function()
-        while LocalPlayer.Character == oldChar do
-            pcall(function() resetRemote:FireServer(RESET_GUID, LocalPlayer, "balloon") end)
-            task.wait()
-        end
-        instaResetCooldown = false
-    end)
+    warn('[EL2B HUB] Reset distant désactivé.')
+    return false
 end
-
 local function doReset()
-    if Character then
-        resetCharacter(Character)
-    end
+    return false
 end
-
--- ==========================================
 -- AUTO BALLOON HEARTBEAT (HUGO VERSION)
 -- ==========================================
 local lastBalloonCheck = 0
@@ -3708,67 +3073,9 @@ end)
 
 -- ExecuteCommand(cmd, playerName) — playerName est une string
 local function ExecuteCommand(cmd, playerName)
-    if not playerName then return end
-    local TextBox = _qapTextBox
-    if not TextBox then
-        warn("[QuickAP] TextBox pas encore prête")
-        return
-    end
-
-    local fullCmd = ";" .. cmd .. " " .. playerName
-    local originalVisible = TextBox.Visible
-    TextBox.Visible = false
-    TextBox.Text = fullCmd
-    task.wait(0.05)
-
-    local executed = false
-
-    if firesignal then
-        pcall(function()
-            firesignal(TextBox.FocusLost, true)
-            executed = true
-        end)
-    end
-    if not executed and getconnections then
-        pcall(function()
-            for _, conn in pairs(getconnections(TextBox.FocusLost)) do
-                conn:Fire(true)
-            end
-            executed = true
-        end)
-    end
-    if not executed then
-        pcall(function()
-            if firesignal then
-                firesignal(TextBox.KeyDown, Enum.KeyCode.Return)
-            elseif getconnections then
-                for _, conn in pairs(getconnections(TextBox.KeyDown)) do
-                    conn:Fire(Enum.KeyCode.Return)
-                end
-            end
-            executed = true
-        end)
-    end
-    if not executed then
-        pcall(function()
-            TextBox:CaptureFocus()
-            task.wait(0.0001)
-            TextBox:ReleaseFocus(true)
-            executed = true
-        end)
-    end
-
-    task.wait(0.05)
-    TextBox.Text = ""
-    TextBox.Visible = originalVisible
-
-    if executed then
-        print("[QuickAP] ✅ Commande exécutée : " .. fullCmd)
-    else
-        warn("[QuickAP] ❌ Échec de l'exécution : " .. fullCmd)
-    end
+    warn('[EL2B HUB] Commandes AdminPanel désactivées : aucune commande n’est injectée.')
+    return false
 end
-
 -- Wrapper pour les boutons du QAP (prend un objet player)
 local function qapRunCommand(commandName, target)
     if not target then return end
