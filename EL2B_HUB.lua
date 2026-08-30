@@ -304,6 +304,9 @@ local RandomTools = {
     getAudioSummary = function() return featureState.audio and string.format("ON %d%%", math.floor(notificationVolume * 100 + 0.5)) or "OFF" end,
     getUiSummary = function() return string.format("%s · %s", activePage or "NONE", panel.Visible and "VISIBLE" or "HIDDEN") end,
     getSelectedDisplay = function() return selectedPlayer and selectedPlayer.DisplayName or "NONE" end,
+    isStealAnEgg = function() return tostring(game.Name):lower():find("steal an egg", 1, true) ~= nil end,
+    getExperienceProfile = function() return RandomTools.isStealAnEgg() and "STEAL AN EGG" or "GENERIC ROBLOX EXPERIENCE" end,
+    getLocalToolCount = function() local backpack = player:FindFirstChildOfClass("Backpack"); return backpack and #backpack:GetChildren() or 0 end,
 }
 local function renderPlayer()
     heading(playerPage, "PLAYER", "Outils locaux et diagnostics sûrs.")
@@ -405,6 +408,7 @@ local function renderEsp()
     end
     performanceChartRefresh()
     local monitorStatus = text(espPage, "SAFE MONITOR ACTIVE · LOCAL DATA ONLY · NO REMOTE ACTIONS", UDim2.fromOffset(10, 290), UDim2.new(1, -20, 0, 18), C.green, Enum.Font.GothamBold); monitorStatus.TextSize = 9
+    local profileStatus = text(espPage, "PROFILE: " .. RandomTools.getExperienceProfile() .. " · LOCAL TOOLS: " .. tostring(RandomTools.getLocalToolCount()), UDim2.fromOffset(10, 312), UDim2.new(1, -20, 0, 18), C.pink, Enum.Font.GothamBold); profileStatus.TextSize = 9
 end
 local function renderSettings()
     heading(settingsPage, "SETTINGS", "Réglages d’affichage de la GUI.")
