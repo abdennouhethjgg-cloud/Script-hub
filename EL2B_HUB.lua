@@ -80,6 +80,8 @@ local memoryThreshold = math.max(50, tonumber(config.memoryThreshold) or 500)
 local memoryAlertActive = false
 local memory = text(header, "MEM -- MB", UDim2.new(1, -360, 0, 33), UDim2.fromOffset(105, 16), C.yellow, Enum.Font.GothamBold)
 memory.TextXAlignment = Enum.TextXAlignment.Right
+local jobIdHeaderButton = btn(header, "JOB ID", UDim2.fromOffset(205, 17), UDim2.fromOffset(92, 28), C.purple)
+jobIdHeaderButton.TextSize = 9
 local close = btn(header, "×", UDim2.new(1, -43, 0, 14), UDim2.fromOffset(28, 28), C.row)
 close.TextSize = 18
 
@@ -153,6 +155,7 @@ local function clearJobId()
 end
 local function setJobId(on)
     clearJobId()
+    jobIdHeaderButton.Text = on and "JOB ID ✓" or "JOB ID"
     if not on then notice("Job ID OFF", "Le panneau a été retiré.", C.dim); return end
     local value = tostring(game.JobId or "")
     jobIdCard = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 18, 1, -18), Size = UDim2.fromOffset(310, 106), BackgroundColor3 = C.panel, BorderSizePixel = 0, ZIndex = 24 }, gui)
@@ -176,6 +179,10 @@ local function setJobId(on)
     closeJob.Activated:Connect(function() featureState.jobId = false; clearJobId() end)
     notice("Job ID ON", "Le Job ID du serveur est affiché localement.", C.green)
 end
+jobIdHeaderButton.Activated:Connect(function()
+    featureState.jobId = not featureState.jobId
+    setJobId(featureState.jobId)
+end)
 local function clearNextBase()
     if nextCleanup then nextCleanup() end
     nextCleanup = nil
@@ -605,12 +612,16 @@ local function fit()
         tabsFrame.Position = UDim2.fromOffset(10, 76); tabsFrame.Size = UDim2.new(1, -20, 0, 48)
         content.Position = UDim2.fromOffset(10, 132); content.Size = UDim2.new(1, -20, 1, -154)
         for index, name in ipairs({ "PLAYER", "ESP", "SETTINGS" }) do local tab = tabButtons[name]; tab.Position = UDim2.new((index - 1) / 3, 6, 0, 6); tab.Size = UDim2.new(1 / 3, -12, 0, 36); tab.TextSize = 9 end
+        jobIdHeaderButton.Position = UDim2.new(1, -118, 0, 14); jobIdHeaderButton.Size = UDim2.fromOffset(70, 28); jobIdHeaderButton.TextSize = 8
+        status.Visible = false
         hint.Visible = false
     else
         panel.Size = featureState.compact and UDim2.fromOffset(360, 390) or UDim2.fromOffset(650, 430)
         tabsFrame.Position = UDim2.fromOffset(14, 76); tabsFrame.Size = UDim2.fromOffset(145, 330)
         content.Position = UDim2.fromOffset(173, 76); content.Size = UDim2.new(1, -187, 1, -98)
         for index, name in ipairs({ "PLAYER", "ESP", "SETTINGS" }) do local tab = tabButtons[name]; tab.Position = UDim2.fromOffset(10, 12 + (index - 1) * 52); tab.Size = UDim2.new(1, -20, 0, 38); tab.TextSize = 11 end
+        jobIdHeaderButton.Position = UDim2.fromOffset(205, 17); jobIdHeaderButton.Size = UDim2.fromOffset(92, 28); jobIdHeaderButton.TextSize = 9
+        status.Visible = true
         hint.Visible = true
     end
 end
