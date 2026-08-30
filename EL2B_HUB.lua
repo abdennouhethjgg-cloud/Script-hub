@@ -108,9 +108,10 @@ local settingsPage = newPage("SETTINGS")
 local function clear(page)
     for _, child in ipairs(page:GetChildren()) do child:Destroy() end
 end
-local featureState = { notifications = true, metrics = true, antiLag = false, nextBase = false, compact = false, audio = true }
+local featureState = { notifications = true, metrics = true, antiLag = false, nextBase = false, compact = false, audio = true, jobId = false }
 local nextCleanup
 local antiLagOriginal = {}
+local jobIdCard
 
 local notificationSoundId = tostring(config.soundId or "rbxassetid://113671164765342")
 local notificationVolume = math.clamp(tonumber(config.volume) or 0.25, 0, 1)
@@ -146,6 +147,35 @@ local function notice(titleValue, bodyValue, color)
     task.delay(3.5, remove)
 end
 
+local function clearJobId()
+    if jobIdCard and jobIdCard.Parent then jobIdCard:Destroy() end
+    jobIdCard = nil
+end
+local function setJobId(on)
+    clearJobId()
+    if not on then notice("Job ID OFF", "Le panneau a été retiré.", C.dim); return end
+    local value = tostring(game.JobId or "")
+    jobIdCard = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 18, 1, -18), Size = UDim2.fromOffset(310, 106), BackgroundColor3 = C.panel, BorderSizePixel = 0, ZIndex = 24 }, gui)
+    corner(jobIdCard, 10)
+    make("UIStroke", { Color = C.purple, Thickness = 1.2 }, jobIdCard)
+    text(jobIdCard, "SERVER JOB ID", UDim2.fromOffset(13, 8), UDim2.new(1, -26, 0, 18), C.pink, Enum.Font.GothamBold).ZIndex = 25
+    local box = make("TextBox", { Text = value ~= "" and value or "Job ID unavailable", ClearTextOnFocus = false, TextEditable = false, BackgroundColor3 = C.bg, BorderSizePixel = 0, Position = UDim2.fromOffset(13, 31), Size = UDim2.new(1, -26, 0, 28), TextColor3 = C.white, TextSize = 11, Font = Enum.Font.Code, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 25 }, jobIdCard)
+    corner(box, 6)
+    local copy = btn(jobIdCard, "COPY", UDim2.fromOffset(13, 67), UDim2.fromOffset(82, 28), C.pink); copy.ZIndex = 25
+    local closeJob = btn(jobIdCard, "×", UDim2.new(1, -42, 0, 8), UDim2.fromOffset(25, 25), C.row); closeJob.ZIndex = 25
+    local state = text(jobIdCard, "Prêt à copier", UDim2.fromOffset(103, 70), UDim2.new(1, -151, 0, 22), C.dim, Enum.Font.Gotham); state.TextSize = 10; state.ZIndex = 25
+    local function copyValue()
+        if value == "" then state.Text = "Job ID indisponible"; state.TextColor3 = C.yellow; return end
+        local copied = false
+        pcall(function() if setclipboard then setclipboard(value); copied = true end end)
+        if not copied then pcall(function() if toclipboard then toclipboard(value); copied = true end end) end
+        if copied then state.Text = "Copié"; state.TextColor3 = C.green else box:CaptureFocus(); box.SelectionStart = 1; box.CursorPosition = #value + 1; state.Text = "Sélectionne le texte"; state.TextColor3 = C.yellow end
+        notice(copied and "Job ID copié" or "Copie manuelle", copied and "Le Job ID est dans le presse-papiers." or "Le presse-papiers n’est pas disponible.", copied and C.green or C.yellow)
+    end
+    copy.Activated:Connect(copyValue)
+    closeJob.Activated:Connect(function() featureState.jobId = false; clearJobId() end)
+    notice("Job ID ON", "Le Job ID du serveur est affiché localement.", C.green)
+end
 local function clearNextBase()
     if nextCleanup then nextCleanup() end
     nextCleanup = nil
@@ -413,6 +443,7 @@ end
 local function renderSettings()
     heading(settingsPage, "SETTINGS", "Réglages d’affichage de la GUI.")
     row(settingsPage, "Compact mode", "Adaptation portrait mobile", "compact", function(on) panel.Size = on and UDim2.fromOffset(360, 390) or UDim2.fromOffset(650, 430); notice(on and "Compact ON" or "Compact OFF", "Taille du menu ajustée.", on and C.green or C.yellow) end)
+    row(settingsPage, "Job ID Copier", "Copier l’identifiant du serveur local", "jobId", setJobId)
     row(settingsPage, "Audio feedback", "Son local des notifications", "audio", function(on) if not on then pcall(function() feedbackSound:Stop() end) end; saveConfig(); notice(on and "Audio ON" or "Audio OFF", "Préférence audio locale.", on and C.green or C.yellow) end)
 
     local audioPanel = make("Frame", { Position = UDim2.fromOffset(10, 110), Size = UDim2.new(1, -20, 0, 92), BackgroundColor3 = C.row, BorderSizePixel = 0 }, settingsPage)
