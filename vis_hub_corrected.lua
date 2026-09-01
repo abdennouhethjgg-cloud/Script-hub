@@ -5249,6 +5249,36 @@ ActGui.DisplayOrder = 2500
 ActGui.Enabled = false
 ActGui.Parent = PlayerGui
 
+-- Fond carré noir derrière les cinq boutons d’action mobiles.
+-- Il reste derrière les boutons et ne capture aucun clic/toucher.
+local actionBackdrop = Instance.new("Frame")
+actionBackdrop.Name = "EL2BAllGearActionBackdrop"
+actionBackdrop.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+actionBackdrop.BackgroundTransparency = 0.12
+actionBackdrop.BorderSizePixel = 0
+actionBackdrop.Active = false
+actionBackdrop.Selectable = false
+actionBackdrop.ZIndex = 1
+actionBackdrop.Parent = ActGui
+local actionBackdropCorner = Instance.new("UICorner")
+actionBackdropCorner.CornerRadius = UDim.new(0, 6)
+actionBackdropCorner.Parent = actionBackdrop
+local actionBackdropStroke = Instance.new("UIStroke")
+actionBackdropStroke.Color = Color3.fromRGB(40, 40, 48)
+actionBackdropStroke.Thickness = 1
+actionBackdropStroke.Transparency = 0.15
+actionBackdropStroke.Parent = actionBackdrop
+local function refreshActionBackdrop()
+	local scale = math.clamp(tonumber(St.btnScale) or 1, 0.5, 2)
+	local buttonSize = math.max(28, math.floor((tonumber(St.btnSizes and St.btnSizes.drop) or 50) * scale))
+	local largeSize = math.max(56, math.floor((tonumber(St.btnSizes and St.btnSizes.steal) or 56) * scale))
+	local size = math.max(buttonSize, largeSize)
+	local width = math.max(146, size * 2 + 36)
+	local height = math.max(216, size * 3 + 48)
+	actionBackdrop.Size = UDim2.fromOffset(width, height)
+	actionBackdrop.Position = UDim2.new(1, -width - 10, 0.5, -height / 2)
+end
+refreshActionBackdrop()
 local modeRefs = {}
 local actRefs = {}
 
@@ -5872,6 +5902,7 @@ function savePos(holder, key)
 end
 
 function rebuildMobile()
+	refreshActionBackdrop()
 	for _, e in pairs(modeRefs) do if e.holder then e.holder:Destroy() end end
 	for _, e in pairs(actRefs) do if e.holder then e.holder:Destroy() end end
 	modeRefs, actRefs = {}, {}
