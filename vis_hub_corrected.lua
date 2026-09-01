@@ -40,13 +40,13 @@ local C = {
 	-- Empire-style palette
 	bg = Color3.fromRGB(12, 12, 16), bg2 = Color3.fromRGB(18, 18, 24),
 	card = Color3.fromRGB(24, 24, 32), stroke = Color3.fromRGB(60, 60, 80),
-	accent = Color3.fromRGB(255, 20, 147), text = Color3.fromRGB(255, 255, 255),
-	textDim = Color3.fromRGB(160, 160, 180), on = Color3.fromRGB(60, 220, 110),
+	accent = Color3.fromRGB(210, 25, 35), text = Color3.fromRGB(255, 255, 255),
+	textDim = Color3.fromRGB(190, 170, 175), on = Color3.fromRGB(220, 45, 55),
 	off = Color3.fromRGB(40, 40, 52), box = Color3.fromRGB(32, 32, 44),
 	danger = Color3.fromRGB(220, 70, 90),
-	modeOnBg = Color3.fromRGB(255, 20, 147), modeOnTxt = Color3.fromRGB(255, 255, 255),
+	modeOnBg = Color3.fromRGB(180, 20, 30), modeOnTxt = Color3.fromRGB(255, 255, 255),
 	modeOffBg = Color3.fromRGB(255, 255, 255), modeOffTxt = Color3.fromRGB(25, 25, 30),
-	btnOn = Color3.fromRGB(50, 210, 100), -- xanh khi bật (Empire style)
+	btnOn = Color3.fromRGB(190, 25, 35), -- rouge lorsque le bouton est activé
 	btnOff = Color3.fromRGB(16, 16, 22),
 }
 
@@ -57,10 +57,10 @@ C.Text = C.text
 C.TextDim = C.textDim
 C.Card = C.card
 C.Red = C.danger
-C.RedSoft = Color3.fromRGB(255, 90, 110)
-C.RedDeep = Color3.fromRGB(120, 25, 40)
-C.Green = C.on
-C.Yellow = Color3.fromRGB(255, 205, 70)
+C.RedSoft = Color3.fromRGB(245, 65, 75)
+C.RedDeep = Color3.fromRGB(105, 12, 20)
+C.Green = Color3.fromRGB(220, 45, 55)
+C.Yellow = Color3.fromRGB(235, 70, 70)
 C.Dark = C.bg
 C.Off = C.off
 
@@ -3771,11 +3771,11 @@ do
 	g.Name = "EmpireOutlineGrad"
 	g.Color = ColorSequence.new({
 		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-		ColorSequenceKeypoint.new(0.15, Color3.fromRGB(255, 140, 200)),
-		ColorSequenceKeypoint.new(0.35, Color3.fromRGB(255, 45, 160)),
-		ColorSequenceKeypoint.new(0.55, Color3.fromRGB(255, 20, 140)),
-		ColorSequenceKeypoint.new(0.75, Color3.fromRGB(255, 80, 180)),
-		ColorSequenceKeypoint.new(0.90, Color3.fromRGB(255, 150, 210)),
+		ColorSequenceKeypoint.new(0.15, Color3.fromRGB(235, 45, 55)),
+		ColorSequenceKeypoint.new(0.35, Color3.fromRGB(210, 25, 35)),
+		ColorSequenceKeypoint.new(0.55, Color3.fromRGB(180, 15, 25)),
+		ColorSequenceKeypoint.new(0.75, Color3.fromRGB(210, 35, 45)),
+		ColorSequenceKeypoint.new(0.90, Color3.fromRGB(245, 65, 75)),
 		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
 	})
 	g.Parent = mainStroke
@@ -5288,7 +5288,7 @@ actionBackdropGradient.Color = ColorSequence.new({
 actionBackdropGradient.Rotation = 25
 actionBackdropGradient.Parent = actionBackdrop
 local actionBackdropStroke = Instance.new("UIStroke")
-actionBackdropStroke.Color = Color3.fromRGB(150, 70, 210)
+actionBackdropStroke.Color = Color3.fromRGB(190, 25, 35)
 actionBackdropStroke.Thickness = 2
 actionBackdropStroke.Transparency = 0.05
 actionBackdropStroke.Parent = actionBackdrop
@@ -5467,8 +5467,8 @@ function applyEmpireBtnBg(btn, index)
 		g.Name = "EmpireOutlineGrad"
 		g.Color = ColorSequence.new({
 			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-			ColorSequenceKeypoint.new(0.35, Color3.fromRGB(255, 80, 180)),
-			ColorSequenceKeypoint.new(0.7, Color3.fromRGB(180, 80, 255)),
+			ColorSequenceKeypoint.new(0.35, Color3.fromRGB(235, 45, 55)),
+			ColorSequenceKeypoint.new(0.7, Color3.fromRGB(170, 20, 35)),
 			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
 		})
 		g.Parent = st
@@ -6104,7 +6104,7 @@ function applyActBtnState(btn, on, onText, offText)
 			tl.TextStrokeTransparency = 0.35
 		end
 		local st = btn:FindFirstChildOfClass("UIStroke")
-		if st then st.Color = Color3.fromRGB(255, 80, 180); st.Transparency = 0.2; st.Thickness = 1.6 end
+		if st then st.Color = Color3.fromRGB(220, 35, 45); st.Transparency = 0.2; st.Thickness = 1.6 end
 	end
 end
 
@@ -6133,7 +6133,7 @@ function _G.VisRefreshModeBar()
 			local on = St.activeMode == n
 			applyCorner(e.btn, "Pill")
 			if on then
-				e.btn.BackgroundColor3 = C.modeOnBg or Color3.fromRGB(255, 20, 147)
+				e.btn.BackgroundColor3 = C.modeOnBg or Color3.fromRGB(190, 20, 30)
 				e.btn.BackgroundTransparency = 0
 				e.btn.TextColor3 = C.modeOnTxt or Color3.fromRGB(255, 255, 255)
 				local tl = e.btn:FindFirstChild("BtnTextOverlay")
@@ -8986,7 +8986,7 @@ task.spawn(function()
 	end
 	local function stroke(obj, col, th, tr)
 		local s = Instance.new("UIStroke")
-		s.Color = col or Color3.fromRGB(41, 128, 255)
+		s.Color = col or Color3.fromRGB(200, 30, 40)
 		s.Thickness = th or 1
 		s.Transparency = tr or 0.3
 		s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -9049,7 +9049,7 @@ task.spawn(function()
 	titleBypass.Position = UDim2.fromOffset(44, 0)
 	titleBypass.BackgroundTransparency = 1
 	titleBypass.Text = "ALL GEAR"
-	titleBypass.TextColor3 = Color3.fromRGB(41, 128, 255)
+	titleBypass.TextColor3 = Color3.fromRGB(200, 30, 40)
 	titleBypass.Font = Enum.Font.GothamBold
 	titleBypass.TextSize = 12
 	titleBypass.TextXAlignment = Enum.TextXAlignment.Left
@@ -9201,7 +9201,7 @@ task.spawn(function()
 	activateButton.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
 	activateButton.BorderSizePixel = 0
 	activateButton.Text = "ACTIVATE"
-	activateButton.TextColor3 = Color3.fromRGB(41, 128, 255)
+	activateButton.TextColor3 = Color3.fromRGB(200, 30, 40)
 	activateButton.Font = Enum.Font.GothamBold
 	activateButton.TextSize = 12
 	activateButton.AutoButtonColor = false
@@ -9277,7 +9277,7 @@ task.spawn(function()
 	miniTitle2.Position = UDim2.fromOffset(44, 0)
 	miniTitle2.BackgroundTransparency = 1
 	miniTitle2.Text = "ALL GEAR"
-	miniTitle2.TextColor3 = Color3.fromRGB(41, 128, 255)
+	miniTitle2.TextColor3 = Color3.fromRGB(200, 30, 40)
 	miniTitle2.Font = Enum.Font.GothamBold
 	miniTitle2.TextSize = 11
 	miniTitle2.ZIndex = 44
@@ -9317,7 +9317,7 @@ task.spawn(function()
 	miniActivate.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
 	miniActivate.BorderSizePixel = 0
 	miniActivate.Text = "ACTIVATE"
-	miniActivate.TextColor3 = Color3.fromRGB(41, 128, 255)
+	miniActivate.TextColor3 = Color3.fromRGB(200, 30, 40)
 	miniActivate.Font = Enum.Font.GothamBold
 	miniActivate.TextSize = 11
 	miniActivate.AutoButtonColor = false
@@ -9341,7 +9341,7 @@ task.spawn(function()
 	local function syncActivateUI()
 		local label = active and "DEACTIVATE" or "ACTIVATE"
 		local bg = active and Color3.fromRGB(200, 0, 0) or Color3.fromRGB(16, 16, 16)
-		local tc = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(41, 128, 255)
+		local tc = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 30, 40)
 		activateButton.Text = label
 		activateButton.BackgroundColor3 = bg
 		activateButton.TextColor3 = tc
@@ -9349,7 +9349,7 @@ task.spawn(function()
 		miniActivate.BackgroundColor3 = bg
 		miniActivate.TextColor3 = tc
 		statusLabel.Text = active and "ONLINE" or "OFFLINE"
-		statusLabel.TextColor3 = active and Color3.fromRGB(80, 255, 120) or Color3.fromRGB(200, 200, 200)
+		statusLabel.TextColor3 = active and Color3.fromRGB(255, 75, 75) or Color3.fromRGB(200, 200, 200)
 	end
 
 	-- setActive: bình thường — KHÔNG nhận diện brainrot / không auto tắt
