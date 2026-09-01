@@ -4738,11 +4738,21 @@ do
 	end
 end
 local actionBackdrop
+local actionLockButton
+local updateActionLockButton
+updateActionLockButton = function()
+	if not actionLockButton then return end
+	local locked = St.guiLock == true
+	actionLockButton.Text = locked and "LOCK" or "UNLOCK"
+	actionLockButton.BackgroundColor3 = locked and Color3.fromRGB(35, 160, 85) or Color3.fromRGB(55, 55, 65)
+	actionLockButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+end
 toggleNamed(pageSet, "Lock UI", St.guiLock, function(on)
 	St.guiLock = on and true or false
 	if actionBackdrop then
 		actionBackdrop:SetAttribute("EL2BLocked", St.guiLock)
 	end
+	if updateActionLockButton then updateActionLockButton() end
 	-- snapshot positions then save immediately on lock/unlock
 	pcall(function()
 		if Main and Main.Parent then
@@ -5274,6 +5284,39 @@ actionBackdropStroke.Color = Color3.fromRGB(40, 40, 48)
 actionBackdropStroke.Thickness = 1
 actionBackdropStroke.Transparency = 0.15
 actionBackdropStroke.Parent = actionBackdrop
+
+-- Petit contrôle indépendant, placé à gauche du carré pour rester visible sur mobile.
+actionLockButton = Instance.new("TextButton")
+actionLockButton.Name = "EL2BAllGearActionLock"
+actionLockButton.Size = UDim2.fromOffset(74, 28)
+actionLockButton.Position = UDim2.new(0, -84, 0.5, -14)
+actionLockButton.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
+actionLockButton.BorderSizePixel = 0
+actionLockButton.AutoButtonColor = false
+actionLockButton.Font = Enum.Font.GothamBold
+actionLockButton.TextSize = 11
+actionLockButton.ZIndex = 300
+actionLockButton.Parent = ActGui
+local actionLockCorner = Instance.new("UICorner")
+actionLockCorner.CornerRadius = UDim.new(0, 7)
+actionLockCorner.Parent = actionLockButton
+local actionLockStroke = Instance.new("UIStroke")
+actionLockStroke.Color = Color3.fromRGB(220, 220, 235)
+actionLockStroke.Thickness = 1.5
+actionLockStroke.Transparency = 0.1
+actionLockStroke.Parent = actionLockButton
+updateActionLockButton()
+actionLockButton.Activated:Connect(function()
+	local api = ToggleRefs and ToggleRefs.guiLock
+	if api and type(api.set) == "function" then
+		api.set(not (St.guiLock == true))
+	else
+		St.guiLock = not (St.guiLock == true)
+		if actionBackdrop then actionBackdrop:SetAttribute("EL2BLocked", St.guiLock) end
+		updateActionLockButton()
+		pcall(saveCfg)
+	end
+end)
 local function getActionLayout()
 	local scale = math.clamp(tonumber(St.btnScale) or 1, 0.5, 2)
 	local buttonSize = math.max(28, math.floor((tonumber(St.btnSizes and St.btnSizes.drop) or 50) * scale))
