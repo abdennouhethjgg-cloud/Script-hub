@@ -3951,6 +3951,8 @@ local pageSpam = makePage("Spam")
 local pageCounter = makePage("Counter")
 local pageSet = makePage("Settings")
 local pageKeys = makePage("Keybinds")
+local pageTools = makePage("Tools")
+local pageVisuals = makePage("Visuals")
 
 function setTab(name)
 	for n, p in pairs(pages) do
@@ -3989,6 +3991,8 @@ addTab("Spam", 3)
 addTab("Counter", 4)
 addTab("Settings", 5)
 addTab("Keybinds", 6)
+addTab("Tools", 7)
+addTab("Visuals", 8)
 
 function section(parent, text, order)
 	local f = Instance.new("Frame")
@@ -4200,6 +4204,45 @@ function actionBtn(parent, text, color, cb, order)
 	b.Activated:Connect(fire)
 	return r
 end
+
+----------------------------------------------------------------
+-- TOOLS / VISUALS TABS
+----------------------------------------------------------------
+section(pageTools, "* — INTERFACE TOOLS", 1)
+actionBtn(pageTools, "Save Layout", C.accent, function()
+	pcall(saveCfg)
+	showToast("LAYOUT SAVED")
+end, 2)
+actionBtn(pageTools, "Refresh Mobile UI", C.accent, function()
+	if _G.VisApplyMobile then pcall(_G.VisApplyMobile) end
+	if _G.VisUpdateMobileVisuals then pcall(_G.VisUpdateMobileVisuals) end
+	showToast("MOBILE UI REFRESHED")
+end, 3)
+actionBtn(pageTools, "Reset Mobile Layout", C.danger, function()
+	if _G.VisResetMobilePos then pcall(_G.VisResetMobilePos) end
+	if _G.VisApplyMobile then pcall(_G.VisApplyMobile) end
+	showToast("MOBILE LAYOUT RESET")
+end, 4)
+section(pageVisuals, "* — DISPLAY", 1)
+actionBtn(pageVisuals, "Show / Hide Action Buttons", C.accent, function()
+	St.mobileBtns = not (St.mobileBtns == true)
+	if _G.VisApplyMobile then pcall(_G.VisApplyMobile) end
+	pcall(saveCfg)
+end, 2)
+actionBtn(pageVisuals, "Reset Square Position", C.danger, function()
+	St._actionBackdropPos = nil
+	St._btnPos = St._btnPos or {}
+	for _, key in ipairs({"drop", "insta", "tp", "sentry", "steal"}) do
+		St._btnPos["A_" .. key] = nil
+	end
+	if _G.VisUpdateMobileVisuals then pcall(_G.VisUpdateMobileVisuals) end
+	pcall(saveCfg)
+	showToast("SQUARE POSITION RESET")
+end, 3)
+actionBtn(pageVisuals, "Save Current Positions", C.accent, function()
+	pcall(saveCfg)
+	showToast("POSITIONS SAVED")
+end, 4)
 
 ----------------------------------------------------------------
 -- PLAYER TAB
