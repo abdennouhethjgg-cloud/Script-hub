@@ -4737,8 +4737,12 @@ do
 		b.Activated:Connect(fire)
 	end
 end
+local actionBackdrop
 toggleNamed(pageSet, "Lock UI", St.guiLock, function(on)
 	St.guiLock = on and true or false
+	if actionBackdrop then
+		actionBackdrop:SetAttribute("EL2BLocked", St.guiLock)
+	end
 	-- snapshot positions then save immediately on lock/unlock
 	pcall(function()
 		if Main and Main.Parent then
@@ -5251,13 +5255,14 @@ ActGui.Parent = PlayerGui
 
 -- Fond carré noir derrière les cinq boutons d’action mobiles.
 -- Il reste derrière les boutons et ne capture aucun clic/toucher.
-local actionBackdrop = Instance.new("Frame")
+actionBackdrop = Instance.new("Frame")
 actionBackdrop.Name = "EL2BAllGearActionBackdrop"
 actionBackdrop.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 actionBackdrop.BackgroundTransparency = 0.12
 actionBackdrop.BorderSizePixel = 0
 actionBackdrop.Active = false
 actionBackdrop.Selectable = false
+actionBackdrop:SetAttribute("EL2BLocked", false)
 actionBackdrop.ZIndex = 1
 actionBackdrop.Parent = ActGui
 local actionBackdropCorner = Instance.new("UICorner")
@@ -5273,10 +5278,12 @@ local function refreshActionBackdrop()
 	local buttonSize = math.max(28, math.floor((tonumber(St.btnSizes and St.btnSizes.drop) or 50) * scale))
 	local largeSize = math.max(56, math.floor((tonumber(St.btnSizes and St.btnSizes.steal) or 56) * scale))
 	local size = math.max(buttonSize, largeSize)
-	local width = math.max(146, size * 2 + 36)
-	local height = math.max(216, size * 3 + 48)
+	-- Les boutons utilisent deux colonnes et trois lignes (y = -40, 30, 100).
+	-- Le calcul tient compte de leur taille et laisse une marge de 10 px.
+	local width = math.max(146, size + 90)
+	local height = math.max(220, size + 160)
 	actionBackdrop.Size = UDim2.fromOffset(width, height)
-	actionBackdrop.Position = UDim2.new(1, -width - 10, 0.5, -height / 2)
+	actionBackdrop.Position = UDim2.new(1, -width - 10, 0.5, -50)
 end
 refreshActionBackdrop()
 local modeRefs = {}
@@ -6094,6 +6101,7 @@ _G.VisForceApplyShape = function(shape)
 end
 
 function _G.VisUpdateMobileVisuals()
+	if actionBackdrop then refreshActionBackdrop() end
 	for n, e in pairs(modeRefs) do
 		if e and e.holder and e.btn then
 			local sc = tonumber(St.btnScale) or 1
