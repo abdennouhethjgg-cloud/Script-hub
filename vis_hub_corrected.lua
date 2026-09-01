@@ -1934,9 +1934,9 @@ task.spawn(function()
 			statusLbl.TextSize = 22
 			statusLbl.Font = Enum.Font.GothamBlack
 			if pct >= 100 then
-				statusLbl.TextColor3 = Color3.fromRGB(120, 255, 160)
+				statusLbl.TextColor3 = Color3.fromRGB(255, 85, 90)
 			elseif pct >= 75 then
-				statusLbl.TextColor3 = Color3.fromRGB(255, 230, 100)
+				statusLbl.TextColor3 = Color3.fromRGB(255, 105, 110)
 			else
 				statusLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
 			end
@@ -1945,7 +1945,7 @@ task.spawn(function()
 			statusLbl.Text = autoStealEnabled and "READY" or "IDLE"
 			statusLbl.TextSize = 16
 			statusLbl.Font = Enum.Font.GothamBold
-			statusLbl.TextColor3 = autoStealEnabled and Color3.fromRGB(140, 255, 180) or COL.dim
+			statusLbl.TextColor3 = autoStealEnabled and Color3.fromRGB(255, 90, 95) or COL.dim
 			statusLbl.TextStrokeTransparency = 0.35
 		end
 	end)
@@ -3808,13 +3808,13 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -80, 1, 0)
 Title.Position = UDim2.new(0, 14, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "Free Sell Là Tuất Ngu Lồn"
-Title.TextColor3 = Color3.fromRGB(255, 230, 245)
+Title.Text = "EL2B ALL GEAR"
+Title.TextColor3 = Color3.fromRGB(255, 225, 225)
 Title.TextSize = 12
 Title.Font = Enum.Font.GothamBlack
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.TextStrokeTransparency = 0.55
-Title.TextStrokeColor3 = Color3.fromRGB(255, 80, 160)
+Title.TextStrokeColor3 = Color3.fromRGB(220, 35, 45)
 Title.Parent = Top
 -- gradient chữ menu
 local titleGrad = Instance.new("UIGradient")
@@ -4763,7 +4763,7 @@ updateActionLockButton = function()
 	if not actionLockButton then return end
 	local locked = St.guiLock == true
 	actionLockButton.Text = locked and "LOCK" or "UNLOCK"
-	actionLockButton.BackgroundColor3 = locked and Color3.fromRGB(35, 160, 85) or Color3.fromRGB(55, 55, 65)
+	actionLockButton.BackgroundColor3 = locked and Color3.fromRGB(155, 20, 30) or Color3.fromRGB(28, 28, 34)
 	actionLockButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 end
 toggleNamed(pageSet, "Lock UI", St.guiLock, function(on)
@@ -4817,7 +4817,7 @@ do
 	lbl.Position = UDim2.new(0, 8, 0, 0)
 	lbl.BackgroundTransparency = 1
 	lbl.Text = "Anti Kick  ·  ALWAYS ON"
-	lbl.TextColor3 = Color3.fromRGB(120, 255, 160)
+	lbl.TextColor3 = Color3.fromRGB(255, 85, 90)
 	lbl.Font = Enum.Font.GothamBold
 	lbl.TextSize = 12
 	lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -5097,7 +5097,7 @@ actionBtn(pageSet, "Reset All Settings", C.danger, function()
 	pcall(applyMenuScale)
 	if _G.VisSyncAutoSteal then pcall(_G.VisSyncAutoSteal) end
 	pcall(saveCfg)
-	showToast("RESET ALL ✓ Free Sell Là Tuất Ngu Lồn")
+	showToast("RESET ALL ✓ EL2B ALL GEAR")
 end, 32)
 actionBtn(pageSet, "Save Now", C.accent, function()
 	-- snapshot vị trí menu / mini / bar trước khi ghi
@@ -5114,7 +5114,7 @@ actionBtn(pageSet, "Save Now", C.accent, function()
 	end)
 	local ok = saveCfg()
 	if ok then
-		showToast("SAVED ✓ Free Sell Là Tuất Ngu Lồn")
+		showToast("SAVED ✓ EL2B ALL GEAR")
 	else
 		showToast("SAVE FAIL (no writefile?)")
 	end
@@ -5134,7 +5134,7 @@ local Mini = Instance.new("TextButton")
 Mini.Size = UDim2.new(0, 110, 0, 36)
 Mini.Position = UDim2.new(0, 14, 0, 90)
 Mini.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
-Mini.Text = "VisHub"
+Mini.Text = "EL2B"
 Mini.TextColor3 = C.accent
 Mini.TextSize = 12
 Mini.Font = Enum.Font.GothamBold
@@ -5257,7 +5257,7 @@ function closeMenu()
 			end
 		end)
 		Mini.Visible = true
-		Mini.Text = "VisHub"
+		Mini.Text = "EL2B"
 		-- Giữ vị trí mini đã lưu; nếu chưa có thì đặt gần chỗ menu
 		pcall(function()
 			local p = St._miniPos
@@ -5334,7 +5334,7 @@ actionBackdrop.ZIndex = 1
 actionBackdrop.ClipsDescendants = false
 actionBackdrop.Parent = ActGui
 local actionBackdropCorner = Instance.new("UICorner")
-actionBackdropCorner.CornerRadius = UDim.new(0, 6)
+actionBackdropCorner.CornerRadius = UDim.new(0, 10)
 actionBackdropCorner.Parent = actionBackdrop
 local actionBackdropGradient = Instance.new("UIGradient")
 actionBackdropGradient.Color = ColorSequence.new({
@@ -5368,7 +5368,7 @@ local actionLockCorner = Instance.new("UICorner")
 actionLockCorner.CornerRadius = UDim.new(1, 0)
 actionLockCorner.Parent = actionLockButton
 local actionLockStroke = Instance.new("UIStroke")
-actionLockStroke.Color = Color3.fromRGB(220, 220, 235)
+actionLockStroke.Color = Color3.fromRGB(235, 55, 65)
 actionLockStroke.Thickness = 1.5
 actionLockStroke.Transparency = 0.1
 actionLockStroke.Parent = actionLockButton
@@ -5507,7 +5507,7 @@ function applyEmpireBtnBg(btn, index)
 	bgImg.Name = "BtnBgImage"
 	bgImg.BackgroundTransparency = 1
 	bgImg.Image = "rbxassetid://" .. tostring(id)
-	bgImg.ImageTransparency = 0.08 -- đậm hơn (thấp = rõ ảnh hơn)
+	bgImg.ImageTransparency = 0.22 -- đậm hơn (thấp = rõ ảnh hơn)
 	bgImg.ScaleType = Enum.ScaleType.Crop
 	bgImg.Size = UDim2.new(1, 0, 1, 0)
 	bgImg.ZIndex = (btn.ZIndex or 1)
@@ -5519,7 +5519,7 @@ function applyEmpireBtnBg(btn, index)
 	dim.Name = "BtnDim"
 	dim.Size = UDim2.new(1, 0, 1, 0)
 	dim.BackgroundColor3 = Color3.new(0, 0, 0)
-	dim.BackgroundTransparency = 0.45
+	dim.BackgroundTransparency = 0.28
 	dim.BorderSizePixel = 0
 	dim.ZIndex = (btn.ZIndex or 1) + 1
 	dim.Active = false
@@ -5579,21 +5579,22 @@ function _G.VisBuildV2ModeBar()
 	-- Size: Speed 3Mode tăng CHIỀU CAO (height), width giữ vừa đủ chữ
 	local V2_BTN_H = math.max(28, math.floor(modeBase * sc))
 	local V2_BTN_W = math.max(72, math.floor(88 * sc)) -- rộng ổn định, không phình theo size
-	local V2_CORNER = 12	local MODE_COLORS = {
+	local V2_CORNER = 12
+	local MODE_COLORS = {
 		Normal = {
-			onBg = Color3.fromRGB(255, 200, 210), onTxt = Color3.fromRGB(30, 20, 30),
+			onBg = Color3.fromRGB(170, 25, 35), onTxt = Color3.fromRGB(255, 255, 255),
 			offBg = Color3.fromRGB(255, 255, 255), offTxt = Color3.fromRGB(25, 25, 30),
-			stroke = Color3.fromRGB(255, 160, 180),
+			stroke = Color3.fromRGB(225, 40, 50),
 		},
 		Lagger = {
-			onBg = Color3.fromRGB(255, 200, 210), onTxt = Color3.fromRGB(30, 20, 30),
+			onBg = Color3.fromRGB(170, 25, 35), onTxt = Color3.fromRGB(255, 255, 255),
 			offBg = Color3.fromRGB(255, 255, 255), offTxt = Color3.fromRGB(25, 25, 30),
-			stroke = Color3.fromRGB(255, 160, 180),
+			stroke = Color3.fromRGB(225, 40, 50),
 		},
 		Custom = {
-			onBg = Color3.fromRGB(255, 200, 210), onTxt = Color3.fromRGB(30, 20, 30),
+			onBg = Color3.fromRGB(170, 25, 35), onTxt = Color3.fromRGB(255, 255, 255),
 			offBg = Color3.fromRGB(255, 255, 255), offTxt = Color3.fromRGB(25, 25, 30),
-			stroke = Color3.fromRGB(255, 160, 180),
+			stroke = Color3.fromRGB(225, 40, 50),
 		},
 	}
 	local gui = Instance.new("ScreenGui")
@@ -5679,7 +5680,7 @@ function _G.VisBuildV2ModeBar()
 			for n, e in pairs(modeRefs or {}) do
 				if e and e.style then pcall(e.style, n == modeName)
 				elseif e and e.btn then
-					e.btn.BackgroundColor3 = (n == modeName) and Color3.fromRGB(255, 200, 210) or Color3.fromRGB(255, 255, 255)
+					e.btn.BackgroundColor3 = (n == modeName) and Color3.fromRGB(170, 25, 35) or Color3.fromRGB(255, 255, 255)
 				end
 			end
 		end
@@ -5778,9 +5779,9 @@ function makeModeBtn(name, order)
 	st.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	local function styleMode(on)
 		if on then
-			btn.BackgroundColor3 = Color3.fromRGB(255, 200, 210)
+			btn.BackgroundColor3 = Color3.fromRGB(170, 25, 35)
 			btn.TextColor3 = Color3.fromRGB(30, 20, 30)
-			st.Color = Color3.fromRGB(255, 160, 180)
+			st.Color = Color3.fromRGB(225, 40, 50)
 			st.Transparency = 0.1
 		else
 			btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -5821,7 +5822,7 @@ function makeModeBtn(name, order)
 				e.style(St.activeMode == n)
 			elseif e and e.btn then
 				local on = St.activeMode == n
-				e.btn.BackgroundColor3 = on and Color3.fromRGB(255, 200, 210) or Color3.fromRGB(255, 255, 255)
+				e.btn.BackgroundColor3 = on and Color3.fromRGB(170, 25, 35) or Color3.fromRGB(255, 255, 255)
 				e.btn.TextColor3 = on and Color3.fromRGB(30, 20, 30) or Color3.fromRGB(25, 25, 30)
 			end
 		end
@@ -5887,7 +5888,7 @@ function makeActBtn(key, label, pos, cb)
 		if oldS then oldS:Destroy() end
 		local s = Instance.new("UIStroke")
 		s.Name = "BtnBorder"
-		s.Color = Color3.fromRGB(220, 220, 235)
+		s.Color = Color3.fromRGB(220, 35, 45)
 		s.Thickness = 2
 		s.Transparency = 0.15
 		s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -6174,11 +6175,11 @@ function applyActBtnState(btn, on, onText, offText)
 		btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 		if offText then btn.Text = offText end
 		local bgImg = btn:FindFirstChild("BtnBgImage")
-		if bgImg then bgImg.ImageTransparency = 0.08 end
+		if bgImg then bgImg.ImageTransparency = 0.22 end
 		local dim = btn:FindFirstChild("BtnDim")
 		if dim then
 			dim.BackgroundColor3 = Color3.new(0, 0, 0)
-			dim.BackgroundTransparency = 0.45
+			dim.BackgroundTransparency = 0.28
 		end
 		local tl = btn:FindFirstChild("BtnTextOverlay")
 		if tl then
@@ -6225,7 +6226,7 @@ function _G.VisRefreshModeBar()
 					tl.Text = n
 				end
 				local st = e.btn:FindFirstChildOfClass("UIStroke")
-				if st then st.Color = Color3.fromRGB(255, 120, 200); st.Transparency = 0.05 end
+				if st then st.Color = Color3.fromRGB(235, 45, 55); st.Transparency = 0.05 end
 			else
 				e.btn.BackgroundColor3 = C.modeOffBg or Color3.fromRGB(255, 255, 255)
 				e.btn.BackgroundTransparency = 0
@@ -6288,7 +6289,7 @@ function _G.VisUpdateMobileVisuals()
 				s.Name = "BtnBorder"
 				s.Parent = e.btn
 			end
-			s.Color = Color3.fromRGB(220, 220, 235)
+			s.Color = Color3.fromRGB(220, 35, 45)
 			s.Thickness = 2
 			s.Transparency = 0.15
 		end
@@ -7698,7 +7699,7 @@ task.defer(function()
 	b.Position = UDim2.new(0.5, -55, 0, 12)
 	b.BackgroundColor3 = Color3.fromRGB(20, 40, 30)
 	b.Text = "INF JUMP"
-	b.TextColor3 = Color3.fromRGB(120, 255, 160)
+	b.TextColor3 = Color3.fromRGB(255, 85, 90)
 	b.Font = Enum.Font.GothamBlack
 	b.TextSize = 13
 	b.Parent = g
@@ -7770,8 +7771,8 @@ function setupOverheadInfo(char)
 	titleLbl.Size = UDim2.new(1, 0, 0, 22)
 	titleLbl.Position = UDim2.new(0, 0, 0, 0)
 	titleLbl.BackgroundTransparency = 1
-	titleLbl.Text = "Free Sell Là Tuất Ngu Lồn"
-	titleLbl.TextColor3 = Color3.fromRGB(255, 220, 100)
+	titleLbl.Text = "EL2B ALL GEAR"
+	titleLbl.TextColor3 = Color3.fromRGB(255, 105, 110)
 	titleLbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 	titleLbl.TextStrokeTransparency = 0
 	titleLbl.Font = Enum.Font.Bangers
@@ -7960,7 +7961,7 @@ task.defer(function()
 			dim.Name = "WallDim"
 			dim.Size = UDim2.new(1, 0, 1, 0)
 			dim.BackgroundColor3 = Color3.new(0, 0, 0)
-			dim.BackgroundTransparency = 0.45
+			dim.BackgroundTransparency = 0.28
 			dim.BorderSizePixel = 0
 			dim.ZIndex = 0
 			dim.Active = false
@@ -8020,7 +8021,7 @@ task.defer(function()
 	local mini = miniGui and miniGui:FindFirstChildWhichIsA("TextButton")
 	if mini then
 		mini.Size = UDim2.new(0, 110, 0, 36)
-		mini.Text = "VisHub"
+		mini.Text = "EL2B"
 		mini.TextSize = 22
 		local c0 = mini:FindFirstChildOfClass("UICorner")
 		if c0 then c0.CornerRadius = UDim.new(0, 8) end
@@ -8033,7 +8034,7 @@ task.defer(function()
 		if top then
 			for _, x in ipairs(top:GetDescendants()) do
 				if x:IsA("TextLabel") and (x.Text:find("VIS") or x.Text:find("Vis")) then
-					x.Text = "Free Sell Là Tuất Ngu Lồn"
+					x.Text = "EL2B ALL GEAR"
 				end
 			end
 		end
@@ -8069,7 +8070,7 @@ if not _G._VisLogicWatchdog then
 	end)
 end
 
-print("[Free All Gear] Speed | InfJump Empire | RagdollTP | AutoSteal | Wallpaper | WinLive | Control")
+print("[EL2B ALL GEAR] Interface loaded")
 
 
 -- Auto-save ALL settings every 3s — mọi vị trí + trạng thái đóng/mở + sizes (không bỏ sót)
@@ -8899,17 +8900,17 @@ task.spawn(function()
 			pctLbl.TextColor3 = Color3.fromRGB(150, 150, 160)
 		elseif p > 0.01 then
 			title.Text = "STEALING..."
-			title.TextColor3 = Color3.fromRGB(180, 220, 255)
+			title.TextColor3 = Color3.fromRGB(255, 190, 195)
 			if pct >= 100 then
-				pctLbl.TextColor3 = Color3.fromRGB(120, 255, 160)
+				pctLbl.TextColor3 = Color3.fromRGB(255, 85, 90)
 			elseif pct >= 75 then
-				pctLbl.TextColor3 = Color3.fromRGB(255, 230, 100)
+				pctLbl.TextColor3 = Color3.fromRGB(255, 105, 110)
 			else
 				pctLbl.TextColor3 = Color3.fromRGB(200, 210, 230)
 			end
 		else
 			title.Text = "READY"
-			title.TextColor3 = Color3.fromRGB(140, 255, 180)
+			title.TextColor3 = Color3.fromRGB(255, 90, 95)
 			pctLbl.Text = "0%"
 			pctLbl.TextColor3 = Color3.fromRGB(180, 200, 230)
 		end
@@ -9101,7 +9102,7 @@ task.spawn(function()
 	end
 	local function stroke(obj, col, th, tr)
 		local s = Instance.new("UIStroke")
-		s.Color = col or Color3.fromRGB(200, 30, 40)
+		s.Color = col or Color3.fromRGB(220, 35, 45)
 		s.Thickness = th or 1
 		s.Transparency = tr or 0.3
 		s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -9249,7 +9250,7 @@ task.spawn(function()
 	bgButton.BackgroundColor3 = Color3.fromRGB(26, 26, 26)
 	bgButton.BorderSizePixel = 0
 	bgButton.Text = "#" .. tostring(savedBgIndex)
-	bgButton.TextColor3 = Color3.fromRGB(180, 210, 255)
+	bgButton.TextColor3 = Color3.fromRGB(255, 185, 190)
 	bgButton.Font = Enum.Font.GothamBold
 	bgButton.TextSize = 10
 	bgButton.ZIndex = 6
