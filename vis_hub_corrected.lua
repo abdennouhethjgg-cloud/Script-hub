@@ -5306,10 +5306,12 @@ local function applyWindowMinimized(on)
 	St.windowMinimized = windowMinimized
 	if Main then Main.Visible = not windowMinimized end
 	if Mini then Mini.Visible = windowMinimized end
-	if ModeGui then ModeGui.Enabled = (not windowMinimized) and St.mobileBtns == true end
-	if ActGui then ActGui.Enabled = (not windowMinimized) and St.mobileBtns == true end
-	if actionBackdrop then actionBackdrop.Visible = not windowMinimized end
-	if actionLockButton then actionLockButton.Visible = not windowMinimized end
+	-- La minimisation concerne uniquement la fenêtre principale.
+	-- Le carré, les cinq boutons et LOCK/UNLOCK restent visibles.
+	if ModeGui then ModeGui.Enabled = St.mobileBtns == true end
+	if ActGui then ActGui.Enabled = St.mobileBtns == true end
+	if actionBackdrop then actionBackdrop.Visible = St.mobileBtns == true end
+	if actionLockButton then actionLockButton.Visible = St.mobileBtns == true end
 	if MinimizeBtn then MinimizeBtn.Text = windowMinimized and "+" or "−" end
 	pcall(saveCfg)
 end
@@ -6316,7 +6318,7 @@ function _G.VisUpdateMobileVisuals()
 end
 
 function _G.VisApplyMobile()
-	local visible = (St.mobileBtns == true) and (windowMinimized ~= true)
+	local visible = St.mobileBtns == true
 	ModeGui.Enabled = visible
 	ActGui.Enabled = visible
 	if actionBackdrop then actionBackdrop.Visible = visible end
@@ -6454,7 +6456,7 @@ function reapplyAllLogic(reason)
 	-- Mobile buttons
 	pcall(function()
 		if ModeGui then ModeGui.Enabled = St.mobileBtns == true end
-		if ActGui then ActGui.Enabled = (St.mobileBtns == true) and (windowMinimized ~= true) end
+		if ActGui then ActGui.Enabled = St.mobileBtns == true end
 		if _G.VisApplyMobile then pcall(_G.VisApplyMobile) end
 	end)
 	-- Sync toggle UI + ép logic chạy nếu đang ON
@@ -6529,7 +6531,7 @@ task.defer(function()
 	pcall(function() if St.toolAim and setToolAim then setToolAim(true) end end)
 	pcall(function()
 		if ModeGui then ModeGui.Enabled = St.mobileBtns == true end
-		if ActGui then ActGui.Enabled = (St.mobileBtns == true) and (windowMinimized ~= true) end
+		if ActGui then ActGui.Enabled = St.mobileBtns == true end
 		if next(modeRefs) == nil or next(actRefs) == nil then
 			if _G.VisApplyMobile then _G.VisApplyMobile() end
 		end
