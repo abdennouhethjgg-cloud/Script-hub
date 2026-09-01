@@ -5225,6 +5225,7 @@ function openMenu()
 	if type(_G.EL2BSetWindowMinimized) == "function" then
 		_G.EL2BSetWindowMinimized(false)
 	end
+	if _G.VisApplyMobile then pcall(_G.VisApplyMobile) end
 	Main.Visible = true
 	Mini.Visible = false
 	St.menuOpen = true
@@ -6300,13 +6301,19 @@ function _G.VisUpdateMobileVisuals()
 end
 
 function _G.VisApplyMobile()
-	ModeGui.Enabled = St.mobileBtns == true
-	ActGui.Enabled = St.mobileBtns == true
+	local visible = (St.mobileBtns == true) and (windowMinimized ~= true)
+	ModeGui.Enabled = visible
+	ActGui.Enabled = visible
+	if actionBackdrop then actionBackdrop.Visible = visible end
+	if actionLockButton then actionLockButton.Visible = visible end
 	local hasMode = next(modeRefs) ~= nil
 	local hasAct = next(actRefs) ~= nil
 	if not hasMode or not hasAct then
 		rebuildMobile()
 	end
+	-- Réaffiche explicitement le carré et ses contrôles après une réouverture.
+	if visible and actionBackdrop then actionBackdrop.Visible = true end
+	if visible and actionLockButton then actionLockButton.Visible = true end
 	-- luôn áp shape/size (Box/Round/Square) kể cả khi đã có nút
 	if _G.VisUpdateMobileVisuals then pcall(_G.VisUpdateMobileVisuals) end
 end
@@ -6432,7 +6439,7 @@ function reapplyAllLogic(reason)
 	-- Mobile buttons
 	pcall(function()
 		if ModeGui then ModeGui.Enabled = St.mobileBtns == true end
-		if ActGui then ActGui.Enabled = St.mobileBtns == true end
+		if ActGui then ActGui.Enabled = (St.mobileBtns == true) and (windowMinimized ~= true) end
 		if _G.VisApplyMobile then pcall(_G.VisApplyMobile) end
 	end)
 	-- Sync toggle UI + ép logic chạy nếu đang ON
@@ -6507,7 +6514,7 @@ task.defer(function()
 	pcall(function() if St.toolAim and setToolAim then setToolAim(true) end end)
 	pcall(function()
 		if ModeGui then ModeGui.Enabled = St.mobileBtns == true end
-		if ActGui then ActGui.Enabled = St.mobileBtns == true end
+		if ActGui then ActGui.Enabled = (St.mobileBtns == true) and (windowMinimized ~= true) end
 		if next(modeRefs) == nil or next(actRefs) == nil then
 			if _G.VisApplyMobile then _G.VisApplyMobile() end
 		end
