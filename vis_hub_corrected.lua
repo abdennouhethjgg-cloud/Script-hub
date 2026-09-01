@@ -5268,7 +5268,7 @@ ActGui.Parent = PlayerGui
 actionBackdrop = Instance.new("Frame")
 actionBackdrop.Name = "EL2BAllGearActionBackdrop"
 actionBackdrop.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-actionBackdrop.BackgroundTransparency = 0.12
+actionBackdrop.BackgroundTransparency = 0.04
 actionBackdrop.BorderSizePixel = 0
 actionBackdrop.Active = false
 actionBackdrop.Selectable = false
@@ -5279,26 +5279,36 @@ actionBackdrop.Parent = ActGui
 local actionBackdropCorner = Instance.new("UICorner")
 actionBackdropCorner.CornerRadius = UDim.new(0, 6)
 actionBackdropCorner.Parent = actionBackdrop
+local actionBackdropGradient = Instance.new("UIGradient")
+actionBackdropGradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(5, 5, 8)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(18, 10, 24)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(3, 3, 5)),
+})
+actionBackdropGradient.Rotation = 25
+actionBackdropGradient.Parent = actionBackdrop
 local actionBackdropStroke = Instance.new("UIStroke")
-actionBackdropStroke.Color = Color3.fromRGB(40, 40, 48)
-actionBackdropStroke.Thickness = 1
-actionBackdropStroke.Transparency = 0.15
+actionBackdropStroke.Color = Color3.fromRGB(150, 70, 210)
+actionBackdropStroke.Thickness = 2
+actionBackdropStroke.Transparency = 0.05
 actionBackdropStroke.Parent = actionBackdrop
 
--- Petit contrôle indépendant, placé à gauche du carré pour rester visible sur mobile.
+-- Petit bouton rond indépendant, placé à gauche du carré pour rester visible sur mobile.
 actionLockButton = Instance.new("TextButton")
 actionLockButton.Name = "EL2BAllGearActionLock"
-actionLockButton.Size = UDim2.fromOffset(74, 28)
-actionLockButton.Position = UDim2.new(0, -84, 0.5, -14)
+actionLockButton.Size = UDim2.fromOffset(52, 52)
+actionLockButton.Position = UDim2.new(0, -62, 0.5, -26)
 actionLockButton.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
 actionLockButton.BorderSizePixel = 0
 actionLockButton.AutoButtonColor = false
 actionLockButton.Font = Enum.Font.GothamBold
-actionLockButton.TextSize = 11
+actionLockButton.TextSize = 9
+actionLockButton.TextScaled = true
+actionLockButton.TextWrapped = true
 actionLockButton.ZIndex = 300
 actionLockButton.Parent = ActGui
 local actionLockCorner = Instance.new("UICorner")
-actionLockCorner.CornerRadius = UDim.new(0, 7)
+actionLockCorner.CornerRadius = UDim.new(1, 0)
 actionLockCorner.Parent = actionLockButton
 local actionLockStroke = Instance.new("UIStroke")
 actionLockStroke.Color = Color3.fromRGB(220, 220, 235)
