@@ -1,5 +1,5 @@
 --[[
-  VIS HUB — Full Menu
+  EL2B ALL GEAR — Full Menu
   Tab 1 Player: Anti Gummy/Ragdoll/Paintball/Boogie + Speed 3-mode (Vis S2 loop)
                 + Tool Aimbot + Drop Jump/Stand + Insta V1/V2 + TP Down keybinds
   Tab 2 ESP: Player ESP + Tracker + Anti Lag (Vis logic)
@@ -26,7 +26,7 @@ local PlayerGui = LP:WaitForChild("PlayerGui", 30) or LP:FindFirstChild("PlayerG
 
 pcall(function()
 	for _, n in ipairs({
-		"VisHubFullMenu", "VisHubFullMini", "VisHubModeBar", "VisHubActionButtons",
+		"EL2BAllGearFullMenu", "EL2BAllGearFullMini", "EL2BAllGearModeBar", "EL2BAllGearActionButtons",
 	}) do
 		local g = PlayerGui:FindFirstChild(n)
 		if g then g:Destroy() end
@@ -50,12 +50,26 @@ local C = {
 	btnOff = Color3.fromRGB(16, 16, 22),
 }
 
+-- Compatibility aliases used by the V2 panel.
+-- They prevent nil Color3 assignments when the panel is created.
+C.White = C.text
+C.Text = C.text
+C.TextDim = C.textDim
+C.Card = C.card
+C.Red = C.danger
+C.RedSoft = Color3.fromRGB(255, 90, 110)
+C.RedDeep = Color3.fromRGB(120, 25, 40)
+C.Green = C.on
+C.Yellow = Color3.fromRGB(255, 205, 70)
+C.Dark = C.bg
+C.Off = C.off
+
 
 -- Auto-write Vis Auto Steal for loadstring
 pcall(function()
 	if writefile then
 		writefile("Vis_Auto_Steal_Embedded.lua", [==[--[[
-  Auto Steal — full Vis Hub logic V1 / Semi V1-V2 / V3
+  Auto Steal — full EL2B ALL GEAR logic V1 / Semi V1-V2 / V3
 ]]
 if _G.__VisAutoStealRunning then
 	pcall(function()
@@ -73,7 +87,7 @@ local HttpService = game:GetService("HttpService")
 local LP = Players.LocalPlayer
 local PlayerGui = LP:WaitForChild("PlayerGui")
 
--- Shared state (must match Vis Hub names used in steal logic)
+-- Shared state (must match EL2B ALL GEAR names used in steal logic)
 autoStealEnabled = false
 selectedStealMode = "Normal"
 autoStealRadius = 60
@@ -3705,7 +3719,7 @@ function stroke(p, col)
 end
 
 local Gui = Instance.new("ScreenGui")
-Gui.Name = "VisHubFullMenu"
+Gui.Name = "EL2BAllGearFullMenu"
 Gui.ResetOnSpawn = false
 Gui.IgnoreGuiInset = true
 Gui.DisplayOrder = 200
@@ -3724,7 +3738,7 @@ Main.Parent = Gui
 
 -- Menu scale (to/nhỏ menu chính)
 local menuScaleObj = Instance.new("UIScale")
-menuScaleObj.Name = "VisMenuScale"
+menuScaleObj.Name = "EL2BAllGearMenuScale"
 menuScaleObj.Scale = tonumber(St.menuScale) or 1
 menuScaleObj.Parent = Main
 function applyMenuScale()
@@ -4731,12 +4745,12 @@ toggleNamed(pageSet, "Lock UI", St.guiLock, function(on)
 			St._mainPos = {Main.Position.X.Scale, Main.Position.X.Offset, Main.Position.Y.Scale, Main.Position.Y.Offset}
 			St.menuOpen = Main.Visible == true
 		end
-		local miniGui = PlayerGui:FindFirstChild("VisHubFullMini")
+		local miniGui = PlayerGui:FindFirstChild("EL2BAllGearFullMini")
 		local mini = miniGui and miniGui:FindFirstChildWhichIsA("TextButton")
 		if mini then
 			St._miniPos = {mini.Position.X.Scale, mini.Position.X.Offset, mini.Position.Y.Scale, mini.Position.Y.Offset}
 		end
-		local mb = PlayerGui:FindFirstChild("VisHubModeBar")
+		local mb = PlayerGui:FindFirstChild("EL2BAllGearModeBar")
 		local mf = mb and mb:FindFirstChildWhichIsA("Frame")
 		if mf then
 			St._modeBarPos = {mf.Position.X.Scale, mf.Position.X.Offset, mf.Position.Y.Scale, mf.Position.Y.Offset}
@@ -4757,8 +4771,8 @@ toggleNamed(pageSet, "Lock UI", St.guiLock, function(on)
 				end
 			end
 		end
-		snapHoldersLock(PlayerGui:FindFirstChild("VisHubActionButtons"))
-		snapHoldersLock(PlayerGui:FindFirstChild("VisHubModeBar"))
+		snapHoldersLock(PlayerGui:FindFirstChild("EL2BAllGearActionButtons"))
+		snapHoldersLock(PlayerGui:FindFirstChild("EL2BAllGearModeBar"))
 	end)
 	pcall(saveCfg)
 end, 3, "guiLock")
@@ -5058,7 +5072,7 @@ actionBtn(pageSet, "Save Now", C.accent, function()
 		if Main then
 			St._mainPos = {Main.Position.X.Scale, Main.Position.X.Offset, Main.Position.Y.Scale, Main.Position.Y.Offset}
 		end
-		local mini = PlayerGui:FindFirstChild("VisHubFullMini")
+		local mini = PlayerGui:FindFirstChild("EL2BAllGearFullMini")
 		local mb = mini and mini:FindFirstChildWhichIsA("GuiObject")
 		if mb then
 			St._miniPos = {mb.Position.X.Scale, mb.Position.X.Offset, mb.Position.Y.Scale, mb.Position.Y.Offset}
@@ -5077,7 +5091,7 @@ end, 33)
 -- MINI + CLOSE (no keybind)
 ----------------------------------------------------------------
 local MiniGui = Instance.new("ScreenGui")
-MiniGui.Name = "VisHubFullMini"
+MiniGui.Name = "EL2BAllGearFullMini"
 MiniGui.ResetOnSpawn = false
 MiniGui.IgnoreGuiInset = true
 MiniGui.DisplayOrder = 121
@@ -5220,7 +5234,7 @@ end
 -- MOBILE: 3 mode + Drop + Insta + TP
 ----------------------------------------------------------------
 local ModeGui = Instance.new("ScreenGui")
-ModeGui.Name = "VisHubModeBar"
+ModeGui.Name = "EL2BAllGearModeBar"
 ModeGui.ResetOnSpawn = false
 ModeGui.IgnoreGuiInset = true
 ModeGui.DisplayOrder = 2501
@@ -5228,7 +5242,7 @@ ModeGui.Enabled = false
 ModeGui.Parent = PlayerGui
 
 local ActGui = Instance.new("ScreenGui")
-ActGui.Name = "VisHubActionButtons"
+ActGui.Name = "EL2BAllGearActionButtons"
 ActGui.ResetOnSpawn = false
 ActGui.IgnoreGuiInset = true
 ActGui.DisplayOrder = 2500
@@ -7799,7 +7813,7 @@ end)
 
 -- Mini = circle combat when closed
 task.defer(function()
-	local miniGui = PlayerGui:FindFirstChild("VisHubFullMini")
+	local miniGui = PlayerGui:FindFirstChild("EL2BAllGearFullMini")
 	local mini = miniGui and miniGui:FindFirstChildWhichIsA("TextButton")
 	if mini then
 		mini.Size = UDim2.new(0, 110, 0, 36)
@@ -7809,7 +7823,7 @@ task.defer(function()
 		if c0 then c0.CornerRadius = UDim.new(0, 8) end
 	end
 	-- Title bar rectangle text
-	local mainGui = PlayerGui:FindFirstChild("VisHubFullMenu")
+	local mainGui = PlayerGui:FindFirstChild("EL2BAllGearFullMenu")
 	local main = mainGui and mainGui:FindFirstChild("Main")
 	if main then
 		local top = main:FindFirstChild("TopBar") or main:FindFirstChildWhichIsA("Frame")
@@ -7865,13 +7879,13 @@ task.spawn(function()
 				St.menuOpen = Main.Visible == true
 			end
 			-- Mini open button
-			local miniGui = PlayerGui:FindFirstChild("VisHubFullMini")
+			local miniGui = PlayerGui:FindFirstChild("EL2BAllGearFullMini")
 			local mini = miniGui and miniGui:FindFirstChildWhichIsA("TextButton")
 			if mini then
 				St._miniPos = {mini.Position.X.Scale, mini.Position.X.Offset, mini.Position.Y.Scale, mini.Position.Y.Offset}
 			end
 			-- Mode bar
-			local mb = PlayerGui:FindFirstChild("VisHubModeBar")
+			local mb = PlayerGui:FindFirstChild("EL2BAllGearModeBar")
 			if mb then
 				local f = mb:FindFirstChildWhichIsA("Frame")
 				if f then
@@ -7895,8 +7909,8 @@ task.spawn(function()
 					end
 				end
 			end
-			snapHolders(PlayerGui:FindFirstChild("VisHubActionButtons"))
-			snapHolders(PlayerGui:FindFirstChild("VisHubModeBar"))
+			snapHolders(PlayerGui:FindFirstChild("EL2BAllGearActionButtons"))
+			snapHolders(PlayerGui:FindFirstChild("EL2BAllGearModeBar"))
 			-- Panel TP
 			local tp = PlayerGui:FindFirstChild("VisHubbTP")
 			if tp then
@@ -7925,7 +7939,7 @@ task.defer(function()
 		if St._mainPos and Main then
 			Main.Position = UDim2.new(St._mainPos[1], St._mainPos[2], St._mainPos[3], St._mainPos[4])
 		end
-		local miniGui = PlayerGui:FindFirstChild("VisHubFullMini")
+		local miniGui = PlayerGui:FindFirstChild("EL2BAllGearFullMini")
 		local mini = miniGui and miniGui:FindFirstChildWhichIsA("TextButton")
 		if mini and St._miniPos then
 			mini.Position = UDim2.new(St._miniPos[1], St._miniPos[2], St._miniPos[3], St._miniPos[4])
@@ -8693,7 +8707,7 @@ task.spawn(function()
 ----------------------------------------------------------------
 -- ACE SPEED BYPASS (full) — mini = ON/OFF EN + Lock | scale panels
 ----------------------------------------------------------------
--- ===== Vis Hub FULL: Speed Bypass + Lagger V2 (replace All Gear old panels) =====
+-- ===== EL2B ALL GEAR FULL: Speed Bypass + Lagger V2 (replace All Gear old panels) =====
 -- VisBypass — Speed Bypass (Noxa-style UI + keybind PC + minimize + bg)
 -- ============================================================
 task.spawn(function()
@@ -8909,7 +8923,7 @@ task.spawn(function()
 	titleNoxa.Size = UDim2.fromOffset(36, 31)
 	titleNoxa.Position = UDim2.fromOffset(12, 0)
 	titleNoxa.BackgroundTransparency = 1
-	titleNoxa.Text = "VIS"
+	titleNoxa.Text = "EL2B"
 	titleNoxa.TextColor3 = Color3.fromRGB(255, 255, 255)
 	titleNoxa.Font = Enum.Font.GothamBold
 	titleNoxa.TextSize = 12
@@ -8920,7 +8934,7 @@ task.spawn(function()
 	titleBypass.Size = UDim2.fromOffset(70, 31)
 	titleBypass.Position = UDim2.fromOffset(44, 0)
 	titleBypass.BackgroundTransparency = 1
-	titleBypass.Text = "BYPASS"
+	titleBypass.Text = "ALL GEAR"
 	titleBypass.TextColor3 = Color3.fromRGB(41, 128, 255)
 	titleBypass.Font = Enum.Font.GothamBold
 	titleBypass.TextSize = 12
@@ -9096,7 +9110,7 @@ task.spawn(function()
 	discLbl.Size = UDim2.new(1, 0, 0, 22)
 	discLbl.Position = UDim2.fromOffset(0, 288)
 	discLbl.BackgroundTransparency = 1
-	discLbl.Text = "Vis Hub · Speed Bypass"
+	discLbl.Text = "EL2B ALL GEAR · Speed Bypass"
 	discLbl.TextColor3 = Color3.fromRGB(160, 160, 170)
 	discLbl.Font = Enum.Font.GothamBold
 	discLbl.TextSize = 11
@@ -9138,7 +9152,7 @@ task.spawn(function()
 	miniTitle1.Size = UDim2.fromOffset(36, 31)
 	miniTitle1.Position = UDim2.fromOffset(12, 0)
 	miniTitle1.BackgroundTransparency = 1
-	miniTitle1.Text = "VIS"
+	miniTitle1.Text = "EL2B"
 	miniTitle1.TextColor3 = Color3.fromRGB(255, 255, 255)
 	miniTitle1.Font = Enum.Font.GothamBold
 	miniTitle1.TextSize = 11
@@ -9148,7 +9162,7 @@ task.spawn(function()
 	miniTitle2.Size = UDim2.fromOffset(70, 31)
 	miniTitle2.Position = UDim2.fromOffset(44, 0)
 	miniTitle2.BackgroundTransparency = 1
-	miniTitle2.Text = "BYPASS"
+	miniTitle2.Text = "ALL GEAR"
 	miniTitle2.TextColor3 = Color3.fromRGB(41, 128, 255)
 	miniTitle2.Font = Enum.Font.GothamBold
 	miniTitle2.TextSize = 11
@@ -9937,7 +9951,7 @@ task.spawn(function()
 	title.Position = UDim2.new(0, 50, 0, 8)
 	title.Size = UDim2.new(0, 150, 0, 19)
 	title.Font = Enum.Font.GothamBlack
-	title.Text = "VisUser V2"
+	title.Text = "EL2B ALL GEAR V2"
 	title.TextColor3 = C.White
 	title.TextSize = 18
 	title.TextXAlignment = Enum.TextXAlignment.Left
@@ -9949,7 +9963,7 @@ task.spawn(function()
 	subtitle.Position = UDim2.new(0, 50, 0, 26)
 	subtitle.Size = UDim2.new(0, 170, 0, 12)
 	subtitle.Font = Enum.Font.GothamBold
-	subtitle.Text = "VisUser module"
+	subtitle.Text = "EL2B ALL GEAR module"
 	subtitle.TextColor3 = C.TextDim
 	subtitle.TextSize = 10
 	subtitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -10397,7 +10411,7 @@ print("[Vis] Perish Lagger V2 FULL GUI loaded (menu toggle, pos persist like V1)
 end)
 
 -- ============================================================
--- WRAPPERS: Settings → Vis Hub Lagger V2 (Perish) + Speed Bypass
+-- WRAPPERS: Settings → EL2B ALL GEAR Lagger V2 (Perish) + Speed Bypass
 -- ============================================================
 do
 	function _G.VisSetLaggerPanel(on)
