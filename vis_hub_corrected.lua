@@ -5273,15 +5273,18 @@ actionBackdropStroke.Color = Color3.fromRGB(40, 40, 48)
 actionBackdropStroke.Thickness = 1
 actionBackdropStroke.Transparency = 0.15
 actionBackdropStroke.Parent = actionBackdrop
-local function refreshActionBackdrop()
+local function getActionLayout()
 	local scale = math.clamp(tonumber(St.btnScale) or 1, 0.5, 2)
 	local buttonSize = math.max(28, math.floor((tonumber(St.btnSizes and St.btnSizes.drop) or 50) * scale))
 	local largeSize = math.max(56, math.floor((tonumber(St.btnSizes and St.btnSizes.steal) or 56) * scale))
 	local size = math.max(buttonSize, largeSize)
-	-- Les boutons utilisent deux colonnes et trois lignes (y = -40, 30, 100).
-	-- Le calcul tient compte de leur taille et laisse une marge de 10 px.
-	local width = math.max(146, size + 90)
+	-- Deux colonnes, trois lignes, avec une marge intérieure de 10 px.
+	local width = math.max(146, size * 2 + 30)
 	local height = math.max(220, size + 160)
+	return size, width, height
+end
+local function refreshActionBackdrop()
+	local _, width, height = getActionLayout()
 	actionBackdrop.Size = UDim2.fromOffset(width, height)
 	actionBackdrop.Position = UDim2.new(1, -width - 10, 0.5, -50)
 end
@@ -5931,10 +5934,14 @@ function rebuildMobile()
 			pcall(startSpeedBoost)
 		end
 	end)
-	makeActBtn("drop", "DROP", UDim2.new(1, -150, 0.5, -40), function() runDrop() if _G.VisCounterOnDrop then pcall(_G.VisCounterOnDrop) end end)
-	makeActBtn("insta", "INSTA\nRESET", UDim2.new(1, -80, 0.5, -40), doInstaReset)
-	makeActBtn("tp", "TP\nDOWN", UDim2.new(1, -80, 0.5, 30), function() doTPDown(true) end)
-	makeActBtn("sentry", "SENTRY", UDim2.new(1, -150, 0.5, 30), function()
+	local actionSize, actionWidth = getActionLayout()
+	local actionLeft = -actionWidth
+	local actionRight = actionLeft + actionSize + 20
+	local actionRow1, actionRow2, actionRow3 = -40, 30, 100
+	makeActBtn("drop", "DROP", UDim2.new(1, actionLeft, 0.5, actionRow1), function() runDrop() if _G.VisCounterOnDrop then pcall(_G.VisCounterOnDrop) end end)
+	makeActBtn("insta", "INSTA\nRESET", UDim2.new(1, actionRight, 0.5, actionRow1), doInstaReset)
+	makeActBtn("tp", "TP\nDOWN", UDim2.new(1, actionRight, 0.5, actionRow2), function() doTPDown(true) end)
+	makeActBtn("sentry", "SENTRY", UDim2.new(1, actionLeft, 0.5, actionRow2), function()
 		local on = not (St.destroySentry == true)
 		if type(setDestroySentry) == "function" then
 			setDestroySentry(on)
@@ -5943,7 +5950,7 @@ function rebuildMobile()
 		end
 		if _G.VisRefreshSentryBtn then pcall(_G.VisRefreshSentryBtn) end
 	end)
-	makeActBtn("steal", "AUTO\nSTEAL", UDim2.new(1, -150, 0.5, 100), function()
+	makeActBtn("steal", "AUTO\nSTEAL", UDim2.new(1, actionLeft, 0.5, actionRow3), function()
 		local on = not (St.autoSteal == true)
 		if type(setAutoSteal) == "function" then
 			setAutoSteal(on)
@@ -5959,6 +5966,15 @@ function rebuildMobile()
 			pcall(ToggleRefs.autoSteal.setVisual, St.autoSteal == true)
 		end
 	end)
+	-- Invalide les anciennes coordonnées écran : elles plaçaient les boutons hors du nouveau carré.
+	if St._actionLayoutVersion ~= 2 then
+		St._btnPos = St._btnPos or {}
+		for _, key in ipairs({"drop", "insta", "tp", "sentry", "steal"}) do
+			St._btnPos["A_" .. key] = nil
+		end
+		St._actionLayoutVersion = 2
+		pcall(saveCfg)
+	end
 	-- restore saved positions
 	for key, e in pairs(actRefs) do
 		if e.holder then restorePos(e.holder, "A_" .. key) end
