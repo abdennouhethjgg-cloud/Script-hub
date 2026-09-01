@@ -5129,16 +5129,18 @@ miniStroke.Thickness = 2
 miniStroke.Transparency = 0.15
 
 do
-	local dragging, dragStart, startPos, moved
+	local dragging, dragStart, startPos, startActionPos
 	Top.InputBegan:Connect(function(input)
 		if St.guiLock then return end
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = true
 			dragStart = input.Position
 			startPos = Main.Position
+			startActionPos = actionBackdrop and actionBackdrop.Position or nil
 			input.Changed:Connect(function()
 				if input.UserInputState == Enum.UserInputState.End then
 					dragging = false
+					startActionPos = nil
 					St._mainPos = {Main.Position.X.Scale, Main.Position.X.Offset, Main.Position.Y.Scale, Main.Position.Y.Offset}
 					St.menuOpen = Main.Visible == true
 					pcall(saveCfg)
@@ -5150,6 +5152,9 @@ do
 		if dragging and not St.guiLock and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
 			local d = input.Position - dragStart
 			Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+			if actionBackdrop and startActionPos then
+				actionBackdrop.Position = UDim2.new(startActionPos.X.Scale, startActionPos.X.Offset + d.X, startActionPos.Y.Scale, startActionPos.Y.Offset + d.Y)
+			end
 		end
 	end)
 end
@@ -5306,7 +5311,7 @@ actionLockButton.TextSize = 9
 actionLockButton.TextScaled = true
 actionLockButton.TextWrapped = true
 actionLockButton.ZIndex = 300
-actionLockButton.Parent = ActGui
+actionLockButton.Parent = actionBackdrop
 local actionLockCorner = Instance.new("UICorner")
 actionLockCorner.CornerRadius = UDim.new(1, 0)
 actionLockCorner.Parent = actionLockButton
@@ -5342,6 +5347,21 @@ local function refreshActionBackdrop()
 	local _, width, height = getActionLayout()
 	actionBackdrop.Size = UDim2.fromOffset(width, height)
 	actionBackdrop.Position = UDim2.new(1, -width - 10, 0.5, -height / 2)
+	if actionLockButton then
+		actionLockButton.Position = UDim2.new(0, -62, 0.5, -26)
+	end
+end
+local function moveActionGroupBy(delta)
+	if not actionBackdrop or not delta then return end
+	actionBackdrop.Position = UDim2.new(
+		actionBackdrop.Position.X.Scale,
+		actionBackdrop.Position.X.Offset + delta.X,
+		actionBackdrop.Position.Y.Scale,
+		actionBackdrop.Position.Y.Offset + delta.Y
+	)
+	if actionLockButton then
+		actionLockButton.Position = UDim2.new(0, -62, 0.5, -26)
+	end
 end
 refreshActionBackdrop()
 local modeRefs = {}
