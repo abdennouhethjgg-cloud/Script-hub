@@ -3846,7 +3846,26 @@ CloseBtn.AutoButtonColor = false
 CloseBtn.Parent = Top
 corner(CloseBtn, 6)
 
--- Helper tròn bên TRÁI menu (LKZ style) — ấn = đóng
+-- Bouton dédié pour réduire/agrandir la fenêtre avec le groupe mobile
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Name = "EL2BMinimizeButton"
+MinimizeBtn.Size = UDim2.fromOffset(22, 22)
+MinimizeBtn.Position = UDim2.new(1, -54, 0.5, -11)
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(45, 10, 14)
+MinimizeBtn.Text = "−"
+MinimizeBtn.TextColor3 = Color3.fromRGB(255, 100, 105)
+MinimizeBtn.TextSize = 14
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.AutoButtonColor = false
+MinimizeBtn.ZIndex = 55
+MinimizeBtn.Parent = Top
+corner(MinimizeBtn, 6)
+local minimizeStroke = Instance.new("UIStroke", MinimizeBtn)
+minimizeStroke.Color = Color3.fromRGB(200, 30, 40)
+minimizeStroke.Thickness = 1
+
+-- Helper rond à gauche du menu — ouvre après réduction
+
 local Helper = Instance.new("TextButton")
 Helper.Name = "HelperClose"
 Helper.Size = UDim2.new(0, 44, 0, 44)
@@ -5203,6 +5222,9 @@ do
 end
 
 function openMenu()
+	if type(_G.EL2BSetWindowMinimized) == "function" then
+		_G.EL2BSetWindowMinimized(false)
+	end
 	Main.Visible = true
 	Mini.Visible = false
 	St.menuOpen = true
@@ -5213,6 +5235,10 @@ function openMenu()
 	}):Play()
 end
 function closeMenu()
+	if type(_G.EL2BSetWindowMinimized) == "function" then
+		_G.EL2BSetWindowMinimized(true)
+		return
+	end
 	local tw = TS:Create(Main, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
 		Size = UDim2.new(0, 0, 0, MH),
 	})
@@ -5267,6 +5293,25 @@ ActGui.IgnoreGuiInset = true
 ActGui.DisplayOrder = 2500
 ActGui.Enabled = false
 ActGui.Parent = PlayerGui
+
+-- Réduction/agrandissement synchronisés : fenêtre, carré et boutons.
+local windowMinimized = false
+local function applyWindowMinimized(on)
+	windowMinimized = on == true
+	St.windowMinimized = windowMinimized
+	if Main then Main.Visible = not windowMinimized end
+	if Mini then Mini.Visible = windowMinimized end
+	if ModeGui then ModeGui.Enabled = (not windowMinimized) and St.mobileBtns == true end
+	if ActGui then ActGui.Enabled = (not windowMinimized) and St.mobileBtns == true end
+	if actionBackdrop then actionBackdrop.Visible = not windowMinimized end
+	if actionLockButton then actionLockButton.Visible = not windowMinimized end
+	if MinimizeBtn then MinimizeBtn.Text = windowMinimized and "+" or "−" end
+	pcall(saveCfg)
+end
+_G.EL2BSetWindowMinimized = applyWindowMinimized
+MinimizeBtn.Activated:Connect(function()
+	applyWindowMinimized(not windowMinimized)
+end)
 
 -- Fond carré noir derrière les cinq boutons d’action mobiles.
 -- Il reste derrière les boutons et ne capture aucun clic/toucher.
