@@ -5264,6 +5264,7 @@ actionBackdrop.Active = false
 actionBackdrop.Selectable = false
 actionBackdrop:SetAttribute("EL2BLocked", false)
 actionBackdrop.ZIndex = 1
+actionBackdrop.ClipsDescendants = false
 actionBackdrop.Parent = ActGui
 local actionBackdropCorner = Instance.new("UICorner")
 actionBackdropCorner.CornerRadius = UDim.new(0, 6)
@@ -5278,15 +5279,16 @@ local function getActionLayout()
 	local buttonSize = math.max(28, math.floor((tonumber(St.btnSizes and St.btnSizes.drop) or 50) * scale))
 	local largeSize = math.max(56, math.floor((tonumber(St.btnSizes and St.btnSizes.steal) or 56) * scale))
 	local size = math.max(buttonSize, largeSize)
-	-- Deux colonnes, trois lignes, avec une marge intérieure de 10 px.
-	local width = math.max(146, size * 2 + 30)
-	local height = math.max(220, size + 160)
-	return size, width, height
+	-- Deux colonnes, trois lignes, entièrement à l’intérieur du carré.
+	local gap = math.max(8, math.floor(size * 0.12))
+	local width = size * 2 + gap * 3
+	local height = size * 3 + gap * 4
+	return size, width, height, gap
 end
 local function refreshActionBackdrop()
 	local _, width, height = getActionLayout()
 	actionBackdrop.Size = UDim2.fromOffset(width, height)
-	actionBackdrop.Position = UDim2.new(1, -width - 10, 0.5, -50)
+	actionBackdrop.Position = UDim2.new(1, -width - 10, 0.5, -height / 2)
 end
 refreshActionBackdrop()
 local modeRefs = {}
@@ -5728,7 +5730,7 @@ function makeActBtn(key, label, pos, cb)
 	holder.BackgroundTransparency = 1
 	holder.Active = true -- nhận touch
 	holder.ZIndex = 50
-	holder.Parent = ActGui
+	holder.Parent = actionBackdrop
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, 0, 1, 0)
 	btn.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
@@ -5934,14 +5936,16 @@ function rebuildMobile()
 			pcall(startSpeedBoost)
 		end
 	end)
-	local actionSize, actionWidth = getActionLayout()
-	local actionLeft = -actionWidth
-	local actionRight = actionLeft + actionSize + 20
-	local actionRow1, actionRow2, actionRow3 = -40, 30, 100
-	makeActBtn("drop", "DROP", UDim2.new(1, actionLeft, 0.5, actionRow1), function() runDrop() if _G.VisCounterOnDrop then pcall(_G.VisCounterOnDrop) end end)
-	makeActBtn("insta", "INSTA\nRESET", UDim2.new(1, actionRight, 0.5, actionRow1), doInstaReset)
-	makeActBtn("tp", "TP\nDOWN", UDim2.new(1, actionRight, 0.5, actionRow2), function() doTPDown(true) end)
-	makeActBtn("sentry", "SENTRY", UDim2.new(1, actionLeft, 0.5, actionRow2), function()
+	local actionSize, _, _, actionGap = getActionLayout()
+	local actionLeft = actionGap
+	local actionRight = actionGap * 2 + actionSize
+	local actionRow1 = actionGap
+	local actionRow2 = actionGap * 2 + actionSize
+	local actionRow3 = actionGap * 3 + actionSize * 2
+	makeActBtn("drop", "DROP", UDim2.fromOffset(actionLeft, actionRow1), function() runDrop() if _G.VisCounterOnDrop then pcall(_G.VisCounterOnDrop) end end)
+	makeActBtn("insta", "INSTA\nRESET", UDim2.fromOffset(actionRight, actionRow1), doInstaReset)
+	makeActBtn("tp", "TP\nDOWN", UDim2.fromOffset(actionRight, actionRow2), function() doTPDown(true) end)
+	makeActBtn("sentry", "SENTRY", UDim2.fromOffset(actionLeft, actionRow2), function()
 		local on = not (St.destroySentry == true)
 		if type(setDestroySentry) == "function" then
 			setDestroySentry(on)
@@ -5950,7 +5954,7 @@ function rebuildMobile()
 		end
 		if _G.VisRefreshSentryBtn then pcall(_G.VisRefreshSentryBtn) end
 	end)
-	makeActBtn("steal", "AUTO\nSTEAL", UDim2.new(1, actionLeft, 0.5, actionRow3), function()
+	makeActBtn("steal", "AUTO\nSTEAL", UDim2.fromOffset(actionLeft, actionRow3), function()
 		local on = not (St.autoSteal == true)
 		if type(setAutoSteal) == "function" then
 			setAutoSteal(on)
@@ -5966,18 +5970,20 @@ function rebuildMobile()
 			pcall(ToggleRefs.autoSteal.setVisual, St.autoSteal == true)
 		end
 	end)
-	-- Invalide les anciennes coordonnées écran : elles plaçaient les boutons hors du nouveau carré.
-	if St._actionLayoutVersion ~= 2 then
+	-- Les boutons sont maintenant enfants du carré : leurs anciennes coordonnées écran sont invalides.
+	if St._actionLayoutVersion ~= 3 then
 		St._btnPos = St._btnPos or {}
 		for _, key in ipairs({"drop", "insta", "tp", "sentry", "steal"}) do
 			St._btnPos["A_" .. key] = nil
 		end
-		St._actionLayoutVersion = 2
+		St._actionLayoutVersion = 3
 		pcall(saveCfg)
 	end
-	-- restore saved positions
+	-- Aucun restorePos pour les boutons d’action : ils utilisent la grille locale du carré.
 	for key, e in pairs(actRefs) do
-		if e.holder then restorePos(e.holder, "A_" .. key) end
+		if e.holder then
+			e.holder:SetAttribute("InsideBackdrop", true)
+		end
 	end
 	for key, e in pairs(modeRefs) do
 		if e.holder then restorePos(e.holder, "M_" .. key) end
