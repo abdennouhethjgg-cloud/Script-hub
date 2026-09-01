@@ -5173,6 +5173,10 @@ do
 			Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
 			if actionBackdrop and startActionPos then
 				actionBackdrop.Position = UDim2.new(startActionPos.X.Scale, startActionPos.X.Offset + d.X, startActionPos.Y.Scale, startActionPos.Y.Offset + d.Y)
+				St._actionBackdropPos = {
+					actionBackdrop.Position.X.Scale, actionBackdrop.Position.X.Offset,
+					actionBackdrop.Position.Y.Scale, actionBackdrop.Position.Y.Offset,
+				}
 			end
 		end
 	end)
@@ -5392,7 +5396,17 @@ end
 local function refreshActionBackdrop()
 	local _, width, height = getActionLayout()
 	actionBackdrop.Size = UDim2.fromOffset(width, height)
-	actionBackdrop.Position = UDim2.new(1, -width - 10, 0.5, -height / 2)
+	local saved = St._actionBackdropPos
+	if type(saved) == "table" and saved[1] ~= nil then
+		actionBackdrop.Position = UDim2.new(
+			tonumber(saved[1]) or 1,
+			tonumber(saved[2]) or (-width - 10),
+			tonumber(saved[3]) or 0.5,
+			tonumber(saved[4]) or (-height / 2)
+		)
+	else
+		actionBackdrop.Position = UDim2.new(1, -width - 10, 0.5, -height / 2)
+	end
 	if actionLockButton then
 		actionLockButton.Position = UDim2.new(0, -62, 0.5, -26)
 	end
@@ -6089,19 +6103,20 @@ function rebuildMobile()
 			pcall(ToggleRefs.autoSteal.setVisual, St.autoSteal == true)
 		end
 	end)
-	-- Les boutons sont maintenant enfants du carré : leurs anciennes coordonnées écran sont invalides.
-	if St._actionLayoutVersion ~= 3 then
+	-- Les boutons sont maintenant enfants du carré : migration unique des anciennes coordonnées écran.
+	if St._actionLayoutVersion ~= 4 then
 		St._btnPos = St._btnPos or {}
 		for _, key in ipairs({"drop", "insta", "tp", "sentry", "steal"}) do
 			St._btnPos["A_" .. key] = nil
 		end
-		St._actionLayoutVersion = 3
+		St._actionLayoutVersion = 4
 		pcall(saveCfg)
 	end
-	-- Aucun restorePos pour les boutons d’action : ils utilisent la grille locale du carré.
+	-- Restaure les positions locales sauvegardées dans le carré.
 	for key, e in pairs(actRefs) do
 		if e.holder then
 			e.holder:SetAttribute("InsideBackdrop", true)
+			restorePos(e.holder, "A_" .. key)
 		end
 	end
 	for key, e in pairs(modeRefs) do
@@ -8078,7 +8093,14 @@ task.spawn(function()
 					St._modeBarPos = {f.Position.X.Scale, f.Position.X.Offset, f.Position.Y.Scale, f.Position.Y.Offset}
 				end
 			end
-			-- Action + Mode buttons: lưu POSITION của Frame holder (A_* / M_*), không phải TextButton
+			-- Carré d’action : sauvegarder sa position globale dans le fichier local.
+			if actionBackdrop and actionBackdrop.Parent then
+				St._actionBackdropPos = {
+					actionBackdrop.Position.X.Scale, actionBackdrop.Position.X.Offset,
+					actionBackdrop.Position.Y.Scale, actionBackdrop.Position.Y.Offset,
+				}
+			end
+			-- Action + Mode buttons : sauvegarder aussi les holders imbriqués dans le carré.
 			St._btnPos = St._btnPos or {}
 			local function snapHolders(gui)
 				if not gui then return end
@@ -8096,6 +8118,17 @@ task.spawn(function()
 				end
 			end
 			snapHolders(PlayerGui:FindFirstChild("EL2BAllGearActionButtons"))
+			if actionBackdrop then
+				for _, holder in ipairs(actionBackdrop:GetChildren()) do
+					if holder:IsA("Frame") and holder.Name:sub(1, 2) == "A_" then
+						St._btnPos[holder.Name] = {
+							holder.Position.X.Scale, holder.Position.X.Offset,
+							holder.Position.Y.Scale, holder.Position.Y.Offset,
+							holder.Size.X.Offset, holder.Size.Y.Offset,
+						}
+					end
+				end
+			end
 			snapHolders(PlayerGui:FindFirstChild("EL2BAllGearModeBar"))
 			-- Panel TP
 			local tp = PlayerGui:FindFirstChild("VisHubbTP")
@@ -8124,6 +8157,14 @@ task.defer(function()
 	pcall(function()
 		if St._mainPos and Main then
 			Main.Position = UDim2.new(St._mainPos[1], St._mainPos[2], St._mainPos[3], St._mainPos[4])
+		end
+		if St._actionBackdropPos and actionBackdrop then
+			actionBackdrop.Position = UDim2.new(
+				tonumber(St._actionBackdropPos[1]) or actionBackdrop.Position.X.Scale,
+				tonumber(St._actionBackdropPos[2]) or actionBackdrop.Position.X.Offset,
+				tonumber(St._actionBackdropPos[3]) or actionBackdrop.Position.Y.Scale,
+				tonumber(St._actionBackdropPos[4]) or actionBackdrop.Position.Y.Offset
+			)
 		end
 		local miniGui = PlayerGui:FindFirstChild("EL2BAllGearFullMini")
 		local mini = miniGui and miniGui:FindFirstChildWhichIsA("TextButton")
