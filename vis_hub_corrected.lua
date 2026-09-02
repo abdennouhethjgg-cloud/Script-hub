@@ -70,10 +70,25 @@ local EL2BThemes = {
 	Light = { bg = Color3.fromRGB(238, 240, 245), card = Color3.fromRGB(255, 255, 255), box = Color3.fromRGB(220, 224, 232), accent = Color3.fromRGB(170, 25, 35), text = Color3.fromRGB(25, 25, 30), dim = Color3.fromRGB(90, 90, 100) },
 	Custom = { bg = Color3.fromRGB(18, 10, 12), card = Color3.fromRGB(35, 16, 20), box = Color3.fromRGB(55, 20, 25), accent = Color3.fromRGB(255, 70, 80), text = Color3.fromRGB(255, 255, 255), dim = Color3.fromRGB(220, 190, 195) },
 }
+local function colorFromThemeValue(value, fallback)
+	if typeof(value) == "Color3" then return value end
+	if type(value) == "table" then
+		return Color3.fromRGB(math.clamp(tonumber(value[1]) or fallback[1], 0, 255), math.clamp(tonumber(value[2]) or fallback[2], 0, 255), math.clamp(tonumber(value[3]) or fallback[3], 0, 255))
+	end
+	return Color3.fromRGB(fallback[1], fallback[2], fallback[3])
+end
 local function applyEL2BTheme(name)
-	name = EL2BThemes[name] and name or "RedBlack"
+	local raw = EL2BThemes[name] or (St.customThemes and St.customThemes[name])
+	if not raw then name = "RedBlack"; raw = EL2BThemes[name] end
 	St.themeName = name
-	local t = EL2BThemes[name]
+	local t = {
+		bg = colorFromThemeValue(raw.bg, {10, 10, 14}),
+		card = colorFromThemeValue(raw.card, {28, 12, 16}),
+		box = colorFromThemeValue(raw.box, {45, 14, 20}),
+		accent = colorFromThemeValue(raw.accent, {220, 35, 45}),
+		text = colorFromThemeValue(raw.text, {255, 255, 255}),
+		dim = colorFromThemeValue(raw.dim, {205, 175, 180}),
+	}
 	C.bg, C.card, C.box, C.accent, C.text, C.textDim = t.bg, t.card, t.box, t.accent, t.text, t.dim
 	C.BG, C.Row, C.Card, C.Red, C.RedSoft, C.RedDeep, C.Text, C.TextDim, C.Stroke, C.Dark, C.Off, C.White = t.bg, t.card, t.card, t.accent, t.accent, t.accent, t.text, t.dim, t.accent, t.bg, t.box, t.text
 	local function paint(root)
@@ -4276,6 +4291,67 @@ end
 ----------------------------------------------------------------
 section(pageSet, "* — THEME", 26)
 local themeRow = row(pageSet, 42, 26.1)
+local customThemeRow = row(pageSet, 118, 26.2)
+local customThemeName = Instance.new("TextBox")
+customThemeName.Size = UDim2.new(0, 105, 0, 28)
+customThemeName.Position = UDim2.new(0, 8, 0, 8)
+customThemeName.BackgroundColor3 = C.box
+customThemeName.Text = "MyTheme"
+customThemeName.PlaceholderText = "Theme name"
+customThemeName.TextColor3 = C.text
+customThemeName.PlaceholderColor3 = C.textDim
+customThemeName.TextSize = 11
+customThemeName.Font = Enum.Font.GothamBold
+customThemeName.ClearTextOnFocus = false
+customThemeName.Parent = customThemeRow
+corner(customThemeName, 7)
+local customThemeBg = Instance.new("TextBox")
+customThemeBg.Size = UDim2.new(0, 62, 0, 28)
+customThemeBg.Position = UDim2.new(0, 120, 0, 8)
+customThemeBg.BackgroundColor3 = C.box
+customThemeBg.Text = "0A0A0E"
+customThemeBg.PlaceholderText = "BG hex"
+customThemeBg.TextColor3 = C.text
+customThemeBg.TextSize = 10
+customThemeBg.Font = Enum.Font.GothamBold
+customThemeBg.ClearTextOnFocus = false
+customThemeBg.Parent = customThemeRow
+corner(customThemeBg, 7)
+local customThemeCard = Instance.new("TextBox")
+customThemeCard.Size = UDim2.new(0, 62, 0, 28)
+customThemeCard.Position = UDim2.new(0, 188, 0, 8)
+customThemeCard.BackgroundColor3 = C.box
+customThemeCard.Text = "1C0C10"
+customThemeCard.PlaceholderText = "CARD"
+customThemeCard.TextColor3 = C.text
+customThemeCard.TextSize = 10
+customThemeCard.Font = Enum.Font.GothamBold
+customThemeCard.ClearTextOnFocus = false
+customThemeCard.Parent = customThemeRow
+corner(customThemeCard, 7)
+local customThemeAccent = Instance.new("TextBox")
+customThemeAccent.Size = UDim2.new(0, 62, 0, 28)
+customThemeAccent.Position = UDim2.new(0, 256, 0, 8)
+customThemeAccent.BackgroundColor3 = C.box
+customThemeAccent.Text = "DC232D"
+customThemeAccent.PlaceholderText = "ACCENT"
+customThemeAccent.TextColor3 = C.text
+customThemeAccent.TextSize = 10
+customThemeAccent.Font = Enum.Font.GothamBold
+customThemeAccent.ClearTextOnFocus = false
+customThemeAccent.Parent = customThemeRow
+corner(customThemeAccent, 7)
+local saveCustomTheme = Instance.new("TextButton")
+saveCustomTheme.Size = UDim2.new(1, -16, 0, 28)
+saveCustomTheme.Position = UDim2.new(0, 8, 0, 43)
+saveCustomTheme.BackgroundColor3 = C.accent
+saveCustomTheme.Text = "SAVE CUSTOM THEME"
+saveCustomTheme.TextColor3 = C.text
+saveCustomTheme.TextSize = 11
+saveCustomTheme.Font = Enum.Font.GothamBold
+saveCustomTheme.AutoButtonColor = false
+saveCustomTheme.Parent = customThemeRow
+corner(saveCustomTheme, 7)
 local themeNames = {"RedBlack", "Dark", "Light", "Custom"}
 for i, name in ipairs(themeNames) do
 	local b = Instance.new("TextButton")
@@ -4298,6 +4374,50 @@ for i, name in ipairs(themeNames) do
 	b.MouseButton1Click:Connect(chooseTheme)
 	b.Activated:Connect(chooseTheme)
 end
+local function parseHexColor(value, fallback)
+	local hex = tostring(value or ""):gsub("#", "")
+	if not hex:match("^%x%x%x%x%x%x$") then return fallback end
+	return { tonumber(hex:sub(1, 2), 16), tonumber(hex:sub(3, 4), 16), tonumber(hex:sub(5, 6), 16) }
+end
+local function refreshCustomThemeButtons()
+	for _, child in ipairs(customThemeRow:GetChildren()) do
+		if child:GetAttribute("CustomThemeButton") then child:Destroy() end
+	end
+	local names = {}
+	for name in pairs(St.customThemes or {}) do table.insert(names, name) end
+	table.sort(names)
+	for i, name in ipairs(names) do
+		local b = Instance.new("TextButton")
+		b:SetAttribute("CustomThemeButton", true)
+		b.Size = UDim2.fromOffset(82, 22)
+		b.Position = UDim2.new(0, 8 + ((i - 1) % 3) * 94, 0, 82 + math.floor((i - 1) / 3) * 26)
+		b.BackgroundColor3 = C.box
+		b.Text = name
+		b.TextColor3 = C.text
+		b.TextSize = 9
+		b.Font = Enum.Font.GothamBold
+		b.AutoButtonColor = false
+		b.Parent = customThemeRow
+		corner(b, 6)
+		b.Activated:Connect(function() applyEL2BTheme(name) end)
+	end
+end
+saveCustomTheme.Activated:Connect(function()
+	local name = tostring(customThemeName.Text or ""):gsub("[^%w_ -]", ""):sub(1, 20)
+	if name == "" then return end
+	St.customThemes = St.customThemes or {}
+	St.customThemes[name] = {
+		bg = parseHexColor(customThemeBg.Text, {10, 10, 14}),
+		card = parseHexColor(customThemeCard.Text, {28, 12, 16}),
+		box = parseHexColor(customThemeCard.Text, {45, 14, 20}),
+		accent = parseHexColor(customThemeAccent.Text, {220, 35, 45}),
+		text = {255, 255, 255},
+		dim = {205, 175, 180},
+	}
+	applyEL2BTheme(name)
+	refreshCustomThemeButtons()
+end)
+refreshCustomThemeButtons()
 section(pageTools, "* — INTERFACE TOOLS", 1)
 actionBtn(pageTools, "Save Layout", C.accent, function()
 	pcall(saveCfg)
