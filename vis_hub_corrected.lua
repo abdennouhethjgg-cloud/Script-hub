@@ -2081,6 +2081,8 @@ local St = {
 	btnShape = "Square", -- Round | Box | Square
 	btnScale = 0.75,
 	menuScale = 1.0,
+	profiles = {},
+	outfitName = "Tenue 1",
 	btnSizes = { mode = 50, drop = 50, insta = 50, tp = 50, sentry = 50, steal = 50 },
 	keys = {
 		Drop = Enum.KeyCode.X,
@@ -2100,6 +2102,7 @@ _G.VisState = St
 local ToggleRefs = {} -- shared state for embedded helpers
 
 local CFG = "VisAllgear.json"
+local CONFIG_FILE = CFG
 local _saveToken = 0
 function autoSaveDebounced()
 	_saveToken = _saveToken + 1
@@ -4048,6 +4051,7 @@ local pageSet = makePage("Settings")
 local pageKeys = makePage("Keybinds")
 local pageTools = makePage("Tools")
 local pageVisuals = makePage("Visuals")
+local pageMisc = makePage("MISC")
 
 function setTab(name)
 	for n, p in pairs(pages) do
@@ -4088,6 +4092,7 @@ addTab("Settings", 5)
 addTab("Keybinds", 6)
 addTab("Tools", 7)
 addTab("Visuals", 8)
+addTab("MISC", 9)
 
 function section(parent, text, order)
 	local f = Instance.new("Frame")
@@ -4434,6 +4439,167 @@ saveCustomTheme.Activated:Connect(function()
 	refreshCustomThemeButtons()
 end)
 refreshCustomThemeButtons()
+----------------------------------------------------------------
+-- MISC / PROFILS / SKIN CHANGER
+----------------------------------------------------------------
+currentNormalSpeed = tonumber(currentNormalSpeed) or 59.5
+currentCarrySpeed = tonumber(currentCarrySpeed) or 28.8
+currentLaggerSpeed = tonumber(currentLaggerSpeed) or 15
+currentLaggerCarrySpeed = tonumber(currentLaggerCarrySpeed) or 24.5
+local function showToast(message)
+	pcall(function()
+		local toast = Gui:FindFirstChild("EL2BToast")
+		if toast then toast:Destroy() end
+		toast = Instance.new("TextLabel")
+		toast.Name = "EL2BToast"
+		toast.AnchorPoint = Vector2.new(0.5, 1)
+		toast.Position = UDim2.new(0.5, 0, 1, -8)
+		toast.Size = UDim2.new(0.8, 0, 0, 30)
+		toast.BackgroundColor3 = C.box
+		toast.BackgroundTransparency = 0.08
+		toast.Text = tostring(message or "OK")
+		toast.TextColor3 = C.text
+		toast.TextSize = 11
+		toast.Font = Enum.Font.GothamBold
+		toast.ZIndex = 999
+		toast.Parent = Gui
+		corner(toast, 8)
+		local toastStroke = Instance.new("UIStroke")
+		toastStroke.Color = C.accent
+		toastStroke.Thickness = 1.5
+		toastStroke.Parent = toast
+		TS:Create(toast, TweenInfo.new(0.16), {BackgroundTransparency = 0.08}):Play()
+		task.delay(1.7, function()
+			if toast and toast.Parent then
+				local fade = TS:Create(toast, TweenInfo.new(0.2), {BackgroundTransparency = 1, TextTransparency = 1})
+				fade:Play()
+				fade.Completed:Connect(function() if toast then toast:Destroy() end end)
+			end
+		end)
+	end)
+end
+section(pageMisc, "* — PROFILES", 1)
+local profileRow = row(pageMisc, 42, 2)
+local profileNameBox = Instance.new("TextBox")
+profileNameBox.Size = UDim2.new(0.48, -8, 0, 28)
+profileNameBox.Position = UDim2.new(0, 8, 0.5, -14)
+profileNameBox.BackgroundColor3 = C.box
+profileNameBox.Text = "Profile 1"
+profileNameBox.PlaceholderText = "Profile name"
+profileNameBox.TextColor3 = C.text
+profileNameBox.PlaceholderColor3 = C.textDim
+profileNameBox.TextSize = 11
+profileNameBox.Font = Enum.Font.GothamBold
+profileNameBox.ClearTextOnFocus = false
+profileNameBox.Parent = profileRow
+corner(profileNameBox, 7)
+local function profileButton(text, x, callback)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(0.24, -4, 0, 28)
+	b.Position = UDim2.new(x, 3, 0.5, -14)
+	b.BackgroundColor3 = C.accent
+	b.Text = text
+	b.TextColor3 = C.text
+	b.TextSize = 10
+	b.Font = Enum.Font.GothamBold
+	b.AutoButtonColor = false
+	b.Parent = profileRow
+	corner(b, 7)
+	b.Activated:Connect(callback)
+	return b
+end
+local profileList = row(pageMisc, 118, 3)
+local function captureProfile()
+	local p = { keys = {}, modes = {}, themeName = St.themeName or "RedBlack", customThemes = St.customThemes or {}, outfitName = St.outfitName or "Tenue 1", speeds = {} }
+	for key, value in pairs(St.keys or {}) do p.keys[key] = (typeof(value) == "EnumItem" and value.Name) or tostring(value) end
+	for key, mode in pairs(St.modes or {}) do
+		p.modes[key] = { norm = tonumber(mode.norm) or 16, steal = tonumber(mode.steal) or 16, key = (typeof(mode.key) == "EnumItem" and mode.key.Name) or tostring(mode.key) }
+	end
+	p.speeds.normal = tonumber(currentNormalSpeed) or 59.5
+	p.speeds.carry = tonumber(currentCarrySpeed) or 28.8
+	p.speeds.lagger = tonumber(currentLaggerSpeed) or 15
+	p.speeds.laggerCarry = tonumber(currentLaggerCarrySpeed) or 24.5
+	return p
+end
+local function loadProfile(name)
+	local p = St.profiles and St.profiles[name]
+	if type(p) ~= "table" then return end
+	St.keys = St.keys or {}
+	for key, value in pairs(p.keys or {}) do pcall(function() St.keys[key] = Enum.KeyCode[value] end) end
+	for key, mode in pairs(p.modes or {}) do
+		St.modes[key] = St.modes[key] or {}
+		St.modes[key].norm = tonumber(mode.norm) or St.modes[key].norm or 16
+		St.modes[key].steal = tonumber(mode.steal) or St.modes[key].steal or 16
+		if mode.key then pcall(function() St.modes[key].key = Enum.KeyCode[mode.key] end) end
+	end
+	St.themeName = p.themeName or St.themeName
+	St.customThemes = type(p.customThemes) == "table" and p.customThemes or St.customThemes
+	St.outfitName = p.outfitName or St.outfitName
+	if p.speeds then
+		currentNormalSpeed = tonumber(p.speeds.normal) or currentNormalSpeed
+		currentCarrySpeed = tonumber(p.speeds.carry) or currentCarrySpeed
+		currentLaggerSpeed = tonumber(p.speeds.lagger) or currentLaggerSpeed
+		currentLaggerCarrySpeed = tonumber(p.speeds.laggerCarry) or currentLaggerCarrySpeed
+	end
+	applyEL2BTheme(St.themeName or "RedBlack")
+	pcall(saveCfg)
+	showToast("PROFILE LOADED: " .. tostring(name))
+end
+local function refreshProfileList()
+	for _, child in ipairs(profileList:GetChildren()) do
+		if child:GetAttribute("ProfileButton") then child:Destroy() end
+	end
+	local names = {}
+	for name in pairs(St.profiles or {}) do table.insert(names, name) end
+	table.sort(names)
+	for i, name in ipairs(names) do
+		local b = Instance.new("TextButton")
+		b:SetAttribute("ProfileButton", true)
+		b.Size = UDim2.fromOffset(88, 24)
+		b.Position = UDim2.new(0, 8 + ((i - 1) % 3) * 96, 0, 8 + math.floor((i - 1) / 3) * 28)
+		b.BackgroundColor3 = C.box
+		b.Text = name
+		b.TextColor3 = C.text
+		b.TextSize = 10
+		b.Font = Enum.Font.GothamBold
+		b.AutoButtonColor = false
+		b.Parent = profileList
+		corner(b, 7)
+		b.Activated:Connect(function() loadProfile(name) end)
+	end
+end
+profileButton("SAVE", 0.5, function()
+	local name = tostring(profileNameBox.Text or ""):gsub("[^%w_ -]", ""):sub(1, 20)
+	if name == "" then return end
+	St.profiles = St.profiles or {}
+	St.profiles[name] = captureProfile()
+	pcall(saveCfg)
+	refreshProfileList()
+	showToast("PROFILE SAVED: " .. name)
+end)
+profileButton("LOAD", 0.75, function() loadProfile(tostring(profileNameBox.Text or "")) end)
+refreshProfileList()
+section(pageMisc, "* — SKIN CHANGER", 5)
+local outfitRow = row(pageMisc, 42, 6)
+local outfits = {"Tenue 1", "Tenue 2", "Tenue 3"}
+for i, outfit in ipairs(outfits) do
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(0.333, -6, 0, 28)
+	b.Position = UDim2.new((i - 1) / 3, 4, 0.5, -14)
+	b.BackgroundColor3 = (St.outfitName == outfit) and C.accent or C.box
+	b.Text = outfit
+	b.TextColor3 = C.text
+	b.TextSize = 10
+	b.Font = Enum.Font.GothamBold
+	b.AutoButtonColor = false
+	b.Parent = outfitRow
+	corner(b, 7)
+	b.Activated:Connect(function()
+		St.outfitName = outfit
+		for _, child in ipairs(outfitRow:GetChildren()) do if child:IsA("TextButton") then child.BackgroundColor3 = (child == b) and C.accent or C.box end end
+		pcall(saveCfg)
+	end)
+end
 section(pageTools, "* — INTERFACE TOOLS", 1)
 actionBtn(pageTools, "Save Layout", C.accent, function()
 	pcall(saveCfg)
