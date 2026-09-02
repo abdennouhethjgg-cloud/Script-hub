@@ -69,6 +69,10 @@ local EL2BThemes = {
 	Dark = { bg = Color3.fromRGB(12, 12, 16), card = Color3.fromRGB(25, 25, 32), box = Color3.fromRGB(40, 40, 50), accent = Color3.fromRGB(150, 155, 175), text = Color3.fromRGB(245, 245, 250), dim = Color3.fromRGB(175, 175, 190) },
 	Light = { bg = Color3.fromRGB(238, 240, 245), card = Color3.fromRGB(255, 255, 255), box = Color3.fromRGB(220, 224, 232), accent = Color3.fromRGB(170, 25, 35), text = Color3.fromRGB(25, 25, 30), dim = Color3.fromRGB(90, 90, 100) },
 	Custom = { bg = Color3.fromRGB(18, 10, 12), card = Color3.fromRGB(35, 16, 20), box = Color3.fromRGB(55, 20, 25), accent = Color3.fromRGB(255, 70, 80), text = Color3.fromRGB(255, 255, 255), dim = Color3.fromRGB(220, 190, 195) },
+	Cyberpunk = { bg = Color3.fromRGB(10, 5, 18), card = Color3.fromRGB(28, 10, 45), box = Color3.fromRGB(55, 12, 75), accent = Color3.fromRGB(0, 230, 255), text = Color3.fromRGB(245, 245, 255), dim = Color3.fromRGB(185, 150, 220) },
+	Neon = { bg = Color3.fromRGB(3, 8, 8), card = Color3.fromRGB(8, 28, 25), box = Color3.fromRGB(10, 55, 45), accent = Color3.fromRGB(0, 255, 170), text = Color3.fromRGB(235, 255, 245), dim = Color3.fromRGB(140, 210, 190) },
+	Pastel = { bg = Color3.fromRGB(246, 239, 246), card = Color3.fromRGB(255, 250, 255), box = Color3.fromRGB(232, 214, 232), accent = Color3.fromRGB(205, 105, 155), text = Color3.fromRGB(55, 38, 55), dim = Color3.fromRGB(125, 95, 120) },
+	Retro = { bg = Color3.fromRGB(35, 24, 18), card = Color3.fromRGB(75, 48, 28), box = Color3.fromRGB(105, 67, 32), accent = Color3.fromRGB(235, 165, 65), text = Color3.fromRGB(255, 239, 190), dim = Color3.fromRGB(205, 165, 110) },
 }
 local function colorFromThemeValue(value, fallback)
 	if typeof(value) == "Color3" then return value end
@@ -4296,7 +4300,7 @@ end
 -- TOOLS / VISUALS TABS
 ----------------------------------------------------------------
 section(pageSet, "* — THEME", 26)
-local themeRow = row(pageSet, 42, 26.1)
+local themeRow = row(pageSet, 72, 26.1)
 local customThemeRow = row(pageSet, 118, 26.2)
 local customThemeName = Instance.new("TextBox")
 customThemeName.Size = UDim2.new(0, 105, 0, 28)
@@ -4358,11 +4362,13 @@ saveCustomTheme.Font = Enum.Font.GothamBold
 saveCustomTheme.AutoButtonColor = false
 saveCustomTheme.Parent = customThemeRow
 corner(saveCustomTheme, 7)
-local themeNames = {"RedBlack", "Dark", "Light", "Custom"}
+local themeNames = {"RedBlack", "Dark", "Light", "Custom", "Cyberpunk", "Neon", "Pastel", "Retro"}
 for i, name in ipairs(themeNames) do
 	local b = Instance.new("TextButton")
-	b.Size = UDim2.new(0.25, -5, 1, -8)
-	b.Position = UDim2.new((i - 1) * 0.25, 4, 0, 4)
+	b.Size = UDim2.new(0.25, -5, 0, 28)
+	local col = (i - 1) % 4
+	local line = math.floor((i - 1) / 4)
+	b.Position = UDim2.new(col * 0.25, 4, 0, 4 + line * 32)
 	b.BackgroundColor3 = C.box
 	b.Text = name == "RedBlack" and "RED" or name:upper()
 	b.TextColor3 = C.text
