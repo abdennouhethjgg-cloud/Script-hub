@@ -3923,7 +3923,7 @@ topFix.BorderSizePixel = 0
 topFix.Parent = Top
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -80, 1, 0)
+Title.Size = UDim2.new(1, -92, 0, 19)
 Title.Position = UDim2.new(0, 14, 0, 0)
 Title.BackgroundTransparency = 1
 Title.Text = "EL2B ALL GEAR"
@@ -3934,6 +3934,19 @@ Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.TextStrokeTransparency = 0.55
 Title.TextStrokeColor3 = Color3.fromRGB(220, 35, 45)
 Title.Parent = Top
+local PlayerProfileLabel = Instance.new("TextLabel")
+PlayerProfileLabel.Name = "PlayerProfile"
+PlayerProfileLabel.Size = UDim2.new(1, -92, 0, 14)
+PlayerProfileLabel.Position = UDim2.new(0, 14, 0, 19)
+PlayerProfileLabel.BackgroundTransparency = 1
+PlayerProfileLabel.Text = "@" .. tostring(LP.Name) .. "  •  " .. tostring(LP.DisplayName)
+PlayerProfileLabel.TextColor3 = C.textDim
+PlayerProfileLabel.TextSize = 9
+PlayerProfileLabel.Font = Enum.Font.Gotham
+PlayerProfileLabel.TextXAlignment = Enum.TextXAlignment.Left
+PlayerProfileLabel.TextTruncate = Enum.TextTruncate.AtEnd
+PlayerProfileLabel.ZIndex = 16
+PlayerProfileLabel.Parent = Top
 -- gradient chữ menu
 local titleGrad = Instance.new("UIGradient")
 titleGrad.Color = ColorSequence.new({
@@ -4552,7 +4565,7 @@ profileHotkeyButton.Parent = profileHotkeyRow
 corner(profileHotkeyButton, 7)
 local profileList = row(pageMisc, 118, 4)
 local function captureProfile()
-	local p = { keys = {}, modes = {}, themeName = St.themeName or "RedBlack", customThemes = St.customThemes or {}, outfitName = St.outfitName or "Tenue 1", speeds = {} }
+	local p = { keys = {}, modes = {}, themeName = St.themeName or "RedBlack", customThemes = St.customThemes or {}, outfitName = St.outfitName or "Tenue 1", ownerName = tostring(LP.Name), ownerDisplayName = tostring(LP.DisplayName), ownerUserId = tonumber(LP.UserId) or 0, speeds = {} }
 	for key, value in pairs(St.keys or {}) do p.keys[key] = (typeof(value) == "EnumItem" and value.Name) or tostring(value) end
 	for key, mode in pairs(St.modes or {}) do
 		p.modes[key] = { norm = tonumber(mode.norm) or 16, steal = tonumber(mode.steal) or 16, key = (typeof(mode.key) == "EnumItem" and mode.key.Name) or tostring(mode.key) }
@@ -4617,7 +4630,8 @@ local function refreshProfileList()
 		b.Position = UDim2.new(0, 8 + ((i - 1) % 3) * 96, 0, 8 + math.floor((i - 1) / 3) * 28)
 		b.BackgroundColor3 = C.box
 		local assigned = St.profileHotkeys and St.profileHotkeys[name]
-		b.Text = name .. (assigned and ("\n[" .. profileKeyName(assigned) .. "]") or "")
+		local owner = St.profiles[name] and St.profiles[name].ownerName
+		b.Text = name .. (assigned and ("\n[" .. profileKeyName(assigned) .. "]") or (owner and ("\n@" .. tostring(owner)) or ""))
 		b.TextColor3 = C.text
 		b.TextSize = assigned and 9 or 10
 		b.Font = Enum.Font.GothamBold
