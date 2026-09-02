@@ -2093,6 +2093,7 @@ local St = {
 	btnScale = 0.75,
 	menuScale = 1.0,
 	profiles = {},
+	profileHotkeys = {},
 	outfitName = "Tenue 1",
 	btnSizes = { mode = 50, drop = 50, insta = 50, tp = 50, sentry = 50, steal = 50 },
 	keys = {
@@ -2226,6 +2227,14 @@ function loadCfg()
 		St.keys = St.keys or {}
 		for k, name in pairs(data.keys) do
 			pcall(function() St.keys[k] = Enum.KeyCode[name] end)
+		end
+	end
+	if type(data.profileHotkeys) == "table" then
+		St.profileHotkeys = {}
+		for profile, name in pairs(data.profileHotkeys) do
+			if type(profile) == "string" and type(name) == "string" then
+				pcall(function() St.profileHotkeys[profile] = Enum.KeyCode[name] end)
+			end
 		end
 	end
 	if type(data.btnSizes) == "table" then
@@ -4519,7 +4528,29 @@ local function profileButton(text, x, callback)
 	b.Activated:Connect(callback)
 	return b
 end
-local profileList = row(pageMisc, 118, 3)
+local profileHotkeyRow = row(pageMisc, 40, 3)
+local profileHotkeyLabel = Instance.new("TextLabel")
+profileHotkeyLabel.Size = UDim2.new(0.42, 0, 1, 0)
+profileHotkeyLabel.Position = UDim2.new(0, 8, 0, 0)
+profileHotkeyLabel.BackgroundTransparency = 1
+profileHotkeyLabel.Text = "Profile hotkey"
+profileHotkeyLabel.TextColor3 = C.textDim
+profileHotkeyLabel.TextSize = 11
+profileHotkeyLabel.Font = Enum.Font.Gotham
+profileHotkeyLabel.TextXAlignment = Enum.TextXAlignment.Left
+profileHotkeyLabel.Parent = profileHotkeyRow
+local profileHotkeyButton = Instance.new("TextButton")
+profileHotkeyButton.Size = UDim2.new(0.52, -12, 0, 28)
+profileHotkeyButton.Position = UDim2.new(0.44, 4, 0.5, -14)
+profileHotkeyButton.BackgroundColor3 = C.box
+profileHotkeyButton.Text = "SET HOTKEY"
+profileHotkeyButton.TextColor3 = C.text
+profileHotkeyButton.TextSize = 10
+profileHotkeyButton.Font = Enum.Font.GothamBold
+profileHotkeyButton.AutoButtonColor = false
+profileHotkeyButton.Parent = profileHotkeyRow
+corner(profileHotkeyButton, 7)
+local profileList = row(pageMisc, 118, 4)
 local function captureProfile()
 	local p = { keys = {}, modes = {}, themeName = St.themeName or "RedBlack", customThemes = St.customThemes or {}, outfitName = St.outfitName or "Tenue 1", speeds = {} }
 	for key, value in pairs(St.keys or {}) do p.keys[key] = (typeof(value) == "EnumItem" and value.Name) or tostring(value) end
@@ -4565,6 +4596,13 @@ local function loadProfile(name)
 	pcall(saveCfg)
 	showToast("PROFILE LOADED: " .. tostring(name))
 end
+local function profileKeyName(code)
+	return code and tostring(code):gsub("Enum.KeyCode.", "") or "NONE"
+end
+local function refreshProfileHotkeyButton()
+	local code = St.profileHotkeys and St.profileHotkeys[tostring(profileNameBox.Text or "")]
+	profileHotkeyButton.Text = code and ("HOTKEY: " .. profileKeyName(code)) or "SET HOTKEY"
+end
 local function refreshProfileList()
 	for _, child in ipairs(profileList:GetChildren()) do
 		if child:GetAttribute("ProfileButton") then child:Destroy() end
@@ -4578,9 +4616,10 @@ local function refreshProfileList()
 		b.Size = UDim2.fromOffset(88, 24)
 		b.Position = UDim2.new(0, 8 + ((i - 1) % 3) * 96, 0, 8 + math.floor((i - 1) / 3) * 28)
 		b.BackgroundColor3 = C.box
-		b.Text = name
+		local assigned = St.profileHotkeys and St.profileHotkeys[name]
+		b.Text = name .. (assigned and ("\n[" .. profileKeyName(assigned) .. "]") or "")
 		b.TextColor3 = C.text
-		b.TextSize = 10
+		b.TextSize = assigned and 9 or 10
 		b.Font = Enum.Font.GothamBold
 		b.AutoButtonColor = false
 		b.Parent = profileList
@@ -4598,7 +4637,47 @@ profileButton("SAVE", 0.5, function()
 	showToast("PROFILE SAVED: " .. name)
 end)
 profileButton("LOAD", 0.75, function() loadProfile(tostring(profileNameBox.Text or "")) end)
+profileNameBox.FocusLost:Connect(refreshProfileHotkeyButton)
+local profileHotkeyListening = false
+profileHotkeyButton.Activated:Connect(function()
+	if profileHotkeyListening then return end
+	local profileName = tostring(profileNameBox.Text or "")
+	if profileName == "" then return end
+	profileHotkeyListening = true
+	profileHotkeyButton.Text = "PRESS A KEY..."
+	local connection
+	connection = UIS.InputBegan:Connect(function(input, gameProcessed)
+		if gameProcessed or not profileHotkeyListening then return end
+		local code = input.KeyCode
+		if code == Enum.KeyCode.Unknown then return end
+		profileHotkeyListening = false
+		if connection then connection:Disconnect() end
+		if code == Enum.KeyCode.Escape or code == Enum.KeyCode.Backspace or code == Enum.KeyCode.Delete then
+			St.profileHotkeys[profileName] = nil
+		else
+			local conflict = false
+			for key, bound in pairs(St.keys or {}) do if bound == code then conflict = true; break end end
+			for other, bound in pairs(St.profileHotkeys or {}) do if other ~= profileName and bound == code then conflict = true; break end end
+			if not conflict then St.profileHotkeys[profileName] = code end
+		end
+		refreshProfileHotkeyButton()
+		refreshProfileList()
+		pcall(saveCfg)
+	end)
+end)
+refreshProfileHotkeyButton()
 refreshProfileList()
+UIS.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed or profileHotkeyListening then return end
+	local code = input.KeyCode
+	if code == Enum.KeyCode.Unknown then return end
+	for name, bound in pairs(St.profileHotkeys or {}) do
+		if bound == code and St.profiles and St.profiles[name] then
+			loadProfile(name)
+			break
+		end
+	end
+end)
 section(pageMisc, "* — SKIN CHANGER", 5)
 local outfitRow = row(pageMisc, 42, 6)
 local outfits = {"Tenue 1", "Tenue 2", "Tenue 3"}
