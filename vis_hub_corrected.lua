@@ -3726,6 +3726,18 @@ Gui.DisplayOrder = 200
 Gui.Parent = PlayerGui
 
 local MW, MH = 310, 380
+local function getDeviceUiScale()
+	local camera = workspace.CurrentCamera
+	local viewport = camera and camera.ViewportSize
+	local width = viewport and viewport.X or 430
+	local height = viewport and viewport.Y or 800
+	local touch = false
+	pcall(function() touch = UIS.TouchEnabled == true end)
+	if not touch then return 1 end
+	-- Téléphone : réduit légèrement les panneaux trop larges ; tablette : garde des contrôles confortables.
+	local base = math.min(width / 430, height / 800)
+	return math.clamp(base, 0.82, 1.12)
+end
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Size = UDim2.new(0, MW, 0, MH)
@@ -3742,8 +3754,8 @@ menuScaleObj.Name = "EL2BAllGearMenuScale"
 menuScaleObj.Scale = tonumber(St.menuScale) or 1
 menuScaleObj.Parent = Main
 function applyMenuScale()
-	local sc = math.clamp(tonumber(St.menuScale) or 1, 0.5, 1.5)
-	St.menuScale = sc
+	local userScale = math.clamp(tonumber(St.menuScale) or 1, 0.5, 1.5)
+	local sc = math.clamp(userScale * getDeviceUiScale(), 0.5, 1.5)
 	if menuScaleObj and menuScaleObj.Parent then
 		menuScaleObj.Scale = sc
 	else
@@ -3753,6 +3765,24 @@ function applyMenuScale()
 	end
 end
 pcall(applyMenuScale)
+-- Recalcule l’échelle après rotation, changement de résolution ou apparition de la caméra.
+if not _G._EL2BResponsiveUiBound then
+	_G._EL2BResponsiveUiBound = true
+	local pending = false
+	local function refreshResponsiveUi()
+		if pending then return end
+		pending = true
+		task.defer(function()
+			pending = false
+			pcall(applyMenuScale)
+			if _G.VisUpdateMobileVisuals then pcall(_G.VisUpdateMobileVisuals) end
+		end)
+	end
+	workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(refreshResponsiveUi)
+	if workspace.CurrentCamera then
+		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(refreshResponsiveUi)
+	end
+end
 -- restore menu position
 pcall(function()
 	local p = St._mainPos
@@ -5428,8 +5458,8 @@ actionLockButton.Activated:Connect(function()
 	end
 end)
 local function getActionLayout()
-	local scale = math.clamp(tonumber(St.btnScale) or 1, 0.5, 2)
-	local buttonSize = math.max(28, math.floor((tonumber(St.btnSizes and St.btnSizes.drop) or 50) * scale))
+	local scale = math.clamp((tonumber(St.btnScale) or 1) * getDeviceUiScale(), 0.5, 2)
+	local buttonSize = math.max(44, math.floor((tonumber(St.btnSizes and St.btnSizes.drop) or 50) * scale))
 	local largeSize = math.max(56, math.floor((tonumber(St.btnSizes and St.btnSizes.steal) or 56) * scale))
 	local size = math.max(buttonSize, largeSize)
 	-- Deux colonnes, trois lignes, entièrement à l’intérieur du carré.
@@ -5901,7 +5931,7 @@ function makeActBtn(key, label, pos, cb)
 	if key == "steal" or key == "sentry" then
 		baseSz = math.max(baseSz, 56)
 	end
-	local sz = math.max(28, math.floor(baseSz * (St.btnScale or 1)))
+	local sz = math.max(44, math.floor(baseSz * (tonumber(St.btnScale) or 1) * getDeviceUiScale()))
 	local holder = Instance.new("Frame")
 	holder.Name = "A_" .. key
 	holder.Size = UDim2.new(0, sz, 0, sz)
@@ -6306,9 +6336,9 @@ function _G.VisUpdateMobileVisuals()
 	if actionBackdrop then refreshActionBackdrop() end
 	for n, e in pairs(modeRefs) do
 		if e and e.holder and e.btn then
-			local sc = tonumber(St.btnScale) or 1
-			local w = math.max(80, math.floor(98 * sc))
-			local h = math.max(32, math.floor(36 * sc))
+			local sc = (tonumber(St.btnScale) or 1) * getDeviceUiScale()
+			local w = math.max(88, math.floor(98 * sc))
+			local h = math.max(40, math.floor(36 * sc))
 			e.holder.Size = UDim2.new(0, w, 0, h)
 			e.btn.TextSize = math.clamp(math.floor(h * 0.36), 11, 14)
 			local c = e.btn:FindFirstChildOfClass("UICorner") or Instance.new("UICorner", e.btn)
@@ -6320,7 +6350,7 @@ function _G.VisUpdateMobileVisuals()
 		if e and e.holder and e.btn then
 			local base = (St.btnSizes[key] or 50)
 			if key == "steal" or key == "sentry" then base = math.max(base, 56) end
-			local sz = math.max(28, math.floor(base * (St.btnScale or 1)))
+			local sz = math.max(32, math.floor(base * (tonumber(St.btnScale) or 1) * getDeviceUiScale()))
 			e.holder.Size = UDim2.new(0, sz, 0, sz)
 			e.btn.TextSize = math.clamp(math.floor(sz * 0.22), 10, 16)
 			applyCorner(e.btn, St.btnShape or "Round")
