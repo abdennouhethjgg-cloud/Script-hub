@@ -81,6 +81,7 @@ local function colorFromThemeValue(value, fallback)
 	end
 	return Color3.fromRGB(fallback[1], fallback[2], fallback[3])
 end
+local themeTweens = setmetatable({}, {__mode = "k"})
 local function applyEL2BTheme(name)
 	local raw = EL2BThemes[name] or (St.customThemes and St.customThemes[name])
 	if not raw then name = "RedBlack"; raw = EL2BThemes[name] end
@@ -97,7 +98,17 @@ local function applyEL2BTheme(name)
 	C.BG, C.Row, C.Card, C.Red, C.RedSoft, C.RedDeep, C.Text, C.TextDim, C.Stroke, C.Dark, C.Off, C.White = t.bg, t.card, t.card, t.accent, t.accent, t.accent, t.text, t.dim, t.accent, t.bg, t.box, t.text
 	local transition = TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 	local function animate(obj, props)
-		pcall(function() TS:Create(obj, transition, props):Play() end)
+		if not obj or not obj.Parent then return end
+		pcall(function()
+			local old = themeTweens[obj]
+			if old then old:Cancel() end
+			local tween = TS:Create(obj, transition, props)
+			themeTweens[obj] = tween
+			tween.Completed:Connect(function()
+				if themeTweens[obj] == tween then themeTweens[obj] = nil end
+			end)
+			tween:Play()
+		end)
 	end
 	local function paint(root)
 		if not root then return end
@@ -6008,13 +6019,15 @@ function applyEmpireBtnBg(btn, index)
 			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
 		})
 		g.Parent = st
-		task.spawn(function()
-			local t0 = tick()
-			while st and st.Parent do
-				g.Rotation = ((tick() - t0) * 50) % 360
-				task.wait(0.04)
+			if not touch then
+				local t0 = tick()
+				task.spawn(function()
+					while st and st.Parent do
+						g.Rotation = ((tick() - t0) * 50) % 360
+						task.wait(0.08)
+					end
+				end)
 			end
-		end)
 	end
 end
 
