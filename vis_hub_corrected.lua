@@ -95,18 +95,22 @@ local function applyEL2BTheme(name)
 	}
 	C.bg, C.card, C.box, C.accent, C.text, C.textDim = t.bg, t.card, t.box, t.accent, t.text, t.dim
 	C.BG, C.Row, C.Card, C.Red, C.RedSoft, C.RedDeep, C.Text, C.TextDim, C.Stroke, C.Dark, C.Off, C.White = t.bg, t.card, t.card, t.accent, t.accent, t.accent, t.text, t.dim, t.accent, t.bg, t.box, t.text
+	local transition = TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	local function animate(obj, props)
+		pcall(function() TS:Create(obj, transition, props):Play() end)
+	end
 	local function paint(root)
 		if not root then return end
 		for _, obj in ipairs(root:GetDescendants()) do
 			if obj:IsA("Frame") or obj:IsA("ScrollingFrame") then
-				if obj.BackgroundTransparency < 1 then obj.BackgroundColor3 = t.card end
+				if obj.BackgroundTransparency < 1 then animate(obj, { BackgroundColor3 = t.card }) end
 			elseif obj:IsA("TextButton") or obj:IsA("TextBox") then
-				if obj.BackgroundTransparency < 1 then obj.BackgroundColor3 = t.box end
-				obj.TextColor3 = t.text
+				if obj.BackgroundTransparency < 1 then animate(obj, { BackgroundColor3 = t.box }) end
+				animate(obj, { TextColor3 = t.text })
 			elseif obj:IsA("TextLabel") then
-				obj.TextColor3 = t.text
+				animate(obj, { TextColor3 = t.text })
 			elseif obj:IsA("UIStroke") then
-				obj.Color = t.accent
+				animate(obj, { Color = t.accent })
 			end
 		end
 	end
@@ -115,12 +119,12 @@ local function applyEL2BTheme(name)
 	end
 	local mainGui = PlayerGui:FindFirstChild("EL2BAllGearFullMenu")
 	local mainRoot = mainGui and mainGui:FindFirstChild("Main")
-	if mainRoot and mainRoot:IsA("GuiObject") then mainRoot.BackgroundColor3 = t.bg end
+	if mainRoot and mainRoot:IsA("GuiObject") then animate(mainRoot, { BackgroundColor3 = t.bg }) end
 	local actionGui = PlayerGui:FindFirstChild("EL2BAllGearActionButtons")
 	local actionRoot = actionGui and actionGui:FindFirstChild("EL2BAllGearActionBackdrop")
-	if actionRoot and actionRoot:IsA("GuiObject") then actionRoot.BackgroundColor3 = t.bg end
+	if actionRoot and actionRoot:IsA("GuiObject") then animate(actionRoot, { BackgroundColor3 = t.bg }) end
 	local lockRoot = actionRoot and actionRoot:FindFirstChild("EL2BAllGearActionLock")
-	if lockRoot and lockRoot:IsA("GuiObject") then lockRoot.BackgroundColor3 = t.box end
+	if lockRoot and lockRoot:IsA("GuiObject") then animate(lockRoot, { BackgroundColor3 = t.box }) end
 	if updateActionLockButton then pcall(updateActionLockButton) end
 	pcall(saveCfg)
 end
