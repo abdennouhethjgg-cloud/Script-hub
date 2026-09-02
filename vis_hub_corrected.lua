@@ -109,9 +109,15 @@ local function applyEL2BTheme(name)
 	for _, root in ipairs(PlayerGui:GetChildren()) do
 		if tostring(root.Name):match("^EL2B") or tostring(root.Name):match("^Vis") then paint(root) end
 	end
-	if Main then Main.BackgroundColor3 = t.bg end
-	if actionBackdrop then actionBackdrop.BackgroundColor3 = t.bg end
-	if actionLockButton then actionLockButton.BackgroundColor3 = t.box; updateActionLockButton() end
+	local mainGui = PlayerGui:FindFirstChild("EL2BAllGearFullMenu")
+	local mainRoot = mainGui and mainGui:FindFirstChild("Main")
+	if mainRoot and mainRoot:IsA("GuiObject") then mainRoot.BackgroundColor3 = t.bg end
+	local actionGui = PlayerGui:FindFirstChild("EL2BAllGearActionButtons")
+	local actionRoot = actionGui and actionGui:FindFirstChild("EL2BAllGearActionBackdrop")
+	if actionRoot and actionRoot:IsA("GuiObject") then actionRoot.BackgroundColor3 = t.bg end
+	local lockRoot = actionRoot and actionRoot:FindFirstChild("EL2BAllGearActionLock")
+	if lockRoot and lockRoot:IsA("GuiObject") then lockRoot.BackgroundColor3 = t.box end
+	if updateActionLockButton then pcall(updateActionLockButton) end
 	pcall(saveCfg)
 end
 
