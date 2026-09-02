@@ -4521,6 +4521,12 @@ local function captureProfile()
 	p.speeds.laggerCarry = tonumber(currentLaggerCarrySpeed) or 24.5
 	return p
 end
+local outfitButtons = {}
+local function refreshOutfitButtons()
+	for outfit, button in pairs(outfitButtons) do
+		if button and button.Parent then button.BackgroundColor3 = (St.outfitName == outfit) and C.accent or C.box end
+	end
+end
 local function loadProfile(name)
 	local p = St.profiles and St.profiles[name]
 	if type(p) ~= "table" then return end
@@ -4542,6 +4548,9 @@ local function loadProfile(name)
 		currentLaggerCarrySpeed = tonumber(p.speeds.laggerCarry) or currentLaggerCarrySpeed
 	end
 	applyEL2BTheme(St.themeName or "RedBlack")
+	refreshOutfitButtons()
+	if _G.VisApplyMobile then pcall(_G.VisApplyMobile) end
+	if _G.VisUpdateMobileVisuals then pcall(_G.VisUpdateMobileVisuals) end
 	pcall(saveCfg)
 	showToast("PROFILE LOADED: " .. tostring(name))
 end
@@ -4584,6 +4593,7 @@ local outfitRow = row(pageMisc, 42, 6)
 local outfits = {"Tenue 1", "Tenue 2", "Tenue 3"}
 for i, outfit in ipairs(outfits) do
 	local b = Instance.new("TextButton")
+	outfitButtons[outfit] = b
 	b.Size = UDim2.new(0.333, -6, 0, 28)
 	b.Position = UDim2.new((i - 1) / 3, 4, 0.5, -14)
 	b.BackgroundColor3 = (St.outfitName == outfit) and C.accent or C.box
@@ -4596,7 +4606,7 @@ for i, outfit in ipairs(outfits) do
 	corner(b, 7)
 	b.Activated:Connect(function()
 		St.outfitName = outfit
-		for _, child in ipairs(outfitRow:GetChildren()) do if child:IsA("TextButton") then child.BackgroundColor3 = (child == b) and C.accent or C.box end end
+		refreshOutfitButtons()
 		pcall(saveCfg)
 	end)
 end
@@ -5193,6 +5203,15 @@ do
 end
 local actionBackdrop
 local actionLockButton
+local mobileActionRegistry = {}
+_G.VisRegisterMobileElement = function(element)
+	if not element or not element:IsA("GuiObject") then return element end
+	mobileActionRegistry[element] = true
+	if actionBackdrop and element.Parent ~= actionBackdrop then
+		element.Parent = actionBackdrop
+	end
+	return element
+end
 local updateActionLockButton
 updateActionLockButton = function()
 	if not actionLockButton then return end
@@ -6302,6 +6321,7 @@ function makeActBtn(key, label, pos, cb)
 	holder.Active = true -- nhận touch
 	holder.ZIndex = 50
 	holder.Parent = actionBackdrop
+	_G.VisRegisterMobileElement(holder)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, 0, 1, 0)
 	btn.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
