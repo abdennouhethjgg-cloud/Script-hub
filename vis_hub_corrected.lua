@@ -4511,6 +4511,28 @@ local function showToast(message)
 		end)
 	end)
 end
+section(pageMisc, "* — PLAYER PROFILE", 1)
+local playerCard = row(pageMisc, 46, 0)
+local playerAvatar = Instance.new("ImageLabel")
+playerAvatar.Size = UDim2.fromOffset(34, 34)
+playerAvatar.Position = UDim2.new(0, 8, 0.5, -17)
+playerAvatar.BackgroundColor3 = C.box
+playerAvatar.BackgroundTransparency = 0
+playerAvatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LP.UserId) .. "&w=150&h=150"
+playerAvatar.Parent = playerCard
+corner(playerAvatar, 17)
+local playerIdentity = Instance.new("TextLabel")
+playerIdentity.Size = UDim2.new(1, -52, 1, 0)
+playerIdentity.Position = UDim2.new(0, 50, 0, 0)
+playerIdentity.BackgroundTransparency = 1
+playerIdentity.Text = "@" .. tostring(LP.Name) .. "  •  " .. tostring(LP.DisplayName) .. "\nUSER ID: " .. tostring(LP.UserId)
+playerIdentity.TextColor3 = C.text
+playerIdentity.TextSize = 10
+playerIdentity.Font = Enum.Font.GothamBold
+playerIdentity.TextXAlignment = Enum.TextXAlignment.Left
+playerIdentity.TextYAlignment = Enum.TextYAlignment.Center
+playerIdentity.TextTruncate = Enum.TextTruncate.AtEnd
+playerIdentity.Parent = playerCard
 section(pageMisc, "* — PROFILES", 1)
 local profileRow = row(pageMisc, 42, 2)
 local profileNameBox = Instance.new("TextBox")
@@ -4616,7 +4638,20 @@ local function refreshProfileHotkeyButton()
 	local code = St.profileHotkeys and St.profileHotkeys[tostring(profileNameBox.Text or "")]
 	profileHotkeyButton.Text = code and ("HOTKEY: " .. profileKeyName(code)) or "SET HOTKEY"
 end
+local function ensureProfileOwners()
+	local changed = false
+	for _, profile in pairs(St.profiles or {}) do
+		if type(profile) == "table" and not profile.ownerName then
+			profile.ownerName = tostring(LP.Name)
+			profile.ownerDisplayName = tostring(LP.DisplayName)
+			profile.ownerUserId = tonumber(LP.UserId) or 0
+			changed = true
+		end
+	end
+	if changed then pcall(saveCfg) end
+end
 local function refreshProfileList()
+	ensureProfileOwners()
 	for _, child in ipairs(profileList:GetChildren()) do
 		if child:GetAttribute("ProfileButton") then child:Destroy() end
 	end
@@ -4630,8 +4665,8 @@ local function refreshProfileList()
 		b.Position = UDim2.new(0, 8 + ((i - 1) % 3) * 96, 0, 8 + math.floor((i - 1) / 3) * 28)
 		b.BackgroundColor3 = C.box
 		local assigned = St.profileHotkeys and St.profileHotkeys[name]
-		local owner = St.profiles[name] and St.profiles[name].ownerName
-		b.Text = name .. (assigned and ("\n[" .. profileKeyName(assigned) .. "]") or (owner and ("\n@" .. tostring(owner)) or ""))
+		local owner = St.profiles[name] and (St.profiles[name].ownerDisplayName or St.profiles[name].ownerName)
+		b.Text = name .. (assigned and ("\n[" .. profileKeyName(assigned) .. "]") or (owner and ("\n" .. tostring(owner)) or ""))
 		b.TextColor3 = C.text
 		b.TextSize = assigned and 9 or 10
 		b.Font = Enum.Font.GothamBold
