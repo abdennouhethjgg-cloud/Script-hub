@@ -1,16 +1,25 @@
 -- StealAnEgg_GUI.lua
--- Petite interface locale pour Steal an Egg.
--- Aucun automatisme de gameplay ni appel distant.
+-- Interface locale, légère et non invasive pour Steal an Egg.
+-- Aucun auto-farm, aucune collecte automatique et aucun appel distant.
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
 if not player then
-    warn("[Steal an Egg GUI] LocalPlayer introuvable.")
+    warn("[Steal an Egg GUI] LocalPlayer introuvable. Lance le script après être entré dans le jeu.")
     return
 end
 
-local playerGui = player:FindFirstChildOfClass("PlayerGui") or player:WaitForChild("PlayerGui", 10)
+local playerGui = player:FindFirstChildOfClass("PlayerGui")
+if not playerGui then
+    local ok, result = pcall(function()
+        return player:WaitForChild("PlayerGui", 10)
+    end)
+    if ok then
+        playerGui = result
+    end
+end
+
 if not playerGui then
     warn("[Steal an Egg GUI] PlayerGui introuvable.")
     return
@@ -21,10 +30,19 @@ if oldGui then
     oldGui:Destroy()
 end
 
+local function rounded(parent, radius)
+    local item = Instance.new("UICorner")
+    item.CornerRadius = UDim.new(0, radius)
+    item.Parent = parent
+    return item
+end
+
 local gui = Instance.new("ScreenGui")
 gui.Name = "StealAnEggGUI"
 gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.DisplayOrder = 20
 gui.Parent = playerGui
 
 local main = Instance.new("Frame")
@@ -34,10 +52,7 @@ main.Position = UDim2.new(0.5, -140, 0.5, -77)
 main.BackgroundColor3 = Color3.fromRGB(39, 31, 25)
 main.BorderSizePixel = 0
 main.Parent = gui
-
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 10)
-corner.Parent = main
+rounded(main, 10)
 
 local stroke = Instance.new("UIStroke")
 stroke.Color = Color3.fromRGB(190, 135, 55)
@@ -67,10 +82,7 @@ close.TextSize = 14
 close.Font = Enum.Font.GothamBold
 close.AutoButtonColor = true
 close.Parent = main
-
-local closeCorner = Instance.new("UICorner")
-closeCorner.CornerRadius = UDim.new(0, 7)
-closeCorner.Parent = close
+rounded(close, 7)
 
 local status = Instance.new("TextLabel")
 status.Name = "Statut"
@@ -90,7 +102,7 @@ info.Size = UDim2.new(1, -28, 0, 22)
 info.Position = UDim2.fromOffset(14, 74)
 info.BackgroundTransparency = 1
 info.Font = Enum.Font.Gotham
-info.Text = "Jeu : " .. game.Name
+info.Text = "Jeu : " .. tostring(game.Name)
 info.TextColor3 = Color3.fromRGB(220, 205, 180)
 info.TextSize = 12
 info.TextXAlignment = Enum.TextXAlignment.Left
@@ -108,15 +120,15 @@ hide.TextSize = 14
 hide.Font = Enum.Font.GothamSemibold
 hide.AutoButtonColor = true
 hide.Parent = main
+rounded(hide, 7)
 
-local hideCorner = Instance.new("UICorner")
-hideCorner.CornerRadius = UDim.new(0, 7)
-hideCorner.Parent = hide
+local reopen
+local function showReopenButton()
+    if reopen and reopen.Parent then
+        return
+    end
 
-hide.MouseButton1Click:Connect(function()
-    main.Visible = false
-
-    local reopen = Instance.new("TextButton")
+    reopen = Instance.new("TextButton")
     reopen.Name = "Rouvrir"
     reopen.Size = UDim2.fromOffset(125, 36)
     reopen.Position = UDim2.new(0, 18, 0.5, -18)
@@ -125,19 +137,25 @@ hide.MouseButton1Click:Connect(function()
     reopen.TextColor3 = Color3.fromRGB(255, 255, 255)
     reopen.TextSize = 14
     reopen.Font = Enum.Font.GothamSemibold
+    reopen.AutoButtonColor = true
     reopen.Parent = gui
+    rounded(reopen, 7)
 
-    local reopenCorner = Instance.new("UICorner")
-    reopenCorner.CornerRadius = UDim.new(0, 7)
-    reopenCorner.Parent = reopen
-
-    reopen.MouseButton1Click:Connect(function()
-        reopen:Destroy()
+    reopen.Activated:Connect(function()
+        if reopen then
+            reopen:Destroy()
+            reopen = nil
+        end
         main.Visible = true
     end)
+end
+
+hide.Activated:Connect(function()
+    main.Visible = false
+    showReopenButton()
 end)
 
-close.MouseButton1Click:Connect(function()
+close.Activated:Connect(function()
     gui:Destroy()
 end)
 
