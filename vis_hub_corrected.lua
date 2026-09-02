@@ -64,6 +64,42 @@ C.Yellow = Color3.fromRGB(235, 70, 70)
 C.Dark = C.bg
 C.Off = C.off
 
+local EL2BThemes = {
+	RedBlack = { bg = Color3.fromRGB(10, 10, 14), card = Color3.fromRGB(28, 12, 16), box = Color3.fromRGB(45, 14, 20), accent = Color3.fromRGB(220, 35, 45), text = Color3.fromRGB(255, 255, 255), dim = Color3.fromRGB(205, 175, 180) },
+	Dark = { bg = Color3.fromRGB(12, 12, 16), card = Color3.fromRGB(25, 25, 32), box = Color3.fromRGB(40, 40, 50), accent = Color3.fromRGB(150, 155, 175), text = Color3.fromRGB(245, 245, 250), dim = Color3.fromRGB(175, 175, 190) },
+	Light = { bg = Color3.fromRGB(238, 240, 245), card = Color3.fromRGB(255, 255, 255), box = Color3.fromRGB(220, 224, 232), accent = Color3.fromRGB(170, 25, 35), text = Color3.fromRGB(25, 25, 30), dim = Color3.fromRGB(90, 90, 100) },
+	Custom = { bg = Color3.fromRGB(18, 10, 12), card = Color3.fromRGB(35, 16, 20), box = Color3.fromRGB(55, 20, 25), accent = Color3.fromRGB(255, 70, 80), text = Color3.fromRGB(255, 255, 255), dim = Color3.fromRGB(220, 190, 195) },
+}
+local function applyEL2BTheme(name)
+	name = EL2BThemes[name] and name or "RedBlack"
+	St.themeName = name
+	local t = EL2BThemes[name]
+	C.bg, C.card, C.box, C.accent, C.text, C.textDim = t.bg, t.card, t.box, t.accent, t.text, t.dim
+	C.BG, C.Row, C.Card, C.Red, C.RedSoft, C.RedDeep, C.Text, C.TextDim, C.Stroke, C.Dark, C.Off, C.White = t.bg, t.card, t.card, t.accent, t.accent, t.accent, t.text, t.dim, t.accent, t.bg, t.box, t.text
+	local function paint(root)
+		if not root then return end
+		for _, obj in ipairs(root:GetDescendants()) do
+			if obj:IsA("Frame") or obj:IsA("ScrollingFrame") then
+				if obj.BackgroundTransparency < 1 then obj.BackgroundColor3 = t.card end
+			elseif obj:IsA("TextButton") or obj:IsA("TextBox") then
+				if obj.BackgroundTransparency < 1 then obj.BackgroundColor3 = t.box end
+				obj.TextColor3 = t.text
+			elseif obj:IsA("TextLabel") then
+				obj.TextColor3 = t.text
+			elseif obj:IsA("UIStroke") then
+				obj.Color = t.accent
+			end
+		end
+	end
+	for _, root in ipairs(PlayerGui:GetChildren()) do
+		if tostring(root.Name):match("^EL2B") or tostring(root.Name):match("^Vis") then paint(root) end
+	end
+	if Main then Main.BackgroundColor3 = t.bg end
+	if actionBackdrop then actionBackdrop.BackgroundColor3 = t.bg end
+	if actionLockButton then actionLockButton.BackgroundColor3 = t.box; updateActionLockButton() end
+	pcall(saveCfg)
+end
+
 
 -- Auto-write Vis Auto Steal for loadstring
 pcall(function()
@@ -4238,6 +4274,30 @@ end
 ----------------------------------------------------------------
 -- TOOLS / VISUALS TABS
 ----------------------------------------------------------------
+section(pageSet, "* — THEME", 26)
+local themeRow = row(pageSet, 42, 26.1)
+local themeNames = {"RedBlack", "Dark", "Light", "Custom"}
+for i, name in ipairs(themeNames) do
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(0.25, -5, 1, -8)
+	b.Position = UDim2.new((i - 1) * 0.25, 4, 0, 4)
+	b.BackgroundColor3 = C.box
+	b.Text = name == "RedBlack" and "RED" or name:upper()
+	b.TextColor3 = C.text
+	b.TextSize = 10
+	b.Font = Enum.Font.GothamBold
+	b.AutoButtonColor = false
+	b.Parent = themeRow
+	corner(b, 7)
+	local function chooseTheme()
+		applyEL2BTheme(name)
+		for _, child in ipairs(themeRow:GetChildren()) do
+			if child:IsA("TextButton") then child.BackgroundColor3 = (child == b) and C.accent or C.box end
+		end
+	end
+	b.MouseButton1Click:Connect(chooseTheme)
+	b.Activated:Connect(chooseTheme)
+end
 section(pageTools, "* — INTERFACE TOOLS", 1)
 actionBtn(pageTools, "Save Layout", C.accent, function()
 	pcall(saveCfg)
@@ -8250,6 +8310,9 @@ task.defer(function()
 	end)
 end)
 
+task.defer(function()
+	applyEL2BTheme(St.themeName or "RedBlack")
+end)
 task.defer(function()
 	if St.menuOpen == false then
 		pcall(function()
