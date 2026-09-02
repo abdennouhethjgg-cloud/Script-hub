@@ -24,6 +24,8 @@ Le code 267 est une déconnexion générée par l’expérience Roblox ou par so
 
 `Petite_GUI_Delta.lua` est une interface locale minimale avec un titre, un statut, un bouton pour masquer/rouvrir la fenêtre et un bouton de fermeture. Elle ne contient ni requête HTTP, ni `loadstring`, ni hook, ni appel `RemoteEvent` ou `RemoteFunction`. Elle peut être collée telle quelle dans Delta ou un exécuteur compatible.
 
+`StealAnEgg_GUI.lua` est la variante visuelle adaptée à **Steal an Egg**. Elle affiche le nom du jeu détecté localement, avec un thème œuf doré, mais n'automatise aucune action de jeu.
+
 ## Utilisation responsable
 
 N’utilisez ce dépôt que dans les environnements où vous disposez de l’autorisation nécessaire. Ne publiez aucune clé API, aucun token privé ni aucune donnée personnelle dans le dépôt.
