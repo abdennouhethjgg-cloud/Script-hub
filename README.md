@@ -20,6 +20,10 @@ Le code 267 est une déconnexion générée par l’expérience Roblox ou par so
 
 `EL2BCODE_Steal.lua` et `vis_hub_corrected.lua` sont des versions historiques non utilisées par la version stable. `TgyEl2b.lua` est un module séparé destiné au quiz SpiderSammy. `RemoteLister.lua` est un outil distinct d’inspection locale. Ils ne sont pas chargés par `EL2B_ALL_GEAR.lua` ni par `EL2B_HUB.lua`.
 
+## Petite GUI Delta
+
+`Petite_GUI_Delta.lua` est une interface locale minimale avec un titre, un statut, un bouton pour masquer/rouvrir la fenêtre et un bouton de fermeture. Elle ne contient ni requête HTTP, ni `loadstring`, ni hook, ni appel `RemoteEvent` ou `RemoteFunction`. Elle peut être collée telle quelle dans Delta ou un exécuteur compatible.
+
 ## Utilisation responsable
 
 N’utilisez ce dépôt que dans les environnements où vous disposez de l’autorisation nécessaire. Ne publiez aucune clé API, aucun token privé ni aucune donnée personnelle dans le dépôt.
