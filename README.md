@@ -1,15 +1,15 @@
 # Script-hub
 
-## EL2B HUB — version stable
+## EL2B ALL GEAR — version stable
 
-Le script principal est `EL2B_HUB.lua`. Cette édition est conçue pour éviter les erreurs et les déconnexions liées aux fonctions d’automatisation dans **Steal a Brainrot**. Elle affiche une interface légère avec le nom **EL2B HUB**, le nombre de joueurs et la liste des joueurs présents.
+Le script principal est `EL2B_ALL_GEAR.lua`. `EL2B_HUB.lua` reste conservé comme copie de compatibilité. Cette édition est conçue pour éviter les erreurs et les déconnexions liées aux fonctions d’automatisation dans **Steal a Brainrot**. Elle affiche une interface légère avec le nom **EL2B ALL GEAR**, le nombre de joueurs et la liste des joueurs présents.
 
 Aucune action de gameplay n’est exécutée par cette version. Le script ne contient pas de téléportation, de commande admin, d’appel `RemoteEvent` ou `RemoteFunction`, de lagger, de hook, d’anti-ragdoll, d’aimbot, de quick pickup, de blocage automatique ou d’automatisation de vol.
 
 Pour charger la version Raw depuis Roblox :
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/EL2B_HUB.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/EL2B_ALL_GEAR.lua"))()
 ```
 
 ## À propos du code 267
@@ -18,7 +18,7 @@ Le code 267 est une déconnexion générée par l’expérience Roblox ou par so
 
 ## Autres scripts
 
-`TgyEl2b.lua` est un module séparé destiné au quiz SpiderSammy. `RemoteLister.lua` est un outil distinct d’inspection locale. Ils ne sont pas chargés par `EL2B_HUB.lua`.
+`EL2BCODE_Steal.lua` et `vis_hub_corrected.lua` sont des versions historiques non utilisées par la version stable. `TgyEl2b.lua` est un module séparé destiné au quiz SpiderSammy. `RemoteLister.lua` est un outil distinct d’inspection locale. Ils ne sont pas chargés par `EL2B_ALL_GEAR.lua` ni par `EL2B_HUB.lua`.
 
 ## Utilisation responsable
 
