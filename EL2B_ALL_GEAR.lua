@@ -173,6 +173,58 @@ local function refreshPlayers()
     playerList.Text = table.concat(names, "  •  ")
 end
 
+local activeJoinNotification
+local notificationSerial = 0
+local function notifyPlayerJoined(player)
+    if destroyed or not player or player == localPlayer then
+        return
+    end
+    notificationSerial = notificationSerial + 1
+    local serial = notificationSerial
+    if activeJoinNotification then
+        activeJoinNotification:Destroy()
+        activeJoinNotification = nil
+    end
+    local notice = make("Frame", {
+        Name = "PlayerJoinedNotification",
+        AnchorPoint = Vector2.new(1, 0),
+        Position = UDim2.new(1, -12, 0, 12),
+        Size = UDim2.fromOffset(224, 54),
+        BackgroundColor3 = Color3.fromRGB(28, 25, 40),
+        BorderSizePixel = 0,
+        ZIndex = 20,
+    }, gui)
+    activeJoinNotification = notice
+    make("UICorner", {CornerRadius = UDim.new(0, 9)}, notice)
+    make("UIStroke", {Color = Color3.fromRGB(125, 85, 220), Thickness = 1.4}, notice)
+    local avatar = make("ImageLabel", {
+        BackgroundTransparency = 1,
+        Position = UDim2.fromOffset(7, 7),
+        Size = UDim2.fromOffset(40, 40),
+        Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(player.UserId) .. "&w=150&h=150",
+        ZIndex = 21,
+    }, notice)
+    make("UICorner", {CornerRadius = UDim.new(1, 0)}, avatar)
+    make("TextLabel", {
+        BackgroundTransparency = 1,
+        Position = UDim2.fromOffset(54, 5),
+        Size = UDim2.new(1, -60, 1, -10),
+        Font = Enum.Font.GothamBold,
+        Text = "NOUVEAU JOUEUR\n" .. tostring(player.DisplayName or player.Name) .. " (@" .. tostring(player.Name) .. ")",
+        TextColor3 = Color3.fromRGB(245, 240, 255),
+        TextSize = 10,
+        TextWrapped = true,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Center,
+        ZIndex = 21,
+    }, notice)
+    task.delay(4, function()
+        if activeJoinNotification == notice and notificationSerial == serial then
+            activeJoinNotification = nil
+            if notice.Parent then notice:Destroy() end
+        end
+    end)
+end
 local dragging = false
 local dragStart
 local startPosition
@@ -209,7 +261,10 @@ connect(closeButton.Activated, function()
     gui:Destroy()
 end)
 
-connect(Players.PlayerAdded, refreshPlayers)
+connect(Players.PlayerAdded, function(player)
+    refreshPlayers()
+    notifyPlayerJoined(player)
+end)
 connect(Players.PlayerRemoving, refreshPlayers)
 task.spawn(function()
     while not destroyed and gui.Parent do
