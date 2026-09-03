@@ -143,6 +143,25 @@ local localProfileAvatar = make("ImageLabel", {
     Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(localPlayer.UserId) .. "&w=150&h=150",
 }, main)
 make("UICorner", {CornerRadius = UDim.new(1, 0)}, localProfileAvatar)
+local localProfileDetails = make("TextLabel", {
+    Name = "SelectedProfileDetails",
+    BackgroundTransparency = 1,
+    Position = UDim2.fromOffset(70, 160),
+    Size = UDim2.new(1, -86, 0, 52),
+    Font = Enum.Font.GothamBold,
+    Text = tostring(localPlayer.DisplayName or localPlayer.Name) .. "\n@" .. tostring(localPlayer.Name) .. "\nID: " .. tostring(localPlayer.UserId),
+    TextColor3 = Color3.fromRGB(235, 230, 245),
+    TextSize = 10,
+    TextWrapped = true,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    TextYAlignment = Enum.TextYAlignment.Center,
+}, main)
+local function selectPlayerProfile(player)
+    if not player or not player.Parent then return end
+    localProfileAvatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(player.UserId) .. "&w=150&h=150"
+    localProfileDetails.Text = tostring(player.DisplayName or player.Name) .. "\n@" .. tostring(player.Name) .. "\nID: " .. tostring(player.UserId)
+    status.Text = "● Profil sélectionné : @" .. tostring(player.Name)
+end
 local playerList = make("ScrollingFrame", {
     Name = "PlayerList",
     BackgroundTransparency = 1,
@@ -186,7 +205,7 @@ local function refreshPlayers()
         make("TextLabel", {
             BackgroundTransparency = 1,
             Position = UDim2.fromOffset(44, 3),
-            Size = UDim2.new(1, -48, 1, -6),
+            Size = UDim2.new(1, -84, 1, -6),
             Font = Enum.Font.GothamBold,
             Text = tostring(player.DisplayName or player.Name) .. "\n@" .. tostring(player.Name) .. "\nID: " .. tostring(player.UserId),
             TextColor3 = Color3.fromRGB(235, 230, 245),
@@ -196,6 +215,21 @@ local function refreshPlayers()
             TextXAlignment = Enum.TextXAlignment.Left,
             TextYAlignment = Enum.TextYAlignment.Center,
         }, card)
+        local viewButton = make("TextButton", {
+            Name = "ViewProfile",
+            AnchorPoint = Vector2.new(1, 0.5),
+            Position = UDim2.new(1, -5, 0.5, 0),
+            Size = UDim2.fromOffset(30, 30),
+            BackgroundColor3 = Color3.fromRGB(125, 35, 55),
+            BorderSizePixel = 0,
+            Font = Enum.Font.GothamBold,
+            Text = "VIEW",
+            TextColor3 = Color3.fromRGB(255, 235, 240),
+            TextSize = 7,
+            AutoButtonColor = false,
+        }, card)
+        make("UICorner", {CornerRadius = UDim.new(1, 0)}, viewButton)
+        viewButton.Activated:Connect(function() selectPlayerProfile(player) end)
     end
     playerList.CanvasSize = UDim2.fromOffset(0, math.max(0, math.ceil(#players / 2) * 50 + 4))
 end
