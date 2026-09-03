@@ -47,7 +47,7 @@ local main = make("Frame", {
     Name = "Main",
     AnchorPoint = Vector2.new(0.5, 0.5),
     Position = UDim2.fromScale(0.5, 0.5),
-    Size = UDim2.fromOffset(330, 395),
+    Size = UDim2.fromOffset(330, 425),
     BackgroundColor3 = Color3.fromRGB(18, 18, 25),
     BorderSizePixel = 0,
 }, gui)
@@ -377,9 +377,34 @@ local function exportPlayers(format)
     end
 end
 
+local randomPlayerButton = make("TextButton", {
+    Name = "RandomPlayer",
+    Position = UDim2.fromOffset(16, 356),
+    Size = UDim2.new(1, -32, 0, 22),
+    BackgroundColor3 = Color3.fromRGB(125, 35, 55),
+    BorderSizePixel = 0,
+    Font = Enum.Font.GothamBold,
+    Text = "RANDOM PLAYER",
+    TextColor3 = Color3.fromRGB(255, 235, 240),
+    TextSize = 8,
+    AutoButtonColor = false,
+}, main)
+make("UICorner", {CornerRadius = UDim.new(0, 6)}, randomPlayerButton)
+connect(randomPlayerButton.Activated, function()
+    local players = getFilteredPlayers()
+    if #players == 0 then
+        status.Text = "● Aucun joueur trouvé"
+        showToast("Aucun joueur trouvé", false)
+        return
+    end
+    local chosen = players[math.random(1, #players)]
+    selectPlayerProfile(chosen)
+    showToast("Joueur choisi : @" .. tostring(chosen.Name), true)
+end)
+
 local exportJsonButton = make("TextButton", {
     Name = "ExportPlayersJson",
-    Position = UDim2.fromOffset(16, 356),
+    Position = UDim2.fromOffset(16, 386),
     Size = UDim2.fromOffset(142, 22),
     BackgroundColor3 = Color3.fromRGB(95, 30, 52),
     BorderSizePixel = 0,
@@ -392,7 +417,7 @@ local exportJsonButton = make("TextButton", {
 make("UICorner", {CornerRadius = UDim.new(0, 6)}, exportJsonButton)
 local exportTextButton = make("TextButton", {
     Name = "ExportPlayersText",
-    Position = UDim2.fromOffset(172, 356),
+    Position = UDim2.fromOffset(172, 386),
     Size = UDim2.fromOffset(142, 22),
     BackgroundColor3 = Color3.fromRGB(95, 30, 52),
     BorderSizePixel = 0,
