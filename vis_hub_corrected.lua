@@ -46,7 +46,7 @@ local main = make("Frame", {
     Name = "Main",
     AnchorPoint = Vector2.new(0.5, 0.5),
     Position = UDim2.fromScale(0.5, 0.5),
-    Size = UDim2.fromOffset(330, 365),
+    Size = UDim2.fromOffset(330, 395),
     BackgroundColor3 = Color3.fromRGB(18, 18, 25),
     BorderSizePixel = 0,
 }, gui)
@@ -245,11 +245,27 @@ end)
 copyIdButton.Activated:Connect(function()
     if selectedPlayer then copyToClipboard(selectedPlayer.UserId, "UserId") end
 end)
+local playerSearchBox = make("TextBox", {
+    Name = "PlayerSearch",
+    PlaceholderText = "Rechercher un joueur...",
+    ClearTextOnFocus = false,
+    Position = UDim2.fromOffset(16, 237),
+    Size = UDim2.new(1, -32, 0, 24),
+    BackgroundColor3 = Color3.fromRGB(30, 24, 40),
+    BorderSizePixel = 0,
+    Font = Enum.Font.Gotham,
+    Text = "",
+    TextColor3 = Color3.fromRGB(245, 240, 255),
+    PlaceholderColor3 = Color3.fromRGB(160, 150, 175),
+    TextSize = 10,
+    TextXAlignment = Enum.TextXAlignment.Left,
+}, main)
+make("UICorner", {CornerRadius = UDim.new(0, 7)}, playerSearchBox)
 local playerList = make("ScrollingFrame", {
     Name = "PlayerList",
     BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(16, 237),
-    Size = UDim2.new(1, -32, 0, 98),
+    Position = UDim2.fromOffset(16, 267),
+    Size = UDim2.new(1, -32, 0, 116),
     BorderSizePixel = 0,
     ScrollBarThickness = 4,
     ScrollBarImageColor3 = Color3.fromRGB(125, 35, 55),
@@ -261,7 +277,17 @@ local function refreshPlayers()
         return
     end
     local players = Players:GetPlayers()
-    playerCount.Text = string.format("Joueurs : %d  •  Profil : @%s", #players, tostring(localPlayer.Name))
+    local totalPlayers = #players
+    local query = tostring(playerSearchBox.Text or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
+    if query ~= "" then
+        local filtered = {}
+        for _, player in ipairs(players) do
+            local haystack = (tostring(player.DisplayName) .. " " .. tostring(player.Name) .. " " .. tostring(player.UserId)):lower()
+            if string.find(haystack, query, 1, true) then table.insert(filtered, player) end
+        end
+        players = filtered
+    end
+    playerCount.Text = string.format("Joueurs : %d/%d  •  Profil : @%s", #players, totalPlayers, tostring(localPlayer.Name))
     for _, child in ipairs(playerList:GetChildren()) do
         if child:GetAttribute("ServerPlayerCard") then
             child:Destroy()
@@ -316,6 +342,7 @@ local function refreshPlayers()
     end
     playerList.CanvasSize = UDim2.fromOffset(0, math.max(0, math.ceil(#players / 2) * 50 + 4))
 end
+connect(playerSearchBox:GetPropertyChangedSignal("Text"), refreshPlayers)
 
 local activeJoinNotification
 local notificationSerial = 0
