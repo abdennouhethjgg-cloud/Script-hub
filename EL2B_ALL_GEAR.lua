@@ -1,4 +1,5 @@
 -- EL2B ALL GEAR — version stable et sûre pour Roblox
+-- VERSION: 1.0.0
 -- Cette version est volontairement limitée à l’interface et aux informations visuelles.
 -- Aucun RemoteEvent/RemoteFunction, téléportation, lagger, hook, commande admin,
 -- anti-ragdoll, aimbot, quick pickup ou automatisation de gameplay n’est exécuté.
@@ -13,6 +14,9 @@ end
 
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local GUI_NAME = "EL2B_ALL_GEAR"
+local CURRENT_VERSION = "1.0.0"
+local VERSION_URL = "https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/EL2B_VERSION.txt"
+local SCRIPT_URL = "https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/vis_hub_corrected.lua"
 local oldGui = playerGui:FindFirstChild(GUI_NAME)
 if oldGui then
     oldGui:Destroy()
@@ -198,6 +202,29 @@ local function showToast(message, success)
         end
     end)
 end
+local updateButton
+local function checkForUpdate()
+    local httpGet = game.HttpGet
+    if type(httpGet) ~= "function" then
+        return
+    end
+    local ok, remoteVersion = pcall(function()
+        return game:HttpGet(VERSION_URL)
+    end)
+    if not ok or type(remoteVersion) ~= "string" then
+        return
+    end
+    remoteVersion = remoteVersion:gsub("^%s+", ""):gsub("%s+$", "")
+    if remoteVersion ~= "" and remoteVersion ~= CURRENT_VERSION then
+        status.Text = "● Mise à jour disponible : v" .. remoteVersion
+        updateButton.Text = "UPDATE AVAILABLE  •  v" .. remoteVersion
+        showToast("Nouvelle GUI disponible : v" .. remoteVersion, true)
+    else
+        status.Text = "● GUI à jour : v" .. CURRENT_VERSION
+        updateButton.Text = "CHECK UPDATE  •  v" .. CURRENT_VERSION
+    end
+end
+
 local function copyToClipboard(value, label)
     local copied = false
     for _, clipboardFunction in ipairs({setclipboard, toclipboard, set_clipboard}) do
@@ -214,6 +241,21 @@ local function copyToClipboard(value, label)
         showToast("Copie indisponible : " .. label, false)
     end
 end
+updateButton = make("TextButton", {
+    Name = "CheckUpdate",
+    Position = UDim2.fromOffset(16, 133),
+    Size = UDim2.new(1, -32, 0, 22),
+    BackgroundColor3 = Color3.fromRGB(65, 35, 100),
+    BorderSizePixel = 0,
+    Font = Enum.Font.GothamBold,
+    Text = "CHECK UPDATE  •  v" .. CURRENT_VERSION,
+    TextColor3 = Color3.fromRGB(245, 235, 255),
+    TextSize = 8,
+    AutoButtonColor = false,
+}, main)
+make("UICorner", {CornerRadius = UDim.new(0, 6)}, updateButton)
+connect(updateButton.Activated, checkForUpdate)
+
 local copyUsernameButton = make("TextButton", {
     Name = "CopyUsername",
     Position = UDim2.fromOffset(70, 207),
@@ -431,6 +473,7 @@ make("UICorner", {CornerRadius = UDim.new(0, 6)}, exportTextButton)
 connect(exportJsonButton.Activated, function() exportPlayers("json") end)
 connect(exportTextButton.Activated, function() exportPlayers("text") end)
 connect(playerSearchBox:GetPropertyChangedSignal("Text"), refreshPlayers)
+task.delay(1.5, checkForUpdate)
 
 local activeJoinNotification
 local notificationSerial = 0
