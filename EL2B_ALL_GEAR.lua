@@ -46,7 +46,7 @@ local main = make("Frame", {
     Name = "Main",
     AnchorPoint = Vector2.new(0.5, 0.5),
     Position = UDim2.fromScale(0.5, 0.5),
-    Size = UDim2.fromOffset(330, 245),
+    Size = UDim2.fromOffset(330, 330),
     BackgroundColor3 = Color3.fromRGB(18, 18, 25),
     BorderSizePixel = 0,
 }, gui)
@@ -143,17 +143,15 @@ local localProfileAvatar = make("ImageLabel", {
     Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(localPlayer.UserId) .. "&w=150&h=150",
 }, main)
 make("UICorner", {CornerRadius = UDim.new(1, 0)}, localProfileAvatar)
-local playerList = make("TextLabel", {
+local playerList = make("ScrollingFrame", {
     Name = "PlayerList",
     BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(70, 160),
-    Size = UDim2.new(1, -86, 0, 66),
-    Font = Enum.Font.Gotham,
-    TextColor3 = Color3.fromRGB(185, 180, 195),
-    TextSize = 12,
-    TextWrapped = true,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    TextYAlignment = Enum.TextYAlignment.Top,
+    Position = UDim2.fromOffset(16, 215),
+    Size = UDim2.new(1, -32, 0, 98),
+    BorderSizePixel = 0,
+    ScrollBarThickness = 4,
+    ScrollBarImageColor3 = Color3.fromRGB(125, 35, 55),
+    CanvasSize = UDim2.fromOffset(0, 0),
 }, main)
 
 local function refreshPlayers()
@@ -162,15 +160,44 @@ local function refreshPlayers()
     end
     local players = Players:GetPlayers()
     playerCount.Text = string.format("Joueurs : %d  •  Profil : @%s", #players, tostring(localPlayer.Name))
-    local names = {}
-    for index, player in ipairs(players) do
-        if index > 5 then
-            table.insert(names, "…")
-            break
+    for _, child in ipairs(playerList:GetChildren()) do
+        if child:GetAttribute("ServerPlayerCard") then
+            child:Destroy()
         end
-        table.insert(names, tostring(player.DisplayName or player.Name) .. " (@" .. tostring(player.Name) .. ")")
     end
-    playerList.Text = table.concat(names, "  •  ")
+    table.sort(players, function(a, b) return tostring(a.Name):lower() < tostring(b.Name):lower() end)
+    for index, player in ipairs(players) do
+        local card = make("Frame", {
+            Name = "ServerPlayerCard",
+            BackgroundColor3 = Color3.fromRGB(30, 24, 40),
+            BorderSizePixel = 0,
+            Size = UDim2.new(0.5, -6, 0, 44),
+            Position = UDim2.new((index - 1) % 2 * 0.5, 4, 0, math.floor((index - 1) / 2) * 50 + 4),
+        }, playerList)
+        card:SetAttribute("ServerPlayerCard", true)
+        make("UICorner", {CornerRadius = UDim.new(0, 7)}, card)
+        local avatar = make("ImageLabel", {
+            BackgroundTransparency = 1,
+            Position = UDim2.fromOffset(5, 5),
+            Size = UDim2.fromOffset(34, 34),
+            Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(player.UserId) .. "&w=150&h=150",
+        }, card)
+        make("UICorner", {CornerRadius = UDim.new(1, 0)}, avatar)
+        make("TextLabel", {
+            BackgroundTransparency = 1,
+            Position = UDim2.fromOffset(44, 3),
+            Size = UDim2.new(1, -48, 1, -6),
+            Font = Enum.Font.GothamBold,
+            Text = tostring(player.DisplayName or player.Name) .. "\n@" .. tostring(player.Name) .. "\nID: " .. tostring(player.UserId),
+            TextColor3 = Color3.fromRGB(235, 230, 245),
+            TextSize = 8,
+            TextWrapped = true,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Center,
+        }, card)
+    end
+    playerList.CanvasSize = UDim2.fromOffset(0, math.max(0, math.ceil(#players / 2) * 50 + 4))
 end
 
 local activeJoinNotification
