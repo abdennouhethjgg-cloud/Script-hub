@@ -134,11 +134,20 @@ local playerCount = make("TextLabel", {
     TextXAlignment = Enum.TextXAlignment.Left,
 }, main)
 
+local localProfileAvatar = make("ImageLabel", {
+    Name = "LocalProfileAvatar",
+    BackgroundColor3 = Color3.fromRGB(55, 38, 75),
+    Position = UDim2.fromOffset(16, 163),
+    Size = UDim2.fromOffset(44, 44),
+    BorderSizePixel = 0,
+    Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(localPlayer.UserId) .. "&w=150&h=150",
+}, main)
+make("UICorner", {CornerRadius = UDim.new(1, 0)}, localProfileAvatar)
 local playerList = make("TextLabel", {
     Name = "PlayerList",
     BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(16, 163),
-    Size = UDim2.new(1, -32, 0, 60),
+    Position = UDim2.fromOffset(70, 160),
+    Size = UDim2.new(1, -86, 0, 66),
     Font = Enum.Font.Gotham,
     TextColor3 = Color3.fromRGB(185, 180, 195),
     TextSize = 12,
@@ -152,14 +161,14 @@ local function refreshPlayers()
         return
     end
     local players = Players:GetPlayers()
-    playerCount.Text = string.format("Joueurs dans le serveur : %d", #players)
+    playerCount.Text = string.format("Joueurs : %d  •  Profil : @%s", #players, tostring(localPlayer.Name))
     local names = {}
     for index, player in ipairs(players) do
         if index > 5 then
             table.insert(names, "…")
             break
         end
-        table.insert(names, player.DisplayName or player.Name)
+        table.insert(names, tostring(player.DisplayName or player.Name) .. " (@" .. tostring(player.Name) .. ")")
     end
     playerList.Text = table.concat(names, "  •  ")
 end
