@@ -164,6 +164,39 @@ local function selectPlayerProfile(player)
     localProfileDetails.Text = tostring(player.DisplayName or player.Name) .. "\n@" .. tostring(player.Name) .. "\nID: " .. tostring(player.UserId)
     status.Text = "● Profil sélectionné : @" .. tostring(player.Name)
 end
+local activeToast
+local toastSerial = 0
+local function showToast(message, success)
+    if destroyed then return end
+    toastSerial = toastSerial + 1
+    local serial = toastSerial
+    if activeToast then
+        activeToast:Destroy()
+        activeToast = nil
+    end
+    local toast = make("TextLabel", {
+        Name = "CopyToast",
+        AnchorPoint = Vector2.new(0.5, 1),
+        Position = UDim2.new(0.5, 0, 1, -12),
+        Size = UDim2.fromOffset(220, 32),
+        BackgroundColor3 = success and Color3.fromRGB(35, 105, 65) or Color3.fromRGB(105, 35, 45),
+        BorderSizePixel = 0,
+        Font = Enum.Font.GothamBold,
+        Text = tostring(message),
+        TextColor3 = Color3.fromRGB(255, 245, 248),
+        TextSize = 11,
+        TextWrapped = true,
+        ZIndex = 30,
+    }, gui)
+    activeToast = toast
+    make("UICorner", {CornerRadius = UDim.new(0, 8)}, toast)
+    task.delay(2.5, function()
+        if activeToast == toast and toastSerial == serial then
+            activeToast = nil
+            if toast.Parent then toast:Destroy() end
+        end
+    end)
+end
 local function copyToClipboard(value, label)
     local copied = false
     for _, clipboardFunction in ipairs({setclipboard, toclipboard, set_clipboard}) do
@@ -172,7 +205,13 @@ local function copyToClipboard(value, label)
             if copied then break end
         end
     end
-    status.Text = copied and ("● " .. label .. " copié") or ("● Copie indisponible : " .. label)
+    if copied then
+        status.Text = "● " .. label .. " copié"
+        showToast(label .. " copié", true)
+    else
+        status.Text = "● Copie indisponible : " .. label
+        showToast("Copie indisponible : " .. label, false)
+    end
 end
 local copyUsernameButton = make("TextButton", {
     Name = "CopyUsername",
