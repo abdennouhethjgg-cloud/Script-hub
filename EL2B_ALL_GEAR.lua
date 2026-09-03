@@ -46,7 +46,7 @@ local main = make("Frame", {
     Name = "Main",
     AnchorPoint = Vector2.new(0.5, 0.5),
     Position = UDim2.fromScale(0.5, 0.5),
-    Size = UDim2.fromOffset(330, 330),
+    Size = UDim2.fromOffset(330, 365),
     BackgroundColor3 = Color3.fromRGB(18, 18, 25),
     BorderSizePixel = 0,
 }, gui)
@@ -156,16 +156,60 @@ local localProfileDetails = make("TextLabel", {
     TextXAlignment = Enum.TextXAlignment.Left,
     TextYAlignment = Enum.TextYAlignment.Center,
 }, main)
+local selectedPlayer
 local function selectPlayerProfile(player)
     if not player or not player.Parent then return end
+    selectedPlayer = player
     localProfileAvatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(player.UserId) .. "&w=150&h=150"
     localProfileDetails.Text = tostring(player.DisplayName or player.Name) .. "\n@" .. tostring(player.Name) .. "\nID: " .. tostring(player.UserId)
     status.Text = "● Profil sélectionné : @" .. tostring(player.Name)
 end
+local function copyToClipboard(value, label)
+    local copied = false
+    for _, clipboardFunction in ipairs({setclipboard, toclipboard, set_clipboard}) do
+        if type(clipboardFunction) == "function" then
+            copied = pcall(clipboardFunction, tostring(value))
+            if copied then break end
+        end
+    end
+    status.Text = copied and ("● " .. label .. " copié") or ("● Copie indisponible : " .. label)
+end
+local copyUsernameButton = make("TextButton", {
+    Name = "CopyUsername",
+    Position = UDim2.fromOffset(70, 207),
+    Size = UDim2.fromOffset(112, 22),
+    BackgroundColor3 = Color3.fromRGB(125, 35, 55),
+    BorderSizePixel = 0,
+    Font = Enum.Font.GothamBold,
+    Text = "COPY USERNAME",
+    TextColor3 = Color3.fromRGB(255, 235, 240),
+    TextSize = 8,
+    AutoButtonColor = false,
+}, main)
+make("UICorner", {CornerRadius = UDim.new(0, 6)}, copyUsernameButton)
+local copyIdButton = make("TextButton", {
+    Name = "CopyUserId",
+    Position = UDim2.fromOffset(188, 207),
+    Size = UDim2.fromOffset(76, 22),
+    BackgroundColor3 = Color3.fromRGB(125, 35, 55),
+    BorderSizePixel = 0,
+    Font = Enum.Font.GothamBold,
+    Text = "COPY ID",
+    TextColor3 = Color3.fromRGB(255, 235, 240),
+    TextSize = 8,
+    AutoButtonColor = false,
+}, main)
+make("UICorner", {CornerRadius = UDim.new(0, 6)}, copyIdButton)
+copyUsernameButton.Activated:Connect(function()
+    if selectedPlayer then copyToClipboard(selectedPlayer.Name, "Username") end
+end)
+copyIdButton.Activated:Connect(function()
+    if selectedPlayer then copyToClipboard(selectedPlayer.UserId, "UserId") end
+end)
 local playerList = make("ScrollingFrame", {
     Name = "PlayerList",
     BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(16, 215),
+    Position = UDim2.fromOffset(16, 237),
     Size = UDim2.new(1, -32, 0, 98),
     BorderSizePixel = 0,
     ScrollBarThickness = 4,
