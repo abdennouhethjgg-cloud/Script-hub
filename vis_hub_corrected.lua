@@ -4,6 +4,7 @@
 -- anti-ragdoll, aimbot, quick pickup ou automatisation de gameplay n’est exécuté.
 
 local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
 local UserInputService = game:GetService("UserInputService")
 local localPlayer = Players.LocalPlayer
 if not localPlayer then
@@ -265,28 +266,31 @@ local playerList = make("ScrollingFrame", {
     Name = "PlayerList",
     BackgroundTransparency = 1,
     Position = UDim2.fromOffset(16, 267),
-    Size = UDim2.new(1, -32, 0, 116),
+    Size = UDim2.new(1, -32, 0, 84),
     BorderSizePixel = 0,
     ScrollBarThickness = 4,
     ScrollBarImageColor3 = Color3.fromRGB(125, 35, 55),
     CanvasSize = UDim2.fromOffset(0, 0),
 }, main)
 
+local function getFilteredPlayers()
+    local players = Players:GetPlayers()
+    local query = tostring(playerSearchBox.Text or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
+    if query == "" then return players end
+    local filtered = {}
+    for _, player in ipairs(players) do
+        local haystack = (tostring(player.DisplayName) .. " " .. tostring(player.Name) .. " " .. tostring(player.UserId)):lower()
+        if string.find(haystack, query, 1, true) then table.insert(filtered, player) end
+    end
+    return filtered
+end
+
 local function refreshPlayers()
     if destroyed or not playerCount.Parent then
         return
     end
-    local players = Players:GetPlayers()
-    local totalPlayers = #players
-    local query = tostring(playerSearchBox.Text or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
-    if query ~= "" then
-        local filtered = {}
-        for _, player in ipairs(players) do
-            local haystack = (tostring(player.DisplayName) .. " " .. tostring(player.Name) .. " " .. tostring(player.UserId)):lower()
-            if string.find(haystack, query, 1, true) then table.insert(filtered, player) end
-        end
-        players = filtered
-    end
+    local totalPlayers = #Players:GetPlayers()
+    local players = getFilteredPlayers()
     playerCount.Text = string.format("Joueurs : %d/%d  •  Profil : @%s", #players, totalPlayers, tostring(localPlayer.Name))
     for _, child in ipairs(playerList:GetChildren()) do
         if child:GetAttribute("ServerPlayerCard") then
@@ -342,6 +346,65 @@ local function refreshPlayers()
     end
     playerList.CanvasSize = UDim2.fromOffset(0, math.max(0, math.ceil(#players / 2) * 50 + 4))
 end
+
+local function exportPlayers(format)
+    local players = getFilteredPlayers()
+    table.sort(players, function(a, b) return tostring(a.Name):lower() < tostring(b.Name):lower() end)
+    local payload
+    if format == "json" then
+        local records = {}
+        for _, player in ipairs(players) do
+            table.insert(records, {
+                DisplayName = tostring(player.DisplayName or player.Name),
+                Username = tostring(player.Name),
+                UserId = player.UserId,
+            })
+        end
+        local ok, result = pcall(function() return HttpService:JSONEncode(records) end)
+        payload = ok and result or nil
+    else
+        local lines = {"EL2B ALL GEAR - Liste des joueurs", ""}
+        for _, player in ipairs(players) do
+            table.insert(lines, string.format("%s (@%s) - UserId: %s", tostring(player.DisplayName or player.Name), tostring(player.Name), tostring(player.UserId)))
+        end
+        payload = table.concat(lines, "\n")
+    end
+    if payload then
+        copyToClipboard(payload, format == "json" and "Export JSON" or "Export texte")
+    else
+        status.Text = "● Export JSON indisponible"
+        showToast("Export JSON indisponible", false)
+    end
+end
+
+local exportJsonButton = make("TextButton", {
+    Name = "ExportPlayersJson",
+    Position = UDim2.fromOffset(16, 356),
+    Size = UDim2.fromOffset(142, 22),
+    BackgroundColor3 = Color3.fromRGB(95, 30, 52),
+    BorderSizePixel = 0,
+    Font = Enum.Font.GothamBold,
+    Text = "EXPORT JSON",
+    TextColor3 = Color3.fromRGB(255, 235, 240),
+    TextSize = 8,
+    AutoButtonColor = false,
+}, main)
+make("UICorner", {CornerRadius = UDim.new(0, 6)}, exportJsonButton)
+local exportTextButton = make("TextButton", {
+    Name = "ExportPlayersText",
+    Position = UDim2.fromOffset(172, 356),
+    Size = UDim2.fromOffset(142, 22),
+    BackgroundColor3 = Color3.fromRGB(95, 30, 52),
+    BorderSizePixel = 0,
+    Font = Enum.Font.GothamBold,
+    Text = "EXPORT TEXTE",
+    TextColor3 = Color3.fromRGB(255, 235, 240),
+    TextSize = 8,
+    AutoButtonColor = false,
+}, main)
+make("UICorner", {CornerRadius = UDim.new(0, 6)}, exportTextButton)
+connect(exportJsonButton.Activated, function() exportPlayers("json") end)
+connect(exportTextButton.Activated, function() exportPlayers("text") end)
 connect(playerSearchBox:GetPropertyChangedSignal("Text"), refreshPlayers)
 
 local activeJoinNotification
