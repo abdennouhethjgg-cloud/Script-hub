@@ -1,5 +1,5 @@
 -- EL2B ALL GEAR — version stable et sûre pour Roblox
--- VERSION: 2.1.0
+-- VERSION: 2.2.0
 -- Cette version est volontairement limitée à l’interface et aux informations visuelles.
 -- Aucun RemoteEvent/RemoteFunction, téléportation, lagger, hook, commande admin,
 -- anti-ragdoll, aimbot, quick pickup ou automatisation de gameplay n’est exécuté.
@@ -16,7 +16,7 @@ end
 
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local GUI_NAME = "EL2B_ALL_GEAR"
-local CURRENT_VERSION = "2.1.0"
+local CURRENT_VERSION = "2.2.0"
 local THEME_FILE = "EL2B_THEME.json"
 local themePresets = {
     DARK = {main=Color3.fromRGB(18,18,25), panel=Color3.fromRGB(28,25,40), card=Color3.fromRGB(30,24,40), accent=Color3.fromRGB(125,35,55), text=Color3.fromRGB(245,240,255), muted=Color3.fromRGB(190,180,205), input=Color3.fromRGB(30,24,40)},
@@ -1048,21 +1048,52 @@ task.spawn(function()
 end)
 refreshPlayers()
 
-local loadingProgress = TweenService:Create(loadingFill, TweenInfo.new(1.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 1, 0)})
+local loadingDuration = 60
+local loadingFinished = false
+local loadingProgress = TweenService:Create(loadingFill, TweenInfo.new(loadingDuration, Enum.EasingStyle.Linear), {Size = UDim2.new(1, 0, 1, 0)})
 local loadingSpin = TweenService:Create(loadingSpinner, TweenInfo.new(0.75, Enum.EasingStyle.Linear, Enum.EasingDirection.In, -1), {Rotation = 360})
+local skipButton = make("TextButton", {
+    Name = "SkipLoading",
+    AnchorPoint = Vector2.new(0.5, 1),
+    Position = UDim2.new(0.5, 0, 1, -12),
+    Size = UDim2.fromOffset(130, 24),
+    BackgroundColor3 = Color3.fromRGB(125, 35, 55),
+    BorderSizePixel = 0,
+    Font = Enum.Font.GothamBold,
+    Text = "SKIP  •  60s",
+    TextColor3 = Color3.fromRGB(255, 235, 240),
+    TextSize = 9,
+    AutoButtonColor = false,
+    ZIndex = 102,
+}, loadingPanel)
+make("UICorner", {CornerRadius = UDim.new(0, 7)}, skipButton)
+bindButtonSfx(skipButton)
+local function finishLoading()
+    if loadingFinished or destroyed or not gui.Parent then return end
+    loadingFinished = true
+    loadingStatus.Text = "Interface prête"
+    main.Visible = true
+    loadingOverlay.Visible = false
+    loadingProgress:Cancel()
+    loadingSpin:Cancel()
+    pcall(function() loadingMusic:Stop() end)
+    if loadingMusic.Parent then loadingMusic:Destroy() end
+    if loadingOverlay.Parent then loadingOverlay:Destroy() end
+end
+connect(skipButton.Activated, finishLoading)
 if musicEnabled then pcall(function() loadingMusic:Play() end) end
 loadingProgress:Play()
 loadingSpin:Play()
 task.spawn(function()
-    task.wait(1.15)
-    if destroyed or not gui.Parent then return end
-    loadingStatus.Text = "Interface prête"
-    task.wait(0.2)
-    if destroyed or not gui.Parent then return end
-    main.Visible = true
-    loadingOverlay.Visible = false
-    loadingSpin:Cancel()
-    pcall(function() loadingMusic:Stop() end)
-    loadingMusic:Destroy()
-    loadingOverlay:Destroy()
+    local startedAt = os.clock()
+    while not loadingFinished and not destroyed and gui.Parent do
+        local remaining = math.max(0, math.ceil(loadingDuration - (os.clock() - startedAt)))
+        skipButton.Text = "SKIP  •  " .. tostring(remaining) .. "s"
+        loadingStatus.Text = "Chargement de l’interface... " .. tostring(remaining) .. "s"
+        if remaining <= 0 then
+            finishLoading()
+            break
+        end
+        task.wait(1)
+    end
 end)
