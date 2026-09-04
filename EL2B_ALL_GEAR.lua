@@ -1,5 +1,5 @@
 -- EL2B ALL GEAR — version stable et sûre pour Roblox
--- VERSION: 1.6.0
+-- VERSION: 1.7.0
 -- Cette version est volontairement limitée à l’interface et aux informations visuelles.
 -- Aucun RemoteEvent/RemoteFunction, téléportation, lagger, hook, commande admin,
 -- anti-ragdoll, aimbot, quick pickup ou automatisation de gameplay n’est exécuté.
@@ -16,7 +16,7 @@ end
 
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local GUI_NAME = "EL2B_ALL_GEAR"
-local CURRENT_VERSION = "1.6.0"
+local CURRENT_VERSION = "1.7.0"
 local THEME_FILE = "EL2B_THEME.json"
 local themePresets = {
     DARK = {main=Color3.fromRGB(18,18,25), panel=Color3.fromRGB(28,25,40), card=Color3.fromRGB(30,24,40), accent=Color3.fromRGB(125,35,55), text=Color3.fromRGB(245,240,255), muted=Color3.fromRGB(190,180,205), input=Color3.fromRGB(30,24,40)},
@@ -110,6 +110,26 @@ local loadingMusic = make("Sound", {
     Volume = 0.18,
     Looped = true,
 }, SoundService)
+local CLICK_SFX_ID = "rbxassetid://12221967"
+local clickSfx = make("Sound", {
+    Name = "EL2B_ALL_GEAR_ClickSFX",
+    SoundId = CLICK_SFX_ID,
+    Volume = 0.12,
+    PlaybackSpeed = 1,
+}, SoundService)
+local function playClickSfx()
+    if destroyed or not clickSfx.Parent then return end
+    pcall(function()
+        clickSfx:Stop()
+        clickSfx.TimePosition = 0
+        clickSfx:Play()
+    end)
+end
+local function bindButtonSfx(button)
+    if not button or button:GetAttribute("ClickSfxBound") then return end
+    button:SetAttribute("ClickSfxBound", true)
+    connect(button.Activated, playClickSfx)
+end
 make("TextLabel", {
     Name = "LoadingTitle",
     BackgroundTransparency = 1,
@@ -559,7 +579,8 @@ local function refreshPlayers(force)
             AutoButtonColor = false,
         }, card)
         make("UICorner", {CornerRadius = UDim.new(1, 0)}, viewButton)
-        viewButton.Activated:Connect(function() selectPlayerProfile(player) end)
+        connect(viewButton.Activated, function() selectPlayerProfile(player) end)
+        bindButtonSfx(viewButton)
     end
     playerList.CanvasSize = UDim2.fromOffset(0, math.max(0, math.ceil(#players / 2) * 50 + 4))
 end
@@ -692,6 +713,10 @@ modeButton = make("TextButton", {
 }, main)
 make("UICorner", {CornerRadius = UDim.new(0, 6)}, modeButton)
 
+for _, object in ipairs(gui:GetDescendants()) do
+    if object:IsA("TextButton") then bindButtonSfx(object) end
+end
+
 applyTheme = function(themeName)
     local palette = themePresets[themeName] or themePresets.DARK
     main.BackgroundColor3 = palette.main
@@ -812,6 +837,8 @@ connect(closeButton.Activated, function()
     destroyed = true
     pcall(function() loadingMusic:Stop() end)
     if loadingMusic.Parent then loadingMusic:Destroy() end
+    pcall(function() clickSfx:Stop() end)
+    if clickSfx.Parent then clickSfx:Destroy() end
     for _, connection in ipairs(connections) do
         if connection.Connected then
             connection:Disconnect()
