@@ -1,5 +1,5 @@
 -- EL2B ALL GEAR — version stable et sûre pour Roblox
--- VERSION: 1.3.0
+-- VERSION: 1.4.0
 -- Cette version est volontairement limitée à l’interface et aux informations visuelles.
 -- Aucun RemoteEvent/RemoteFunction, téléportation, lagger, hook, commande admin,
 -- anti-ragdoll, aimbot, quick pickup ou automatisation de gameplay n’est exécuté.
@@ -7,6 +7,7 @@
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 local localPlayer = Players.LocalPlayer
 if not localPlayer then
     return
@@ -14,7 +15,7 @@ end
 
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local GUI_NAME = "EL2B_ALL_GEAR"
-local CURRENT_VERSION = "1.3.0"
+local CURRENT_VERSION = "1.4.0"
 local THEME_FILE = "EL2B_THEME.json"
 local themePresets = {
     DARK = {main=Color3.fromRGB(18,18,25), panel=Color3.fromRGB(28,25,40), card=Color3.fromRGB(30,24,40), accent=Color3.fromRGB(125,35,55), text=Color3.fromRGB(245,240,255), muted=Color3.fromRGB(190,180,205), input=Color3.fromRGB(30,24,40)},
@@ -71,6 +72,76 @@ local gui = make("ScreenGui", {
     DisplayOrder = 100,
 }, playerGui)
 
+local loadingOverlay = make("Frame", {
+    Name = "LoadingOverlay",
+    Size = UDim2.fromScale(1, 1),
+    BackgroundColor3 = Color3.fromRGB(8, 8, 12),
+    BorderSizePixel = 0,
+    ZIndex = 100,
+}, gui)
+local loadingPanel = make("Frame", {
+    Name = "LoadingPanel",
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.fromScale(0.5, 0.5),
+    Size = UDim2.fromOffset(280, 150),
+    BackgroundColor3 = Color3.fromRGB(22, 12, 18),
+    BorderSizePixel = 0,
+    ZIndex = 101,
+}, loadingOverlay)
+make("UICorner", {CornerRadius = UDim.new(0, 14)}, loadingPanel)
+make("UIStroke", {Color = Color3.fromRGB(190, 35, 55), Thickness = 1.5}, loadingPanel)
+make("TextLabel", {
+    Name = "LoadingTitle",
+    BackgroundTransparency = 1,
+    Position = UDim2.fromOffset(16, 18),
+    Size = UDim2.new(1, -32, 0, 30),
+    Font = Enum.Font.GothamBold,
+    Text = "EL2B ALL GEAR",
+    TextColor3 = Color3.fromRGB(255, 235, 238),
+    TextSize = 22,
+    ZIndex = 102,
+}, loadingPanel)
+local loadingSpinner = make("TextLabel", {
+    Name = "LoadingSpinner",
+    BackgroundTransparency = 1,
+    AnchorPoint = Vector2.new(0.5, 0),
+    Position = UDim2.new(0.5, 0, 0, 54),
+    Size = UDim2.fromOffset(34, 28),
+    Font = Enum.Font.GothamBold,
+    Text = "◌",
+    TextColor3 = Color3.fromRGB(235, 55, 75),
+    TextSize = 28,
+    ZIndex = 102,
+}, loadingPanel)
+local loadingStatus = make("TextLabel", {
+    Name = "LoadingStatus",
+    BackgroundTransparency = 1,
+    Position = UDim2.fromOffset(16, 90),
+    Size = UDim2.new(1, -32, 0, 20),
+    Font = Enum.Font.Gotham,
+    Text = "Initialisation de l’interface...",
+    TextColor3 = Color3.fromRGB(210, 165, 175),
+    TextSize = 10,
+    ZIndex = 102,
+}, loadingPanel)
+local loadingTrack = make("Frame", {
+    Name = "LoadingTrack",
+    Position = UDim2.fromOffset(24, 122),
+    Size = UDim2.new(1, -48, 0, 6),
+    BackgroundColor3 = Color3.fromRGB(55, 25, 32),
+    BorderSizePixel = 0,
+    ZIndex = 102,
+}, loadingPanel)
+make("UICorner", {CornerRadius = UDim.new(1, 0)}, loadingTrack)
+local loadingFill = make("Frame", {
+    Name = "LoadingFill",
+    Size = UDim2.new(0, 0, 1, 0),
+    BackgroundColor3 = Color3.fromRGB(205, 35, 55),
+    BorderSizePixel = 0,
+    ZIndex = 103,
+}, loadingTrack)
+make("UICorner", {CornerRadius = UDim.new(1, 0)}, loadingFill)
+
 local main = make("Frame", {
     Name = "Main",
     AnchorPoint = Vector2.new(0.5, 0.5),
@@ -78,6 +149,7 @@ local main = make("Frame", {
     Size = UDim2.fromOffset(330, 480),
     BackgroundColor3 = Color3.fromRGB(18, 18, 25),
     BorderSizePixel = 0,
+    Visible = false,
 }, gui)
 make("UICorner", {CornerRadius = UDim.new(0, 10)}, main)
 make("UIStroke", {
@@ -725,5 +797,20 @@ task.spawn(function()
         task.wait(0.5)
     end
 end)
-
 refreshPlayers()
+
+local loadingProgress = TweenService:Create(loadingFill, TweenInfo.new(1.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 1, 0)})
+local loadingSpin = TweenService:Create(loadingSpinner, TweenInfo.new(0.75, Enum.EasingStyle.Linear, Enum.EasingDirection.In, -1), {Rotation = 360})
+loadingProgress:Play()
+loadingSpin:Play()
+task.spawn(function()
+    task.wait(1.15)
+    if destroyed or not gui.Parent then return end
+    loadingStatus.Text = "Interface prête"
+    task.wait(0.2)
+    if destroyed or not gui.Parent then return end
+    main.Visible = true
+    loadingOverlay.Visible = false
+    loadingSpin:Cancel()
+    loadingOverlay:Destroy()
+end)
