@@ -1,5 +1,5 @@
 -- EL2B ALL GEAR — version stable et sûre pour Roblox
--- VERSION: 1.0.0
+-- VERSION: 1.2.0
 -- Cette version est volontairement limitée à l’interface et aux informations visuelles.
 -- Aucun RemoteEvent/RemoteFunction, téléportation, lagger, hook, commande admin,
 -- anti-ragdoll, aimbot, quick pickup ou automatisation de gameplay n’est exécuté.
@@ -14,7 +14,31 @@ end
 
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local GUI_NAME = "EL2B_ALL_GEAR"
-local CURRENT_VERSION = "1.0.0"
+local CURRENT_VERSION = "1.2.0"
+local THEME_FILE = "EL2B_THEME.json"
+local themePresets = {
+    DARK = {main=Color3.fromRGB(18,18,25), panel=Color3.fromRGB(28,25,40), card=Color3.fromRGB(30,24,40), accent=Color3.fromRGB(125,35,55), text=Color3.fromRGB(245,240,255), muted=Color3.fromRGB(190,180,205), input=Color3.fromRGB(30,24,40)},
+    LIGHT = {main=Color3.fromRGB(242,242,247), panel=Color3.fromRGB(255,255,255), card=Color3.fromRGB(232,232,240), accent=Color3.fromRGB(170,45,70), text=Color3.fromRGB(35,30,45), muted=Color3.fromRGB(95,85,110), input=Color3.fromRGB(225,225,235)},
+    RED = {main=Color3.fromRGB(22,10,14), panel=Color3.fromRGB(45,16,24), card=Color3.fromRGB(55,20,29), accent=Color3.fromRGB(190,35,55), text=Color3.fromRGB(255,235,238), muted=Color3.fromRGB(220,155,165), input=Color3.fromRGB(45,16,24)},
+    CYBERPUNK = {main=Color3.fromRGB(12,12,28), panel=Color3.fromRGB(25,18,48), card=Color3.fromRGB(30,24,58), accent=Color3.fromRGB(0,220,190), text=Color3.fromRGB(235,255,250), muted=Color3.fromRGB(150,205,205), input=Color3.fromRGB(25,18,48)},
+    NEON = {main=Color3.fromRGB(8,12,18), panel=Color3.fromRGB(14,30,42), card=Color3.fromRGB(18,42,52), accent=Color3.fromRGB(0,190,255), text=Color3.fromRGB(225,250,255), muted=Color3.fromRGB(145,200,220), input=Color3.fromRGB(14,30,42)},
+    PASTEL = {main=Color3.fromRGB(42,35,50), panel=Color3.fromRGB(70,56,78), card=Color3.fromRGB(82,65,90), accent=Color3.fromRGB(225,125,175), text=Color3.fromRGB(255,245,252), muted=Color3.fromRGB(220,190,215), input=Color3.fromRGB(70,56,78)},
+    RETRO = {main=Color3.fromRGB(28,24,18), panel=Color3.fromRGB(58,45,27), card=Color3.fromRGB(72,55,30), accent=Color3.fromRGB(225,155,45), text=Color3.fromRGB(255,244,205), muted=Color3.fromRGB(205,180,125), input=Color3.fromRGB(58,45,27)},
+}
+local activeThemeName = "DARK"
+local themeButton
+local modeButton
+local visualToggle
+local function saveThemeSettings()
+    if type(writefile) ~= "function" then return end
+    pcall(function() writefile(THEME_FILE, HttpService:JSONEncode({theme=activeThemeName})) end)
+end
+if type(isfile) == "function" and type(readfile) == "function" and isfile(THEME_FILE) then
+    pcall(function()
+        local saved = HttpService:JSONDecode(readfile(THEME_FILE))
+        if saved and themePresets[saved.theme] then activeThemeName = saved.theme end
+    end)
+end
 local VERSION_URL = "https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/EL2B_VERSION.txt"
 local SCRIPT_URL = "https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/vis_hub_corrected.lua"
 local oldGui = playerGui:FindFirstChild(GUI_NAME)
@@ -51,7 +75,7 @@ local main = make("Frame", {
     Name = "Main",
     AnchorPoint = Vector2.new(0.5, 0.5),
     Position = UDim2.fromScale(0.5, 0.5),
-    Size = UDim2.fromOffset(330, 425),
+    Size = UDim2.fromOffset(330, 480),
     BackgroundColor3 = Color3.fromRGB(18, 18, 25),
     BorderSizePixel = 0,
 }, gui)
@@ -202,6 +226,34 @@ local function showToast(message, success)
         end
     end)
 end
+
+visualToggle = make("TextButton", {
+    Name = "VisualToggle",
+    AnchorPoint = Vector2.new(1, 1),
+    Position = UDim2.new(1, -18, 1, -72),
+    Size = UDim2.fromOffset(40, 40),
+    BackgroundColor3 = Color3.fromRGB(125, 35, 55),
+    BorderSizePixel = 0,
+    Font = Enum.Font.GothamBold,
+    Text = "◉",
+    TextColor3 = Color3.fromRGB(255, 235, 240),
+    TextSize = 18,
+    ZIndex = 40,
+    AutoButtonColor = false,
+}, gui)
+make("UICorner", {CornerRadius = UDim.new(1, 0)}, visualToggle)
+make("UIStroke", {Color = Color3.fromRGB(255, 205, 215), Thickness = 1}, visualToggle)
+local visualEnabled = true
+connect(visualToggle.Activated, function()
+    visualEnabled = not visualEnabled
+    main.Visible = visualEnabled
+    visualToggle.Text = visualEnabled and "◉" or "○"
+    visualToggle:SetAttribute("VisualEnabled", visualEnabled)
+    if visualEnabled then
+        showToast("Interface visuelle activée", true)
+    end
+end)
+
 local updateButton
 local function checkForUpdate()
     local httpGet = game.HttpGet
@@ -343,7 +395,7 @@ local function refreshPlayers()
     for index, player in ipairs(players) do
         local card = make("Frame", {
             Name = "ServerPlayerCard",
-            BackgroundColor3 = Color3.fromRGB(30, 24, 40),
+            BackgroundColor3 = themePresets[activeThemeName].card,
             BorderSizePixel = 0,
             Size = UDim2.new(0.5, -6, 0, 44),
             Position = UDim2.new((index - 1) % 2 * 0.5, 4, 0, math.floor((index - 1) / 2) * 50 + 4),
@@ -375,7 +427,7 @@ local function refreshPlayers()
             AnchorPoint = Vector2.new(1, 0.5),
             Position = UDim2.new(1, -5, 0.5, 0),
             Size = UDim2.fromOffset(30, 30),
-            BackgroundColor3 = Color3.fromRGB(125, 35, 55),
+            BackgroundColor3 = themePresets[activeThemeName].accent,
             BorderSizePixel = 0,
             Font = Enum.Font.GothamBold,
             Text = "VIEW",
@@ -472,6 +524,86 @@ local exportTextButton = make("TextButton", {
 make("UICorner", {CornerRadius = UDim.new(0, 6)}, exportTextButton)
 connect(exportJsonButton.Activated, function() exportPlayers("json") end)
 connect(exportTextButton.Activated, function() exportPlayers("text") end)
+
+local themeOrder = {"DARK", "LIGHT", "RED", "CYBERPUNK", "NEON", "PASTEL", "RETRO"}
+local applyTheme
+local function nextTheme()
+    local currentIndex = 1
+    for index, name in ipairs(themeOrder) do
+        if name == activeThemeName then currentIndex = index break end
+    end
+    activeThemeName = themeOrder[currentIndex % #themeOrder + 1]
+    applyTheme(activeThemeName)
+    saveThemeSettings()
+end
+local function toggleLightDark()
+    activeThemeName = activeThemeName == "LIGHT" and "DARK" or "LIGHT"
+    applyTheme(activeThemeName)
+    saveThemeSettings()
+end
+
+themeButton = make("TextButton", {
+    Name = "ThemePreset",
+    Position = UDim2.fromOffset(16, 416),
+    Size = UDim2.fromOffset(142, 22),
+    BackgroundColor3 = Color3.fromRGB(95, 30, 52),
+    BorderSizePixel = 0,
+    Font = Enum.Font.GothamBold,
+    Text = "THEME : " .. activeThemeName,
+    TextColor3 = Color3.fromRGB(255, 235, 240),
+    TextSize = 8,
+    AutoButtonColor = false,
+}, main)
+make("UICorner", {CornerRadius = UDim.new(0, 6)}, themeButton)
+modeButton = make("TextButton", {
+    Name = "LightDarkMode",
+    Position = UDim2.fromOffset(172, 416),
+    Size = UDim2.fromOffset(142, 22),
+    BackgroundColor3 = Color3.fromRGB(95, 30, 52),
+    BorderSizePixel = 0,
+    Font = Enum.Font.GothamBold,
+    Text = "MODE CLAIR / SOMBRE",
+    TextColor3 = Color3.fromRGB(255, 235, 240),
+    TextSize = 8,
+    AutoButtonColor = false,
+}, main)
+make("UICorner", {CornerRadius = UDim.new(0, 6)}, modeButton)
+
+applyTheme = function(themeName)
+    local palette = themePresets[themeName] or themePresets.DARK
+    main.BackgroundColor3 = palette.main
+    header.BackgroundColor3 = palette.panel
+    local headerFill = header:FindFirstChild("HeaderFill")
+    if headerFill then headerFill.BackgroundColor3 = palette.panel end
+    local stroke = main:FindFirstChildOfClass("UIStroke")
+    if stroke then stroke.Color = palette.accent end
+    status.BackgroundColor3 = palette.card
+    status.TextColor3 = palette.text
+    playerCount.TextColor3 = palette.text
+    local title = header:FindFirstChild("Title")
+    if title then title.TextColor3 = palette.text end
+    for _, object in ipairs(main:GetDescendants()) do
+        if object:IsA("TextLabel") or object:IsA("TextButton") then
+            object.TextColor3 = palette.text
+        end
+        if object:IsA("TextBox") then
+            object.BackgroundColor3 = palette.input
+            object.TextColor3 = palette.text
+            object.PlaceholderColor3 = palette.muted
+        elseif object:IsA("Frame") and object:GetAttribute("ServerPlayerCard") then
+            object.BackgroundColor3 = palette.card
+        elseif object:IsA("TextButton") then
+            object.BackgroundColor3 = palette.accent
+        end
+    end
+    themeButton.Text = "THEME : " .. themeName
+    modeButton.Text = themeName == "LIGHT" and "MODE CLAIR  •  ACTIF" or "MODE SOMBRE  •  ACTIF"
+    visualToggle.BackgroundColor3 = palette.accent
+    visualToggle.TextColor3 = palette.text
+end
+connect(themeButton.Activated, nextTheme)
+connect(modeButton.Activated, toggleLightDark)
+applyTheme(activeThemeName)
 connect(playerSearchBox:GetPropertyChangedSignal("Text"), refreshPlayers)
 task.delay(1.5, checkForUpdate)
 
