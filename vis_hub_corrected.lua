@@ -1,5 +1,5 @@
 -- EL2B ALL GEAR — version stable et sûre pour Roblox
--- VERSION: 1.8.0
+-- VERSION: 1.9.0
 -- Cette version est volontairement limitée à l’interface et aux informations visuelles.
 -- Aucun RemoteEvent/RemoteFunction, téléportation, lagger, hook, commande admin,
 -- anti-ragdoll, aimbot, quick pickup ou automatisation de gameplay n’est exécuté.
@@ -16,7 +16,7 @@ end
 
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local GUI_NAME = "EL2B_ALL_GEAR"
-local CURRENT_VERSION = "1.8.0"
+local CURRENT_VERSION = "1.9.0"
 local THEME_FILE = "EL2B_THEME.json"
 local themePresets = {
     DARK = {main=Color3.fromRGB(18,18,25), panel=Color3.fromRGB(28,25,40), card=Color3.fromRGB(30,24,40), accent=Color3.fromRGB(125,35,55), text=Color3.fromRGB(245,240,255), muted=Color3.fromRGB(190,180,205), input=Color3.fromRGB(30,24,40)},
@@ -27,6 +27,14 @@ local themePresets = {
     PASTEL = {main=Color3.fromRGB(42,35,50), panel=Color3.fromRGB(70,56,78), card=Color3.fromRGB(82,65,90), accent=Color3.fromRGB(225,125,175), text=Color3.fromRGB(255,245,252), muted=Color3.fromRGB(220,190,215), input=Color3.fromRGB(70,56,78)},
     RETRO = {main=Color3.fromRGB(28,24,18), panel=Color3.fromRGB(58,45,27), card=Color3.fromRGB(72,55,30), accent=Color3.fromRGB(225,155,45), text=Color3.fromRGB(255,244,205), muted=Color3.fromRGB(205,180,125), input=Color3.fromRGB(58,45,27)},
 }
+local function parseHexColor(value)
+    local hex = tostring(value or ""):gsub("#", "")
+    if not hex:match("^%x%x%x%x%x%x$") then return nil end
+    return Color3.fromRGB(tonumber(hex:sub(1, 2), 16), tonumber(hex:sub(3, 4), 16), tonumber(hex:sub(5, 6), 16))
+end
+local customThemeHex = {main="#121219", panel="#1C1928", card="#1E1828", accent="#7D2337", text="#F5F0FF", muted="#BEB4CD", input="#1E1828"}
+local customTheme = {}
+for key, value in pairs(customThemeHex) do customTheme[key] = parseHexColor(value) end
 local activeThemeName = "DARK"
 local musicVolume = 0.18
 local sfxVolume = 0.12
@@ -37,12 +45,18 @@ local visualToggle
 local audioPanel
 local function saveThemeSettings()
     if type(writefile) ~= "function" then return end
-    pcall(function() writefile(THEME_FILE, HttpService:JSONEncode({theme=activeThemeName, musicVolume=musicVolume, sfxVolume=sfxVolume, musicEnabled=musicEnabled})) end)
+    pcall(function() writefile(THEME_FILE, HttpService:JSONEncode({theme=activeThemeName, customColors=customThemeHex, musicVolume=musicVolume, sfxVolume=sfxVolume, musicEnabled=musicEnabled})) end)
 end
 if type(isfile) == "function" and type(readfile) == "function" and isfile(THEME_FILE) then
     pcall(function()
         local saved = HttpService:JSONDecode(readfile(THEME_FILE))
-        if saved and themePresets[saved.theme] then activeThemeName = saved.theme end
+        if saved and (themePresets[saved.theme] or saved.theme == "CUSTOM") then activeThemeName = saved.theme end
+        if saved and type(saved.customColors) == "table" then
+            for key, value in pairs(saved.customColors) do
+                local parsed = parseHexColor(value)
+                if parsed and customTheme[key] then customThemeHex[key] = tostring(value); customTheme[key] = parsed end
+            end
+        end
         if saved and type(saved.musicVolume) == "number" then musicVolume = math.clamp(saved.musicVolume, 0, 1) end
         if saved and type(saved.sfxVolume) == "number" then sfxVolume = math.clamp(saved.sfxVolume, 0, 1) end
         if saved and type(saved.musicEnabled) == "boolean" then musicEnabled = saved.musicEnabled end
@@ -678,7 +692,7 @@ make("UICorner", {CornerRadius = UDim.new(0, 6)}, exportTextButton)
 connect(exportJsonButton.Activated, function() exportPlayers("json") end)
 connect(exportTextButton.Activated, function() exportPlayers("text") end)
 
-local themeOrder = {"DARK", "LIGHT", "RED", "CYBERPUNK", "NEON", "PASTEL", "RETRO"}
+local themeOrder = {"DARK", "LIGHT", "RED", "CYBERPUNK", "NEON", "PASTEL", "RETRO", "CUSTOM"}
 local applyTheme
 local function nextTheme()
     local currentIndex = 1
@@ -740,7 +754,7 @@ audioPanel = make("Frame", {
     Name = "AudioPanel",
     AnchorPoint = Vector2.new(0.5, 0.5),
     Position = UDim2.fromScale(0.5, 0.5),
-    Size = UDim2.fromOffset(270, 175),
+    Size = UDim2.fromOffset(270, 315),
     BackgroundColor3 = Color3.fromRGB(28, 25, 40),
     BorderSizePixel = 0,
     Visible = false,
@@ -754,7 +768,7 @@ make("TextLabel", {
     Position = UDim2.fromOffset(14, 10),
     Size = UDim2.new(1, -28, 0, 22),
     Font = Enum.Font.GothamBold,
-    Text = "AUDIO CONFIGURATION",
+    Text = "AUDIO & THEME CONFIGURATION",
     TextColor3 = Color3.fromRGB(245, 240, 255),
     TextSize = 14,
     ZIndex = 51,
@@ -803,7 +817,34 @@ local musicToggle = make("TextButton", {
     ZIndex = 51,
 }, audioPanel)
 make("UICorner", {CornerRadius = UDim.new(0, 6)}, musicToggle)
-local audioClose = make("TextButton", {Name = "CloseAudio", Position = UDim2.fromOffset(14, 150), Size = UDim2.new(1, -28, 0, 18), BackgroundTransparency = 1, Font = Enum.Font.Gotham, Text = "FERMER", TextColor3 = Color3.fromRGB(210, 200, 220), TextSize = 9, ZIndex = 51}, audioPanel)
+local function makeColorBox(name, y, label, key)
+    local box = make("TextBox", {Name = name, Position = UDim2.fromOffset(14, y), Size = UDim2.fromOffset(88, 24), BackgroundColor3 = Color3.fromRGB(30, 24, 40), BorderSizePixel = 0, Font = Enum.Font.GothamBold, Text = customThemeHex[key], TextColor3 = Color3.fromRGB(245, 240, 255), TextSize = 10, ClearTextOnFocus = false, ZIndex = 51}, audioPanel)
+    make("UICorner", {CornerRadius = UDim.new(0, 6)}, box)
+    make("TextLabel", {BackgroundTransparency = 1, Position = UDim2.fromOffset(112, y), Size = UDim2.new(1, -126, 0, 24), Font = Enum.Font.Gotham, Text = label .. " (#RRGGBB)", TextColor3 = Color3.fromRGB(210, 200, 220), TextSize = 9, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 51}, audioPanel)
+    connect(box.FocusLost, function()
+        local value = tostring(box.Text):upper()
+        if not value:match("^#%x%x%x%x%x%x$") then
+            box.Text = customThemeHex[key]
+            showToast("Couleur invalide : " .. label, false)
+            return
+        end
+        local parsed = parseHexColor(value)
+        customThemeHex[key] = value
+        customTheme[key] = parsed
+        if key == "panel" then customTheme.card = parsed; customTheme.input = parsed end
+        if key == "text" then customTheme.muted = parsed end
+        activeThemeName = "CUSTOM"
+        applyTheme("CUSTOM")
+        saveThemeSettings()
+        showToast("Couleur personnalisée appliquée", true)
+    end)
+    return box
+end
+local customMainBox = makeColorBox("CustomMainColor", 150, "Fond", "main")
+local customPanelBox = makeColorBox("CustomPanelColor", 178, "Panneaux", "panel")
+local customAccentBox = makeColorBox("CustomAccentColor", 206, "Accent", "accent")
+local customTextBox = makeColorBox("CustomTextColor", 234, "Texte", "text")
+local audioClose = make("TextButton", {Name = "CloseAudio", Position = UDim2.fromOffset(14, 272), Size = UDim2.new(1, -28, 0, 20), BackgroundTransparency = 1, Font = Enum.Font.Gotham, Text = "FERMER", TextColor3 = Color3.fromRGB(210, 200, 220), TextSize = 9, ZIndex = 51}, audioPanel)
 local function setAudioVolume(box, kind)
     local number = tonumber(tostring(box.Text):gsub("%%", ""))
     if not number then number = kind == "music" and musicVolume * 100 or sfxVolume * 100 end
@@ -829,7 +870,7 @@ for _, object in ipairs(gui:GetDescendants()) do
 end
 
 applyTheme = function(themeName)
-    local palette = themePresets[themeName] or themePresets.DARK
+    local palette = themeName == "CUSTOM" and customTheme or (themePresets[themeName] or themePresets.DARK)
     main.BackgroundColor3 = palette.main
     header.BackgroundColor3 = palette.panel
     local headerFill = header:FindFirstChild("HeaderFill")
