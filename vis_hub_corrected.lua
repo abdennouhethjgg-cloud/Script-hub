@@ -1,5 +1,5 @@
 -- EL2B ALL GEAR — version stable et sûre pour Roblox
--- VERSION: 1.2.0
+-- VERSION: 1.3.0
 -- Cette version est volontairement limitée à l’interface et aux informations visuelles.
 -- Aucun RemoteEvent/RemoteFunction, téléportation, lagger, hook, commande admin,
 -- anti-ragdoll, aimbot, quick pickup ou automatisation de gameplay n’est exécuté.
@@ -14,7 +14,7 @@ end
 
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local GUI_NAME = "EL2B_ALL_GEAR"
-local CURRENT_VERSION = "1.2.0"
+local CURRENT_VERSION = "1.3.0"
 local THEME_FILE = "EL2B_THEME.json"
 local themePresets = {
     DARK = {main=Color3.fromRGB(18,18,25), panel=Color3.fromRGB(28,25,40), card=Color3.fromRGB(30,24,40), accent=Color3.fromRGB(125,35,55), text=Color3.fromRGB(245,240,255), muted=Color3.fromRGB(190,180,205), input=Color3.fromRGB(30,24,40)},
@@ -162,6 +162,18 @@ local playerCount = make("TextLabel", {
     TextSize = 14,
     TextXAlignment = Enum.TextXAlignment.Left,
 }, main)
+local playerCountBaseText = ""
+local function updateCoordinates()
+    if destroyed or not playerCount or not playerCount.Parent then return end
+    local character = localPlayer.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if root then
+        local position = root.Position
+        playerCount.Text = playerCountBaseText .. string.format("  •  XYZ: %.1f, %.1f, %.1f", position.X, position.Y, position.Z)
+    else
+        playerCount.Text = playerCountBaseText .. "  •  XYZ: indisponibles"
+    end
+end
 
 local localProfileAvatar = make("ImageLabel", {
     Name = "LocalProfileAvatar",
@@ -385,7 +397,8 @@ local function refreshPlayers()
     end
     local totalPlayers = #Players:GetPlayers()
     local players = getFilteredPlayers()
-    playerCount.Text = string.format("Joueurs : %d/%d  •  Profil : @%s", #players, totalPlayers, tostring(localPlayer.Name))
+    playerCountBaseText = string.format("Joueurs : %d/%d  •  Profil : @%s", #players, totalPlayers, tostring(localPlayer.Name))
+    updateCoordinates()
     for _, child in ipairs(playerList:GetChildren()) do
         if child:GetAttribute("ServerPlayerCard") then
             child:Destroy()
@@ -704,6 +717,12 @@ task.spawn(function()
     while not destroyed and gui.Parent do
         refreshPlayers()
         task.wait(2)
+    end
+end)
+task.spawn(function()
+    while not destroyed and gui.Parent do
+        updateCoordinates()
+        task.wait(0.5)
     end
 end)
 
