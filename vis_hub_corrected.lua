@@ -1,5 +1,5 @@
 -- EL2B ALL GEAR — version stable et sûre pour Roblox
--- VERSION: 2.0.0
+-- VERSION: 2.1.0
 -- Cette version est volontairement limitée à l’interface et aux informations visuelles.
 -- Aucun RemoteEvent/RemoteFunction, téléportation, lagger, hook, commande admin,
 -- anti-ragdoll, aimbot, quick pickup ou automatisation de gameplay n’est exécuté.
@@ -16,7 +16,7 @@ end
 
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local GUI_NAME = "EL2B_ALL_GEAR"
-local CURRENT_VERSION = "2.0.0"
+local CURRENT_VERSION = "2.1.0"
 local THEME_FILE = "EL2B_THEME.json"
 local themePresets = {
     DARK = {main=Color3.fromRGB(18,18,25), panel=Color3.fromRGB(28,25,40), card=Color3.fromRGB(30,24,40), accent=Color3.fromRGB(125,35,55), text=Color3.fromRGB(245,240,255), muted=Color3.fromRGB(190,180,205), input=Color3.fromRGB(30,24,40)},
@@ -43,9 +43,15 @@ local themeButton
 local modeButton
 local visualToggle
 local audioPanel
+local musicTracks = {
+    {name = "EL2B Loading", id = "rbxassetid://76650356472656"},
+    {name = "Classic Ambient", id = "rbxassetid://1843529603"},
+    {name = "Night Pulse", id = "rbxassetid://1837879082"},
+}
+local selectedMusicIndex = 1
 local function saveThemeSettings()
     if type(writefile) ~= "function" then return end
-    pcall(function() writefile(THEME_FILE, HttpService:JSONEncode({theme=activeThemeName, customColors=customThemeHex, musicVolume=musicVolume, sfxVolume=sfxVolume, musicEnabled=musicEnabled})) end)
+    pcall(function() writefile(THEME_FILE, HttpService:JSONEncode({theme=activeThemeName, customColors=customThemeHex, musicVolume=musicVolume, sfxVolume=sfxVolume, musicEnabled=musicEnabled, selectedMusicIndex=selectedMusicIndex})) end)
 end
 if type(isfile) == "function" and type(readfile) == "function" and isfile(THEME_FILE) then
     pcall(function()
@@ -60,11 +66,11 @@ if type(isfile) == "function" and type(readfile) == "function" and isfile(THEME_
         if saved and type(saved.musicVolume) == "number" then musicVolume = math.clamp(saved.musicVolume, 0, 1) end
         if saved and type(saved.sfxVolume) == "number" then sfxVolume = math.clamp(saved.sfxVolume, 0, 1) end
         if saved and type(saved.musicEnabled) == "boolean" then musicEnabled = saved.musicEnabled end
+        if saved and type(saved.selectedMusicIndex) == "number" and musicTracks[saved.selectedMusicIndex] then selectedMusicIndex = saved.selectedMusicIndex end
     end)
 end
 local VERSION_URL = "https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/EL2B_VERSION.txt"
 local SCRIPT_URL = "https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/vis_hub_corrected.lua"
-local LOADING_MUSIC_ID = "rbxassetid://76650356472656"
 local oldGui = playerGui:FindFirstChild(GUI_NAME)
 if oldGui then
     oldGui:Destroy()
@@ -127,7 +133,7 @@ make("UIGradient", {
 }, loadingPanel)
 local loadingMusic = make("Sound", {
     Name = "EL2B_ALL_GEAR_LoadingMusic",
-    SoundId = LOADING_MUSIC_ID,
+    SoundId = musicTracks[selectedMusicIndex].id,
     Volume = musicVolume,
     Looped = true,
 }, SoundService)
@@ -754,7 +760,7 @@ audioPanel = make("Frame", {
     Name = "AudioPanel",
     AnchorPoint = Vector2.new(0.5, 0.5),
     Position = UDim2.fromScale(0.5, 0.5),
-    Size = UDim2.fromOffset(270, 315),
+    Size = UDim2.fromOffset(270, 335),
     BackgroundColor3 = Color3.fromRGB(28, 25, 40),
     BorderSizePixel = 0,
     Visible = false,
@@ -817,6 +823,17 @@ local musicToggle = make("TextButton", {
     ZIndex = 51,
 }, audioPanel)
 make("UICorner", {CornerRadius = UDim.new(0, 6)}, musicToggle)
+local musicTrackButton = make("TextButton", {Name = "MusicTrackSelector", Position = UDim2.fromOffset(14, 150), Size = UDim2.new(1, -28, 0, 24), BackgroundColor3 = Color3.fromRGB(125, 35, 55), BorderSizePixel = 0, Font = Enum.Font.GothamBold, Text = "PISTE : " .. musicTracks[selectedMusicIndex].name, TextColor3 = Color3.fromRGB(255, 235, 240), TextSize = 9, AutoButtonColor = false, ZIndex = 51}, audioPanel)
+make("UICorner", {CornerRadius = UDim.new(0, 6)}, musicTrackButton)
+connect(musicTrackButton.Activated, function()
+    selectedMusicIndex = selectedMusicIndex % #musicTracks + 1
+    local track = musicTracks[selectedMusicIndex]
+    loadingMusic.SoundId = track.id
+    musicTrackButton.Text = "PISTE : " .. track.name
+    if musicEnabled then pcall(function() loadingMusic:Play() end) end
+    saveThemeSettings()
+    showToast("Piste sélectionnée : " .. track.name, true)
+end)
 local function makeColorBox(name, y, label, key)
     local box = make("TextBox", {Name = name, Position = UDim2.fromOffset(14, y), Size = UDim2.fromOffset(88, 24), BackgroundColor3 = Color3.fromRGB(30, 24, 40), BorderSizePixel = 0, Font = Enum.Font.GothamBold, Text = customThemeHex[key], TextColor3 = Color3.fromRGB(245, 240, 255), TextSize = 10, ClearTextOnFocus = false, ZIndex = 51}, audioPanel)
     make("UICorner", {CornerRadius = UDim.new(0, 6)}, box)
@@ -840,11 +857,11 @@ local function makeColorBox(name, y, label, key)
     end)
     return box
 end
-local customMainBox = makeColorBox("CustomMainColor", 150, "Fond", "main")
-local customPanelBox = makeColorBox("CustomPanelColor", 178, "Panneaux", "panel")
-local customAccentBox = makeColorBox("CustomAccentColor", 206, "Accent", "accent")
-local customTextBox = makeColorBox("CustomTextColor", 234, "Texte", "text")
-local audioClose = make("TextButton", {Name = "CloseAudio", Position = UDim2.fromOffset(14, 272), Size = UDim2.new(1, -28, 0, 20), BackgroundTransparency = 1, Font = Enum.Font.Gotham, Text = "FERMER", TextColor3 = Color3.fromRGB(210, 200, 220), TextSize = 9, ZIndex = 51}, audioPanel)
+local customMainBox = makeColorBox("CustomMainColor", 180, "Fond", "main")
+local customPanelBox = makeColorBox("CustomPanelColor", 208, "Panneaux", "panel")
+local customAccentBox = makeColorBox("CustomAccentColor", 236, "Accent", "accent")
+local customTextBox = makeColorBox("CustomTextColor", 264, "Texte", "text")
+local audioClose = make("TextButton", {Name = "CloseAudio", Position = UDim2.fromOffset(14, 302), Size = UDim2.new(1, -28, 0, 20), BackgroundTransparency = 1, Font = Enum.Font.Gotham, Text = "FERMER", TextColor3 = Color3.fromRGB(210, 200, 220), TextSize = 9, ZIndex = 51}, audioPanel)
 local function setAudioVolume(box, kind)
     local number = tonumber(tostring(box.Text):gsub("%%", ""))
     if not number then number = kind == "music" and musicVolume * 100 or sfxVolume * 100 end
