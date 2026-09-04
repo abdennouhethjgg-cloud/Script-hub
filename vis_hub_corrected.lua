@@ -1,5 +1,5 @@
 -- EL2B ALL GEAR — version stable et sûre pour Roblox
--- VERSION: 1.7.0
+-- VERSION: 1.8.0
 -- Cette version est volontairement limitée à l’interface et aux informations visuelles.
 -- Aucun RemoteEvent/RemoteFunction, téléportation, lagger, hook, commande admin,
 -- anti-ragdoll, aimbot, quick pickup ou automatisation de gameplay n’est exécuté.
@@ -16,7 +16,7 @@ end
 
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local GUI_NAME = "EL2B_ALL_GEAR"
-local CURRENT_VERSION = "1.7.0"
+local CURRENT_VERSION = "1.8.0"
 local THEME_FILE = "EL2B_THEME.json"
 local themePresets = {
     DARK = {main=Color3.fromRGB(18,18,25), panel=Color3.fromRGB(28,25,40), card=Color3.fromRGB(30,24,40), accent=Color3.fromRGB(125,35,55), text=Color3.fromRGB(245,240,255), muted=Color3.fromRGB(190,180,205), input=Color3.fromRGB(30,24,40)},
@@ -28,17 +28,24 @@ local themePresets = {
     RETRO = {main=Color3.fromRGB(28,24,18), panel=Color3.fromRGB(58,45,27), card=Color3.fromRGB(72,55,30), accent=Color3.fromRGB(225,155,45), text=Color3.fromRGB(255,244,205), muted=Color3.fromRGB(205,180,125), input=Color3.fromRGB(58,45,27)},
 }
 local activeThemeName = "DARK"
+local musicVolume = 0.18
+local sfxVolume = 0.12
+local musicEnabled = true
 local themeButton
 local modeButton
 local visualToggle
+local audioPanel
 local function saveThemeSettings()
     if type(writefile) ~= "function" then return end
-    pcall(function() writefile(THEME_FILE, HttpService:JSONEncode({theme=activeThemeName})) end)
+    pcall(function() writefile(THEME_FILE, HttpService:JSONEncode({theme=activeThemeName, musicVolume=musicVolume, sfxVolume=sfxVolume, musicEnabled=musicEnabled})) end)
 end
 if type(isfile) == "function" and type(readfile) == "function" and isfile(THEME_FILE) then
     pcall(function()
         local saved = HttpService:JSONDecode(readfile(THEME_FILE))
         if saved and themePresets[saved.theme] then activeThemeName = saved.theme end
+        if saved and type(saved.musicVolume) == "number" then musicVolume = math.clamp(saved.musicVolume, 0, 1) end
+        if saved and type(saved.sfxVolume) == "number" then sfxVolume = math.clamp(saved.sfxVolume, 0, 1) end
+        if saved and type(saved.musicEnabled) == "boolean" then musicEnabled = saved.musicEnabled end
     end)
 end
 local VERSION_URL = "https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/EL2B_VERSION.txt"
@@ -107,19 +114,20 @@ make("UIGradient", {
 local loadingMusic = make("Sound", {
     Name = "EL2B_ALL_GEAR_LoadingMusic",
     SoundId = LOADING_MUSIC_ID,
-    Volume = 0.18,
+    Volume = musicVolume,
     Looped = true,
 }, SoundService)
 local CLICK_SFX_ID = "rbxassetid://12221967"
 local clickSfx = make("Sound", {
     Name = "EL2B_ALL_GEAR_ClickSFX",
     SoundId = CLICK_SFX_ID,
-    Volume = 0.12,
+    Volume = sfxVolume,
     PlaybackSpeed = 1,
 }, SoundService)
 local function playClickSfx()
     if destroyed or not clickSfx.Parent then return end
     pcall(function()
+        clickSfx.Volume = sfxVolume
         clickSfx:Stop()
         clickSfx.TimePosition = 0
         clickSfx:Play()
@@ -379,6 +387,7 @@ local visualEnabled = true
 connect(visualToggle.Activated, function()
     visualEnabled = not visualEnabled
     main.Visible = visualEnabled
+    if not visualEnabled and audioPanel then audioPanel.Visible = false end
     visualToggle.Text = visualEnabled and "◉" or "○"
     visualToggle:SetAttribute("VisualEnabled", visualEnabled)
     if visualEnabled then
@@ -713,6 +722,108 @@ modeButton = make("TextButton", {
 }, main)
 make("UICorner", {CornerRadius = UDim.new(0, 6)}, modeButton)
 
+local audioButton = make("TextButton", {
+    Name = "AudioSettings",
+    Position = UDim2.fromOffset(16, 444),
+    Size = UDim2.new(1, -32, 0, 22),
+    BackgroundColor3 = Color3.fromRGB(95, 30, 52),
+    BorderSizePixel = 0,
+    Font = Enum.Font.GothamBold,
+    Text = "AUDIO SETTINGS",
+    TextColor3 = Color3.fromRGB(255, 235, 240),
+    TextSize = 8,
+    AutoButtonColor = false,
+}, main)
+make("UICorner", {CornerRadius = UDim.new(0, 6)}, audioButton)
+
+audioPanel = make("Frame", {
+    Name = "AudioPanel",
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.fromScale(0.5, 0.5),
+    Size = UDim2.fromOffset(270, 175),
+    BackgroundColor3 = Color3.fromRGB(28, 25, 40),
+    BorderSizePixel = 0,
+    Visible = false,
+    ZIndex = 50,
+}, gui)
+make("UICorner", {CornerRadius = UDim.new(0, 10)}, audioPanel)
+make("UIStroke", {Color = Color3.fromRGB(125, 35, 55), Thickness = 1.3}, audioPanel)
+make("TextLabel", {
+    Name = "AudioTitle",
+    BackgroundTransparency = 1,
+    Position = UDim2.fromOffset(14, 10),
+    Size = UDim2.new(1, -28, 0, 22),
+    Font = Enum.Font.GothamBold,
+    Text = "AUDIO CONFIGURATION",
+    TextColor3 = Color3.fromRGB(245, 240, 255),
+    TextSize = 14,
+    ZIndex = 51,
+}, audioPanel)
+local musicVolumeBox = make("TextBox", {
+    Name = "MusicVolume",
+    Position = UDim2.fromOffset(14, 48),
+    Size = UDim2.fromOffset(88, 25),
+    BackgroundColor3 = Color3.fromRGB(30, 24, 40),
+    BorderSizePixel = 0,
+    Font = Enum.Font.GothamBold,
+    Text = tostring(math.floor(musicVolume * 100)) .. "%",
+    TextColor3 = Color3.fromRGB(245, 240, 255),
+    TextSize = 10,
+    ClearTextOnFocus = false,
+    ZIndex = 51,
+}, audioPanel)
+make("UICorner", {CornerRadius = UDim.new(0, 6)}, musicVolumeBox)
+make("TextLabel", {BackgroundTransparency = 1, Position = UDim2.fromOffset(112, 48), Size = UDim2.new(1, -126, 0, 25), Font = Enum.Font.Gotham, Text = "Musique loading (%)", TextColor3 = Color3.fromRGB(210, 200, 220), TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 51}, audioPanel)
+local sfxVolumeBox = make("TextBox", {
+    Name = "SfxVolume",
+    Position = UDim2.fromOffset(14, 82),
+    Size = UDim2.fromOffset(88, 25),
+    BackgroundColor3 = Color3.fromRGB(30, 24, 40),
+    BorderSizePixel = 0,
+    Font = Enum.Font.GothamBold,
+    Text = tostring(math.floor(sfxVolume * 100)) .. "%",
+    TextColor3 = Color3.fromRGB(245, 240, 255),
+    TextSize = 10,
+    ClearTextOnFocus = false,
+    ZIndex = 51,
+}, audioPanel)
+make("UICorner", {CornerRadius = UDim.new(0, 6)}, sfxVolumeBox)
+make("TextLabel", {BackgroundTransparency = 1, Position = UDim2.fromOffset(112, 82), Size = UDim2.new(1, -126, 0, 25), Font = Enum.Font.Gotham, Text = "Effets de clic (%)", TextColor3 = Color3.fromRGB(210, 200, 220), TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 51}, audioPanel)
+local musicToggle = make("TextButton", {
+    Name = "MusicToggle",
+    Position = UDim2.fromOffset(14, 120),
+    Size = UDim2.new(1, -28, 0, 25),
+    BackgroundColor3 = Color3.fromRGB(125, 35, 55),
+    BorderSizePixel = 0,
+    Font = Enum.Font.GothamBold,
+    Text = musicEnabled and "MUSIQUE : ON" or "MUSIQUE : OFF",
+    TextColor3 = Color3.fromRGB(255, 235, 240),
+    TextSize = 9,
+    AutoButtonColor = false,
+    ZIndex = 51,
+}, audioPanel)
+make("UICorner", {CornerRadius = UDim.new(0, 6)}, musicToggle)
+local audioClose = make("TextButton", {Name = "CloseAudio", Position = UDim2.fromOffset(14, 150), Size = UDim2.new(1, -28, 0, 18), BackgroundTransparency = 1, Font = Enum.Font.Gotham, Text = "FERMER", TextColor3 = Color3.fromRGB(210, 200, 220), TextSize = 9, ZIndex = 51}, audioPanel)
+local function setAudioVolume(box, kind)
+    local number = tonumber(tostring(box.Text):gsub("%%", ""))
+    if not number then number = kind == "music" and musicVolume * 100 or sfxVolume * 100 end
+    number = math.clamp(number, 0, 100)
+    local value = number / 100
+    if kind == "music" then musicVolume = value; loadingMusic.Volume = value else sfxVolume = value; clickSfx.Volume = value end
+    box.Text = tostring(math.floor(number + 0.5)) .. "%"
+    saveThemeSettings()
+end
+connect(audioButton.Activated, function() audioPanel.Visible = not audioPanel.Visible end)
+connect(audioClose.Activated, function() audioPanel.Visible = false end)
+connect(musicVolumeBox.FocusLost, function() setAudioVolume(musicVolumeBox, "music") end)
+connect(sfxVolumeBox.FocusLost, function() setAudioVolume(sfxVolumeBox, "sfx") end)
+connect(musicToggle.Activated, function()
+    musicEnabled = not musicEnabled
+    musicToggle.Text = musicEnabled and "MUSIQUE : ON" or "MUSIQUE : OFF"
+    if musicEnabled then pcall(function() loadingMusic:Play() end) else pcall(function() loadingMusic:Stop() end) end
+    saveThemeSettings()
+end)
+
 for _, object in ipairs(gui:GetDescendants()) do
     if object:IsA("TextButton") then bindButtonSfx(object) end
 end
@@ -748,6 +859,18 @@ applyTheme = function(themeName)
     modeButton.Text = themeName == "LIGHT" and "MODE CLAIR  •  ACTIF" or "MODE SOMBRE  •  ACTIF"
     visualToggle.BackgroundColor3 = palette.accent
     visualToggle.TextColor3 = palette.text
+    audioPanel.BackgroundColor3 = palette.panel
+    for _, object in ipairs(audioPanel:GetDescendants()) do
+        if object:IsA("TextBox") then
+            object.BackgroundColor3 = palette.input
+            object.TextColor3 = palette.text
+        elseif object:IsA("TextLabel") then
+            object.TextColor3 = palette.text
+        elseif object:IsA("TextButton") then
+            object.BackgroundColor3 = palette.accent
+            object.TextColor3 = palette.text
+        end
+    end
 end
 connect(themeButton.Activated, nextTheme)
 connect(modeButton.Activated, toggleLightDark)
@@ -869,7 +992,7 @@ refreshPlayers()
 
 local loadingProgress = TweenService:Create(loadingFill, TweenInfo.new(1.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 1, 0)})
 local loadingSpin = TweenService:Create(loadingSpinner, TweenInfo.new(0.75, Enum.EasingStyle.Linear, Enum.EasingDirection.In, -1), {Rotation = 360})
-pcall(function() loadingMusic:Play() end)
+if musicEnabled then pcall(function() loadingMusic:Play() end) end
 loadingProgress:Play()
 loadingSpin:Play()
 task.spawn(function()
