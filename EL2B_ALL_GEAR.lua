@@ -1,5 +1,5 @@
 -- EL2B ALL GEAR — version stable et sûre pour Roblox
--- VERSION: 1.4.0
+-- VERSION: 1.5.0
 -- Cette version est volontairement limitée à l’interface et aux informations visuelles.
 -- Aucun RemoteEvent/RemoteFunction, téléportation, lagger, hook, commande admin,
 -- anti-ragdoll, aimbot, quick pickup ou automatisation de gameplay n’est exécuté.
@@ -15,7 +15,7 @@ end
 
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local GUI_NAME = "EL2B_ALL_GEAR"
-local CURRENT_VERSION = "1.4.0"
+local CURRENT_VERSION = "1.5.0"
 local THEME_FILE = "EL2B_THEME.json"
 local themePresets = {
     DARK = {main=Color3.fromRGB(18,18,25), panel=Color3.fromRGB(28,25,40), card=Color3.fromRGB(30,24,40), accent=Color3.fromRGB(125,35,55), text=Color3.fromRGB(245,240,255), muted=Color3.fromRGB(190,180,205), input=Color3.fromRGB(30,24,40)},
@@ -235,15 +235,23 @@ local playerCount = make("TextLabel", {
     TextXAlignment = Enum.TextXAlignment.Left,
 }, main)
 local playerCountBaseText = ""
+local lastCoordinateText = ""
+local coordinateInterval = UserInputService.TouchEnabled and 0.6 or 0.35
 local function updateCoordinates()
     if destroyed or not playerCount or not playerCount.Parent then return end
     local character = localPlayer.Character
     local root = character and character:FindFirstChild("HumanoidRootPart")
+    local coordinateText
     if root then
         local position = root.Position
-        playerCount.Text = playerCountBaseText .. string.format("  •  XYZ: %.1f, %.1f, %.1f", position.X, position.Y, position.Z)
+        coordinateText = string.format("  •  XYZ: %.1f, %.1f, %.1f", position.X, position.Y, position.Z)
     else
-        playerCount.Text = playerCountBaseText .. "  •  XYZ: indisponibles"
+        coordinateText = "  •  XYZ: indisponibles"
+    end
+    local nextText = playerCountBaseText .. coordinateText
+    if nextText ~= lastCoordinateText then
+        lastCoordinateText = nextText
+        playerCount.Text = nextText
     end
 end
 
@@ -463,11 +471,21 @@ local function getFilteredPlayers()
     return filtered
 end
 
-local function refreshPlayers()
+local lastPlayerSignature = ""
+local function refreshPlayers(force)
     if destroyed or not playerCount.Parent then
         return
     end
-    local totalPlayers = #Players:GetPlayers()
+    local allPlayers = Players:GetPlayers()
+    local signatureParts = {}
+    for _, player in ipairs(allPlayers) do table.insert(signatureParts, tostring(player.UserId)) end
+    table.sort(signatureParts)
+    local playerSignature = table.concat(signatureParts, ":")
+    if not force and playerSignature == lastPlayerSignature then
+        return
+    end
+    lastPlayerSignature = playerSignature
+    local totalPlayers = #allPlayers
     local players = getFilteredPlayers()
     playerCountBaseText = string.format("Joueurs : %d/%d  •  Profil : @%s", #players, totalPlayers, tostring(localPlayer.Name))
     updateCoordinates()
@@ -689,7 +707,7 @@ end
 connect(themeButton.Activated, nextTheme)
 connect(modeButton.Activated, toggleLightDark)
 applyTheme(activeThemeName)
-connect(playerSearchBox:GetPropertyChangedSignal("Text"), refreshPlayers)
+connect(playerSearchBox:GetPropertyChangedSignal("Text"), function() refreshPlayers(true) end)
 task.delay(1.5, checkForUpdate)
 
 local activeJoinNotification
@@ -781,20 +799,21 @@ connect(closeButton.Activated, function()
 end)
 
 connect(Players.PlayerAdded, function(player)
-    refreshPlayers()
+    refreshPlayers(true)
     notifyPlayerJoined(player)
 end)
-connect(Players.PlayerRemoving, refreshPlayers)
+connect(Players.PlayerRemoving, function() refreshPlayers(true) end)
 task.spawn(function()
+    local playerRefreshInterval = UserInputService.TouchEnabled and 4 or 3
     while not destroyed and gui.Parent do
-        refreshPlayers()
-        task.wait(2)
+        refreshPlayers(false)
+        task.wait(playerRefreshInterval)
     end
 end)
 task.spawn(function()
     while not destroyed and gui.Parent do
         updateCoordinates()
-        task.wait(0.5)
+        task.wait(coordinateInterval)
     end
 end)
 refreshPlayers()
