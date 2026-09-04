@@ -1,5 +1,5 @@
 -- EL2B ALL GEAR — version stable et sûre pour Roblox
--- VERSION: 1.5.0
+-- VERSION: 1.6.0
 -- Cette version est volontairement limitée à l’interface et aux informations visuelles.
 -- Aucun RemoteEvent/RemoteFunction, téléportation, lagger, hook, commande admin,
 -- anti-ragdoll, aimbot, quick pickup ou automatisation de gameplay n’est exécuté.
@@ -8,6 +8,7 @@ local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local SoundService = game:GetService("SoundService")
 local localPlayer = Players.LocalPlayer
 if not localPlayer then
     return
@@ -15,7 +16,7 @@ end
 
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local GUI_NAME = "EL2B_ALL_GEAR"
-local CURRENT_VERSION = "1.5.0"
+local CURRENT_VERSION = "1.6.0"
 local THEME_FILE = "EL2B_THEME.json"
 local themePresets = {
     DARK = {main=Color3.fromRGB(18,18,25), panel=Color3.fromRGB(28,25,40), card=Color3.fromRGB(30,24,40), accent=Color3.fromRGB(125,35,55), text=Color3.fromRGB(245,240,255), muted=Color3.fromRGB(190,180,205), input=Color3.fromRGB(30,24,40)},
@@ -42,9 +43,15 @@ if type(isfile) == "function" and type(readfile) == "function" and isfile(THEME_
 end
 local VERSION_URL = "https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/EL2B_VERSION.txt"
 local SCRIPT_URL = "https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/vis_hub_corrected.lua"
+local LOADING_MUSIC_ID = "rbxassetid://1843529603"
 local oldGui = playerGui:FindFirstChild(GUI_NAME)
 if oldGui then
     oldGui:Destroy()
+end
+local oldLoadingMusic = SoundService:FindFirstChild("EL2B_ALL_GEAR_LoadingMusic")
+if oldLoadingMusic then
+    oldLoadingMusic:Stop()
+    oldLoadingMusic:Destroy()
 end
 
 local connections = {}
@@ -90,6 +97,19 @@ local loadingPanel = make("Frame", {
 }, loadingOverlay)
 make("UICorner", {CornerRadius = UDim.new(0, 14)}, loadingPanel)
 make("UIStroke", {Color = Color3.fromRGB(190, 35, 55), Thickness = 1.5}, loadingPanel)
+make("UIGradient", {
+    Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(38, 13, 23)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(18, 10, 18)),
+    }),
+    Rotation = 35,
+}, loadingPanel)
+local loadingMusic = make("Sound", {
+    Name = "EL2B_ALL_GEAR_LoadingMusic",
+    SoundId = LOADING_MUSIC_ID,
+    Volume = 0.18,
+    Looped = true,
+}, SoundService)
 make("TextLabel", {
     Name = "LoadingTitle",
     BackgroundTransparency = 1,
@@ -790,6 +810,8 @@ end)
 
 connect(closeButton.Activated, function()
     destroyed = true
+    pcall(function() loadingMusic:Stop() end)
+    if loadingMusic.Parent then loadingMusic:Destroy() end
     for _, connection in ipairs(connections) do
         if connection.Connected then
             connection:Disconnect()
@@ -820,6 +842,7 @@ refreshPlayers()
 
 local loadingProgress = TweenService:Create(loadingFill, TweenInfo.new(1.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 1, 0)})
 local loadingSpin = TweenService:Create(loadingSpinner, TweenInfo.new(0.75, Enum.EasingStyle.Linear, Enum.EasingDirection.In, -1), {Rotation = 360})
+pcall(function() loadingMusic:Play() end)
 loadingProgress:Play()
 loadingSpin:Play()
 task.spawn(function()
@@ -831,5 +854,7 @@ task.spawn(function()
     main.Visible = true
     loadingOverlay.Visible = false
     loadingSpin:Cancel()
+    pcall(function() loadingMusic:Stop() end)
+    loadingMusic:Destroy()
     loadingOverlay:Destroy()
 end)
