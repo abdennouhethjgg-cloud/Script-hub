@@ -3,20 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EL2B Hub — Application</title>
-  <meta name="description" content="EL2B Hub — interface visuelle stable pour Roblox." />
+  <meta name="theme-color" content="#080a12" />
+  <title>EL2B Control Center</title>
+  <meta name="description" content="Centre de contrôle et de téléchargement du script EL2B ALL GEAR." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="bg-grid"></div><div class="bg-glow"></div>
-  <header class="nav"><div class="brand"><span class="brand-mark">EL2B</span><span class="brand-sub">HUB</span></div><nav><a href="#features">Features</a><a href="#loading">Loading</a><a href="#download">Download</a></nav><button class="btn btn-sm" id="btnTopGet">Get Script</button></header>
-  <main>
-    <section class="hero"><p class="eyebrow">Application v2.3.0</p><h1>EL2B <span class="accent">HUB</span></h1><p class="lead">Interface visuelle stable pour Roblox — menu centré, thèmes, profils joueurs, export et écran de chargement.</p><div class="hero-actions"><a class="btn btn-primary" href="#download">Télécharger</a><a class="btn btn-ghost" href="#features">Voir les features</a></div><div class="hero-stats"><div class="stat"><strong>30s</strong><span>Loading</span></div><div class="stat"><strong>20s</strong><span>Skip unlock</span></div><div class="stat"><strong>7</strong><span>Themes</span></div><div class="stat"><strong>2.3</strong><span>Version</span></div></div></section>
-    <section id="features" class="section"><h2>Features</h2><div class="grid"><article class="card"><div class="card-icon">⚡</div><h3>Interface stable</h3><p>GUI centrée, draggable et adaptée au mobile.</p></article><article class="card"><div class="card-icon">🎨</div><h3>Thèmes</h3><p>Plusieurs thèmes visuels et sauvegarde des préférences.</p></article><article class="card"><div class="card-icon">👤</div><h3>Profils joueurs</h3><p>Liste locale des joueurs et consultation des profils.</p></article><article class="card"><div class="card-icon">📱</div><h3>Mobile-first</h3><p>Boutons tactiles et interface légère.</p></article><article class="card"><div class="card-icon">🔐</div><h3>Mode prudent</h3><p>Aucune automatisation de gameplay dans la version stable.</p></article><article class="card"><div class="card-icon">🖥</div><h3>Export</h3><p>Export texte ou JSON si ton exécuteur autorise le presse-papiers.</p></article></div></section>
-    <section id="loading" class="section section-alt"><h2>Loading Screen</h2><div class="loading-demo"><div class="load-card"><h3 class="load-title">EL2B HUB</h3><p class="load-sub" id="loadStatus">Initializing...</p><div class="bar-bg"><div class="bar-fill" id="barFill"></div></div><div class="load-meta"><span id="loadPct">0%</span><span id="loadTime">30s</span></div><p class="skip-wait" id="skipWait">Skip in 20s...</p><button class="btn btn-primary btn-skip" id="skipBtn" disabled>SKIP</button></div></div><p class="hint">La démo dure 30 secondes ; le bouton SKIP se débloque après 20 secondes.</p></section>
-    <section id="download" class="section"><h2>Download</h2><div class="download-box"><p>Script Lua stable prêt à charger.</p><ul class="checklist"><li>Version 2.3.0</li><li>Loading 30s + Skip à 20s</li><li>Interface centrée et thèmes</li><li>Aucune automatisation de gameplay</li></ul><div class="download-actions"><a class="btn btn-primary" href="EL2B_ALL_GEAR.lua" download="EL2B_ALL_GEAR.lua">Télécharger EL2B_ALL_GEAR.lua</a><button class="btn btn-ghost" id="btnCopyPath">Copier le nom du fichier</button></div><div class="loadstring-box"><label for="loadstringCode">Loadstring de la version stable</label><code id="loadstringCode">loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/EL2B_ALL_GEAR.lua"))()</code><button class="btn btn-ghost" id="btnCopyLoadstring">Copier le loadstring</button></div><p class="fine">Utilise uniquement ce script dans un environnement autorisé. Cette commande pointe vers la version interface-only du dépôt.</p></div></section>
-  </main><footer class="footer"><span>EL2B Hub v2.3.0</span><span>Stable · Mobile-first</span></footer><script src="app.js"></script>
-</body></html>
+  <div class="noise"></div>
+  <div class="orb orb-a"></div><div class="orb orb-b"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="EL2B Control Center accueil">
+      <span class="brand-mark">E2</span><span><strong>EL2B</strong><small>CONTROL CENTER</small></span>
+    </a>
+    <nav aria-label="Navigation principale">
+      <a href="#overview">Vue d’ensemble</a><a href="#features">Fonctions</a><a href="#install">Installation</a>
+    </nav>
+    <a class="button button-small button-primary" href="#install">Ouvrir le script <span>↗</span></a>
+  </header>
+
+  <main id="top">
+    <section class="hero" id="overview">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="status-dot"></span> Dépôt connecté · branche main</p>
+        <h1>Un centre clair pour<br /><em>EL2B ALL GEAR.</em></h1>
+        <p class="hero-text">Télécharge la version du dépôt, copie le lanceur Raw et consulte les fonctions présentes avant de l’exécuter dans un environnement autorisé.</p>
+        <div class="hero-actions"><a class="button button-primary" href="#install">Accéder au script <span>↓</span></a><a class="button button-secondary" href="#features">Explorer les fonctions</a></div>
+        <div class="meta-line"><span><b class="live-dot"></b> Source publique</span><span>Dernière version : 2.3.0</span><span>11 939 lignes auditées statiquement</span></div>
+      </div>
+      <aside class="status-card" aria-label="Statut du script">
+        <div class="card-top"><span>EL2B / CORE</span><span class="pill">READY</span></div>
+        <div class="signal"><div class="signal-ring"><span>02</span></div><div><strong>Script disponible</strong><p>EL2B_ALL_GEAR.lua</p></div></div>
+        <div class="metric"><span>État du fichier</span><strong><i></i> Accessible</strong></div>
+        <div class="metric"><span>Type</span><strong>Lua · interface + modules</strong></div>
+        <div class="metric"><span>Source</span><strong>GitHub Raw</strong></div>
+      </aside>
+    </section>
+
+    <section class="section" id="features">
+      <div class="section-heading"><div><p class="eyebrow">CONTENU DU SCRIPT</p><h2>Tout ce qui est<br /><span>déjà intégré.</span></h2></div><p>Cette application sert de tableau de bord : elle ne lance pas de code automatiquement et ne demande aucune clé, aucun token ou donnée personnelle.</p></div>
+      <div class="feature-grid">
+        <article class="feature-card feature-main"><span class="feature-number">01</span><div class="feature-icon">◈</div><h3>Menu principal</h3><p>Interface mobile-first avec navigation par onglets, boutons, réglages et fermeture rapide.</p><div class="tags"><span>GUI</span><span>Mobile</span><span>Settings</span></div></article>
+        <article class="feature-card"><span class="feature-number">02</span><div class="feature-icon">◌</div><h3>Loading screen</h3><p>Écran de chargement avec progression et bouton Skip.</p><div class="tags"><span>30 SEC</span><span>SKIP 20 SEC</span></div></article>
+        <article class="feature-card"><span class="feature-number">03</span><div class="feature-icon">⌁</div><h3>Outils de session</h3><p>Modules de joueur, ESP, réglages de déplacement et outils de session présents dans le fichier.</p><div class="tags"><span>PLAYER</span><span>ESP</span></div></article>
+        <article class="feature-card warning-card"><span class="feature-number">04</span><div class="feature-icon">!</div><h3>À vérifier avant usage</h3><p>Le code source contient des fonctions de gameplay avancées. Vérifie toujours le jeu, l’exécuteur et les règles applicables avant utilisation.</p><div class="tags"><span class="tag-warning">PRUDENCE</span><span>SOURCE OUVERTE</span></div></article>
+      </div>
+    </section>
+
+    <section class="install-section" id="install">
+      <div class="install-copy"><p class="eyebrow">INSTALLATION</p><h2>Prêt à charger<br /><span>en deux étapes.</span></h2><p>Utilise le téléchargement pour conserver une copie locale ou le loadstring pour pointer directement vers la branche principale du dépôt.</p><div class="steps"><div><b>01</b><span><strong>Vérifie la source</strong><small>Lis le fichier avant de l’exécuter.</small></span></div><div><b>02</b><span><strong>Charge le script</strong><small>Dans un environnement autorisé uniquement.</small></span></div></div></div>
+      <div class="code-panel"><div class="code-top"><span><i></i><i></i><i></i></span><small>EL2B_ALL_GEAR.lua</small><span class="code-lang">LUA</span></div><div class="code-body"><p class="code-comment">-- EL2B Control Center / stable entrypoint</p><code id="loadstringCode">loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/EL2B_ALL_GEAR.lua"))()</code></div><div class="code-actions"><button class="button button-primary" id="btnCopyLoadstring">Copier le loadstring</button><a class="button button-secondary" href="EL2B_ALL_GEAR.lua" download="EL2B_ALL_GEAR.lua">Télécharger le .lua</a></div><p class="copy-status" id="copyStatus" role="status" aria-live="polite"></p></div>
+    </section>
+
+    <section class="notice"><div class="notice-icon">✓</div><div><strong>Transparence avant exécution</strong><p>La page ne collecte aucune donnée et n’exécute pas le script. Le fichier du dépôt peut évoluer : relis toujours le code source et utilise uniquement les fonctions autorisées dans ton contexte.</p></div><a href="https://github.com/abdennouhethjgg-cloud/Script-hub" target="_blank" rel="noreferrer">Voir le dépôt ↗</a></section>
+  </main>
+
+  <footer><span><strong>EL2B</strong> CONTROL CENTER</span><span>Interface v2.4 · Fait pour le dépôt Script-hub</span></footer>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,12 +1,33 @@
 (() => {
-  const DURATION = 30, SKIP_AT = 20;
-  const $ = id => document.getElementById(id);
-  const bar = $('barFill'), pct = $('loadPct'), time = $('loadTime'), status = $('loadStatus'), wait = $('skipWait'), skip = $('skipBtn');
-  let start = performance.now(), done = false, unlocked = false, raf;
-  function finish(skipped = false) { if (done) return; done = true; cancelAnimationFrame(raf); bar.style.width='100%'; pct.textContent='100%'; time.textContent='0s'; status.textContent=skipped?'Skipped!':'Ready!'; wait.textContent=''; skip.disabled=true; skip.textContent=skipped?'SKIPPED':'DONE'; }
-  function frame(now) { if(done)return; const elapsed=(now-start)/1000, progress=Math.min(1,elapsed/DURATION); bar.style.width=(progress*100).toFixed(1)+'%'; pct.textContent=Math.round(progress*100)+'%'; time.textContent=Math.max(0,Math.ceil(DURATION-elapsed))+'s'; if(elapsed>=SKIP_AT&&!unlocked){unlocked=true;skip.disabled=false;wait.textContent='';}else if(!unlocked){wait.textContent='Skip in '+Math.max(0,Math.ceil(SKIP_AT-elapsed))+'s...';} if(progress>=1){finish();return;} raf=requestAnimationFrame(frame); }
-  skip.addEventListener('click',()=>{if(!skip.disabled)finish(true)}); raf=requestAnimationFrame(frame);
-  $('btnTopGet').addEventListener('click',()=>document.getElementById('download').scrollIntoView({behavior:'smooth'}));
-  $('btnCopyPath').addEventListener('click',async()=>{const b=$('btnCopyPath');try{await navigator.clipboard.writeText('EL2B_ALL_GEAR.lua');b.textContent='Copié !';}catch(_){b.textContent='EL2B_ALL_GEAR.lua';}setTimeout(()=>b.textContent='Copier le nom du fichier',1500);});
-  $('btnCopyLoadstring').addEventListener('click',async()=>{const b=$('btnCopyLoadstring');const value=$('loadstringCode').textContent;try{await navigator.clipboard.writeText(value);b.textContent='Loadstring copié !';}catch(_){b.textContent='Copie indisponible';}setTimeout(()=>b.textContent='Copier le loadstring',1800);});
+  const code = document.getElementById('loadstringCode');
+  const copyButton = document.getElementById('btnCopyLoadstring');
+  const status = document.getElementById('copyStatus');
+
+  const announce = (message, restore = false) => {
+    status.textContent = message;
+    if (restore) window.setTimeout(() => { status.textContent = ''; }, 2200);
+  };
+
+  copyButton?.addEventListener('click', async () => {
+    const value = code?.textContent?.trim() || '';
+    try {
+      await navigator.clipboard.writeText(value);
+      copyButton.textContent = 'Loadstring copié';
+      announce('Le loadstring est dans ton presse-papiers.', true);
+    } catch (_) {
+      announce('Copie automatique indisponible : sélectionne le texte manuellement.', false);
+    }
+    window.setTimeout(() => { copyButton.textContent = 'Copier le loadstring'; }, 2200);
+  });
+
+  document.querySelectorAll('a[href^="#"]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      const target = document.querySelector(link.getAttribute('href'));
+      if (!target) return;
+      event.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      target.setAttribute('tabindex', '-1');
+      target.focus({ preventScroll: true });
+    });
+  });
 })();

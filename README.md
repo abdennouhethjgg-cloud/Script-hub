@@ -1,35 +1,28 @@
-# Script-hub
+# Script-hub · EL2B Control Center
 
-## EL2B ALL GEAR — version stable
+Le dépôt contient maintenant une application web statique **EL2B Control Center** : une page d’accueil claire pour consulter le script, télécharger `EL2B_ALL_GEAR.lua` et copier son point d’entrée Raw. La page ne lance aucun code automatiquement et ne collecte aucune donnée.
 
-Le script principal est `EL2B_ALL_GEAR.lua` (version 2.3.0). `EL2B_HUB.lua` reste conservé comme copie de compatibilité. Cette édition est conçue pour éviter les erreurs et les déconnexions liées aux fonctions d’automatisation dans **Steal a Brainrot**. Elle affiche une interface légère avec le nom **EL2B ALL GEAR**, le nombre de joueurs et la liste des joueurs présents.
+## Fichiers principaux
 
-L’écran de chargement dure 30 secondes. Le bouton **SKIP** reste désactivé pendant les 20 premières secondes, puis devient disponible ; la fin automatique ouvre l’interface après 30 secondes.
+| Fichier | Rôle |
+| --- | --- |
+| `index.html` | Interface Control Center, présentation, installation et avertissement |
+| `styles.css` | Design responsive sombre, mobile-first |
+| `app.js` | Copie du loadstring et navigation accessible |
+| `EL2B_ALL_GEAR.lua` | Script Lua actuellement servi par le dépôt |
 
-Aucune action de gameplay n’est exécutée par cette version. Le script ne contient pas de téléportation, de commande admin, d’appel `RemoteEvent` ou `RemoteFunction`, de lagger, de hook, d’anti-ragdoll, d’aimbot, de quick pickup, de blocage automatique ou d’automatisation de vol.
+## Utilisation
 
-Pour charger la version Raw depuis Roblox :
+Ouvre `index.html` localement ou sers le dossier avec un serveur statique. Le bouton **Télécharger le .lua** conserve une copie locale ; le bouton **Copier le loadstring** copie le lanceur suivant :
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/EL2B_ALL_GEAR.lua"))()
 ```
 
-Cette commande charge uniquement `EL2B_ALL_GEAR.lua`, la version stable interface-only. Le script joint contenant des fonctions d’automatisation et d’exploitation n’est pas intégré au dépôt.
+Le script doit être lu et utilisé uniquement dans un environnement autorisé. L’application web ne vérifie pas la compatibilité d’un exécuteur et ne peut pas garantir l’absence de déconnexion dans un jeu Roblox.
 
-## À propos du code 267
+## Audit de portée
 
-Le code 267 est une déconnexion générée par l’expérience Roblox ou par son système de sécurité. La suppression des fonctions de gameplay non nécessaires réduit les causes possibles liées au script, mais elle ne peut pas garantir qu’une expérience Roblox ne déconnectera jamais un joueur. Utilisez uniquement des scripts et des fonctions autorisés par les règles de Roblox et du jeu.
+La page décrit les modules visibles dans le fichier Lua, mais ne prétend pas que le script est « interface-only ». Le fichier actuel contient des modules de menu, loading screen, joueur, ESP, déplacement et autres fonctions de gameplay avancées. Cette distinction est volontaire afin que l’utilisateur puisse vérifier le code avant exécution.
 
-## Autres scripts
-
-`EL2BCODE_Steal.lua` et `vis_hub_corrected.lua` sont des versions historiques non utilisées par la version stable. `TgyEl2b.lua` est un module séparé destiné au quiz SpiderSammy. `RemoteLister.lua` est un outil distinct d’inspection locale. Ils ne sont pas chargés par `EL2B_ALL_GEAR.lua` ni par `EL2B_HUB.lua`.
-
-## Petite GUI Delta
-
-`Petite_GUI_Delta.lua` est une interface locale minimale avec un titre, un statut, un bouton pour masquer/rouvrir la fenêtre et un bouton de fermeture. Elle ne contient ni requête HTTP, ni `loadstring`, ni hook, ni appel `RemoteEvent` ou `RemoteFunction`. Elle peut être collée telle quelle dans Delta ou un exécuteur compatible.
-
-`StealAnEgg_GUI.lua` est la variante visuelle adaptée à **Steal an Egg**. Elle affiche le nom du jeu détecté localement, avec un thème œuf doré, mais n'automatise aucune action de jeu.
-
-## Utilisation responsable
-
-N’utilisez ce dépôt que dans les environnements où vous disposez de l’autorisation nécessaire. Ne publiez aucune clé API, aucun token privé ni aucune donnée personnelle dans le dépôt.
+Aucune clé API, aucun token privé, webhook secret ou donnée personnelle ne doit être ajouté au dépôt.
