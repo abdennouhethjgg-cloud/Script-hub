@@ -8,4 +8,5 @@
   skip.addEventListener('click',()=>{if(!skip.disabled)finish(true)}); raf=requestAnimationFrame(frame);
   $('btnTopGet').addEventListener('click',()=>document.getElementById('download').scrollIntoView({behavior:'smooth'}));
   $('btnCopyPath').addEventListener('click',async()=>{const b=$('btnCopyPath');try{await navigator.clipboard.writeText('EL2B_ALL_GEAR.lua');b.textContent='Copié !';}catch(_){b.textContent='EL2B_ALL_GEAR.lua';}setTimeout(()=>b.textContent='Copier le nom du fichier',1500);});
+  $('btnCopyLoadstring').addEventListener('click',async()=>{const b=$('btnCopyLoadstring');const value=$('loadstringCode').textContent;try{await navigator.clipboard.writeText(value);b.textContent='Loadstring copié !';}catch(_){b.textContent='Copie indisponible';}setTimeout(()=>b.textContent='Copier le loadstring',1800);});
 })();

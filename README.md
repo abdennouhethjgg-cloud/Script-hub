@@ -14,6 +14,8 @@ Pour charger la version Raw depuis Roblox :
 loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/Script-hub/main/EL2B_ALL_GEAR.lua"))()
 ```
 
+Cette commande charge uniquement `EL2B_ALL_GEAR.lua`, la version stable interface-only. Le script joint contenant des fonctions d’automatisation et d’exploitation n’est pas intégré au dépôt.
+
 ## À propos du code 267
 
 Le code 267 est une déconnexion générée par l’expérience Roblox ou par son système de sécurité. La suppression des fonctions de gameplay non nécessaires réduit les causes possibles liées au script, mais elle ne peut pas garantir qu’une expérience Roblox ne déconnectera jamais un joueur. Utilisez uniquement des scripts et des fonctions autorisés par les règles de Roblox et du jeu.
