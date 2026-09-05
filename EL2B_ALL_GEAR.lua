@@ -1,5 +1,5 @@
 -- EL2B ALL GEAR — version stable et sûre pour Roblox
--- VERSION: 2.2.0
+-- VERSION: 2.3.0
 -- Cette version est volontairement limitée à l’interface et aux informations visuelles.
 -- Aucun RemoteEvent/RemoteFunction, téléportation, lagger, hook, commande admin,
 -- anti-ragdoll, aimbot, quick pickup ou automatisation de gameplay n’est exécuté.
@@ -16,7 +16,7 @@ end
 
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local GUI_NAME = "EL2B_ALL_GEAR"
-local CURRENT_VERSION = "2.2.0"
+local CURRENT_VERSION = "2.3.0"
 local THEME_FILE = "EL2B_THEME.json"
 local themePresets = {
     DARK = {main=Color3.fromRGB(18,18,25), panel=Color3.fromRGB(28,25,40), card=Color3.fromRGB(30,24,40), accent=Color3.fromRGB(125,35,55), text=Color3.fromRGB(245,240,255), muted=Color3.fromRGB(190,180,205), input=Color3.fromRGB(30,24,40)},
@@ -117,7 +117,7 @@ local loadingPanel = make("Frame", {
     Name = "LoadingPanel",
     AnchorPoint = Vector2.new(0.5, 0.5),
     Position = UDim2.fromScale(0.5, 0.5),
-    Size = UDim2.fromOffset(280, 150),
+    Size = UDim2.fromOffset(280, 180),
     BackgroundColor3 = Color3.fromRGB(22, 12, 18),
     BorderSizePixel = 0,
     ZIndex = 101,
@@ -440,7 +440,9 @@ end
 
 local function copyToClipboard(value, label)
     local copied = false
-    for _, clipboardFunction in ipairs({setclipboard, toclipboard, set_clipboard}) do
+    local clipboardFunctions = {setclipboard, toclipboard, set_clipboard}
+    for index = 1, #clipboardFunctions do
+        local clipboardFunction = clipboardFunctions[index]
         if type(clipboardFunction) == "function" then
             copied = pcall(clipboardFunction, tostring(value))
             if copied then break end
@@ -1048,7 +1050,8 @@ task.spawn(function()
 end)
 refreshPlayers()
 
-local loadingDuration = 60
+local loadingDuration = 30
+local skipUnlockAt = 20
 local loadingFinished = false
 local loadingProgress = TweenService:Create(loadingFill, TweenInfo.new(loadingDuration, Enum.EasingStyle.Linear), {Size = UDim2.new(1, 0, 1, 0)})
 local loadingSpin = TweenService:Create(loadingSpinner, TweenInfo.new(0.75, Enum.EasingStyle.Linear, Enum.EasingDirection.In, -1), {Rotation = 360})
@@ -1060,10 +1063,12 @@ local skipButton = make("TextButton", {
     BackgroundColor3 = Color3.fromRGB(125, 35, 55),
     BorderSizePixel = 0,
     Font = Enum.Font.GothamBold,
-    Text = "SKIP  •  60s",
+    Text = "SKIP IN  •  20s",
     TextColor3 = Color3.fromRGB(255, 235, 240),
     TextSize = 9,
     AutoButtonColor = false,
+    Active = false,
+    TextTransparency = 0.35,
     ZIndex = 102,
 }, loadingPanel)
 make("UICorner", {CornerRadius = UDim.new(0, 7)}, skipButton)
@@ -1087,8 +1092,16 @@ loadingSpin:Play()
 task.spawn(function()
     local startedAt = os.clock()
     while not loadingFinished and not destroyed and gui.Parent do
-        local remaining = math.max(0, math.ceil(loadingDuration - (os.clock() - startedAt)))
-        skipButton.Text = "SKIP  •  " .. tostring(remaining) .. "s"
+        local elapsed = os.clock() - startedAt
+        local remaining = math.max(0, math.ceil(loadingDuration - elapsed))
+        local untilSkip = math.max(0, math.ceil(skipUnlockAt - elapsed))
+        if elapsed >= skipUnlockAt and not skipButton.Active then
+            skipButton.Active = true
+            skipButton.TextTransparency = 0
+            skipButton.Text = "SKIP"
+        elseif not skipButton.Active then
+            skipButton.Text = "SKIP IN  •  " .. tostring(untilSkip) .. "s"
+        end
         loadingStatus.Text = "Chargement de l’interface... " .. tostring(remaining) .. "s"
         if remaining <= 0 then
             finishLoading()

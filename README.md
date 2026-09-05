@@ -2,7 +2,9 @@
 
 ## EL2B ALL GEAR — version stable
 
-Le script principal est `EL2B_ALL_GEAR.lua`. `EL2B_HUB.lua` reste conservé comme copie de compatibilité. Cette édition est conçue pour éviter les erreurs et les déconnexions liées aux fonctions d’automatisation dans **Steal a Brainrot**. Elle affiche une interface légère avec le nom **EL2B ALL GEAR**, le nombre de joueurs et la liste des joueurs présents.
+Le script principal est `EL2B_ALL_GEAR.lua` (version 2.3.0). `EL2B_HUB.lua` reste conservé comme copie de compatibilité. Cette édition est conçue pour éviter les erreurs et les déconnexions liées aux fonctions d’automatisation dans **Steal a Brainrot**. Elle affiche une interface légère avec le nom **EL2B ALL GEAR**, le nombre de joueurs et la liste des joueurs présents.
+
+L’écran de chargement dure 30 secondes. Le bouton **SKIP** reste désactivé pendant les 20 premières secondes, puis devient disponible ; la fin automatique ouvre l’interface après 30 secondes.
 
 Aucune action de gameplay n’est exécutée par cette version. Le script ne contient pas de téléportation, de commande admin, d’appel `RemoteEvent` ou `RemoteFunction`, de lagger, de hook, d’anti-ragdoll, d’aimbot, de quick pickup, de blocage automatique ou d’automatisation de vol.
 
