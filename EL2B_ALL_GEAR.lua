@@ -1,7 +1,7 @@
 --[[
   ╔══════════════════════════════════════════════════════════╗
   ║  EL2B HUB — Application                                 ║
-  ║  Version: 2.0.0                                         ║
+  ║  Version: 2.3.0                                         ║
   ║  Style: Empire / Mobile-first                           ║
   ╚══════════════════════════════════════════════════════════╝
 
@@ -366,7 +366,7 @@ end
 _G.EL2B = _G.EL2B or {}
 local APP = _G.EL2B
 APP.Name = "EL2B Hub"
-APP.Version = "2.0.0"
+APP.Version = "2.3.0"
 APP.StartedAt = tick()
 APP.Errors = APP.Errors or {}
 
@@ -375,8 +375,12 @@ function APP.Log(msg)
 end
 
 function APP.Warn(msg)
-	warn(string.format("[EL2B %s] %s", APP.Version, tostring(msg)))
-	table.insert(APP.Errors, { t = tick(), msg = tostring(msg) })
+	local text = tostring(msg)
+	warn(string.format("[EL2B %s] %s", APP.Version, text))
+	table.insert(APP.Errors, { t = tick(), msg = text })
+	if type(_G.EL2B_ReportError) == "function" then
+		pcall(_G.EL2B_ReportError, text)
+	end
 end
 
 function APP.Safe(fn, label)
@@ -11927,6 +11931,66 @@ end
 --   - Effacer : _G.EL2B_ClearWinLiveWebhook()
 -- ============================================================
 
+-- ============================================================
+-- DIAGNOSTICS SITE / SCRIPT (OPTIONNEL, COMMANDES SÛRES UNIQUEMENT)
+-- ============================================================
+do
+	local diagnostics = { url = nil, key = nil, interval = 30, errors = {}, lastStatus = "disabled", message = "" }
+	local function getRequest()
+		return (syn and syn.request) or http_request or request or (http and http.request)
+	end
+	local function addError(text)
+		text = tostring(text or "unknown error")
+		if #diagnostics.errors >= 20 then table.remove(diagnostics.errors, 1) end
+		table.insert(diagnostics.errors, text)
+	end
+	_G.EL2B_ReportError = addError
+	_G.EL2B_SetDiagnosticsConfig = function(url, key)
+		if type(url) ~= "string" or not url:find("^https://") then
+			warn("[EL2B] Diagnostics URL refusée : HTTPS requis")
+			return false
+		end
+		if type(key) ~= "string" or #key < 16 then
+			warn("[EL2B] Diagnostics key refusée : clé trop courte")
+			return false
+		end
+		diagnostics.url = url:gsub("/+$", "")
+		diagnostics.key = key
+		diagnostics.lastStatus = "configured"
+		print("[EL2B] Diagnostics configurés — clé gardée en mémoire uniquement")
+		return true
+	end
+	_G.EL2B_DisableDiagnostics = function()
+		diagnostics.url = nil
+		diagnostics.key = nil
+		diagnostics.lastStatus = "disabled"
+	end
+	local function sendHeartbeat()
+		if not diagnostics.url or not diagnostics.key then return end
+		local req = getRequest()
+		if not req then diagnostics.lastStatus = "request_unavailable"; return end
+		local payload = HttpService:JSONEncode({ key = diagnostics.key, version = APP.Version, errors = diagnostics.errors, message = diagnostics.message })
+		local ok, response = pcall(req, { Url = diagnostics.url .. "/api/agent/heartbeat", Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = payload })
+		if not ok or not response then diagnostics.lastStatus = "request_failed"; return end
+		local body = response.Body or response.body
+		local decodedOk, data = pcall(function() return HttpService:JSONDecode(body or "") end)
+		if not decodedOk or type(data) ~= "table" or data.ok ~= true then diagnostics.lastStatus = "server_rejected"; return end
+		diagnostics.lastStatus = "connected"
+		diagnostics.errors = {}
+		if data.master then
+			_G.EL2B_MasterLocked = data.master.status ~= "active" or tostring(data.master.version) ~= tostring(APP.Version)
+		end
+		for _, command in ipairs(data.commands or {}) do
+			if command.type == "ping" then APP.Log("Diagnostics ping reçu")
+			elseif command.type == "request_diagnostics" then diagnostics.message = "diagnostics requested"
+			elseif command.type == "clear_errors" then diagnostics.errors = {} end
+		end
+	end
+	task.spawn(function()
+		while true do task.wait(diagnostics.interval); pcall(sendHeartbeat) end
+	end)
+end
+
 ----------------------------------------------------------------
 -- EL2B APPLICATION READY
 ----------------------------------------------------------------
@@ -11934,6 +11998,6 @@ pcall(function()
 	if _G.EL2B and _G.EL2B.Log then
 		_G.EL2B.Log("Application ready — UI centered, loading done, modules active")
 	else
-		print("[EL2B 2.0.0] Application ready")
+		print("[EL2B 2.3.0] Application ready")
 	end
 end)

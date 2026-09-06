@@ -26,3 +26,13 @@ Le script doit être lu et utilisé uniquement dans un environnement autorisé. 
 La page décrit les modules visibles dans le fichier Lua, mais ne prétend pas que le script est « interface-only ». Le fichier actuel contient des modules de menu, loading screen, joueur, ESP, déplacement et autres fonctions de gameplay avancées. Cette distinction est volontaire afin que l’utilisateur puisse vérifier le code avant exécution.
 
 Aucune clé API, aucun token privé, webhook secret ou donnée personnelle ne doit être ajouté au dépôt.
+
+## Supervision optionnelle
+
+Le script contient une liaison de diagnostic désactivée par défaut. Depuis la page `/admin` du Control Center, régénère une clé puis exécute uniquement la commande générée dans un environnement autorisé :
+
+```lua
+_G.EL2B_SetDiagnosticsConfig("https://el2bctrl-ggqdrtpt.manus.space", "COLLER_LA_CLE_ICI")
+```
+
+La liaison envoie périodiquement la version, un message d’état et les erreurs explicitement enregistrées. Les seules commandes distantes acceptées sont `ping`, `request_diagnostics` et `clear_errors`. Elle ne fournit aucun mécanisme de `loadstring`, kick, freeze, lag ou action distante de gameplay. La clé reste en mémoire du client et est stockée uniquement sous forme hachée côté serveur ; régénère-la si elle est compromise.
