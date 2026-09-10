@@ -1,5 +1,5 @@
 -- EL2B ALL GEAR — version stable et sûre pour Roblox
--- VERSION: 2.2.0
+-- VERSION: 2.3.0
 -- Cette version est volontairement limitée à l’interface et aux informations visuelles.
 -- Aucun RemoteEvent/RemoteFunction, téléportation, lagger, hook, commande admin,
 -- anti-ragdoll, aimbot, quick pickup ou automatisation de gameplay n’est exécuté.
@@ -16,7 +16,7 @@ end
 
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local GUI_NAME = "EL2B_ALL_GEAR"
-local CURRENT_VERSION = "2.2.0"
+local CURRENT_VERSION = "2.3.0"
 local THEME_FILE = "EL2B_THEME.json"
 local themePresets = {
     DARK = {main=Color3.fromRGB(18,18,25), panel=Color3.fromRGB(28,25,40), card=Color3.fromRGB(30,24,40), accent=Color3.fromRGB(125,35,55), text=Color3.fromRGB(245,240,255), muted=Color3.fromRGB(190,180,205), input=Color3.fromRGB(30,24,40)},
@@ -1077,7 +1077,6 @@ local function finishLoading()
     loadingProgress:Cancel()
     loadingSpin:Cancel()
     pcall(function() loadingMusic:Stop() end)
-    if loadingMusic.Parent then loadingMusic:Destroy() end
     if loadingOverlay.Parent then loadingOverlay:Destroy() end
 end
 connect(skipButton.Activated, finishLoading)
