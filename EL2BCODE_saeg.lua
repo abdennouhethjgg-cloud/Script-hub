@@ -1964,13 +1964,15 @@ local function playEL2BIntro(parent)
         "rbxassetid://92480523122234",
         "rbxassetid://117453595633818"
     }
-    local playerGui = Players.LocalPlayer and Players.LocalPlayer:FindFirstChildOfClass("PlayerGui")
-    local intro = Instance.new("ScreenGui")
+    -- The intro is hosted inside the library ScreenGui, so its root must be
+    -- a Frame (Roblox does not allow ScreenGui nesting).
+    local intro = Instance.new("Frame")
     intro.Name = "EL2BIntro"
-    intro.IgnoreGuiInset = true
-    intro.ResetOnSpawn = false
-    intro.DisplayOrder = 1000
-    intro.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    intro.Size = UDim2.fromScale(1, 1)
+    intro.Position = UDim2.fromScale(0, 0)
+    intro.BackgroundTransparency = 1
+    intro.BorderSizePixel = 0
+    intro.ZIndex = 1000
     intro.Parent = parent
     local frame = Instance.new("Frame")
     frame.Size = UDim2.fromScale(1, 1)
@@ -2001,7 +2003,12 @@ local function playEL2BIntro(parent)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then finish() end
     end)
     task.spawn(function()
-        pcall(function() ContentProvider:PreloadAsync(images) end)
+        -- Preload in parallel so a slow/unavailable asset never freezes the intro.
+        task.spawn(function()
+            pcall(function()
+                game:GetService("ContentProvider"):PreloadAsync(images)
+            end)
+        end)
         local okFileApi = typeof(isfile) == "function" and typeof(writefile) == "function" and typeof(getcustomasset) == "function"
         if okFileApi then
             local fileName = "EL2BHubIntro.mp3"
@@ -7405,6 +7412,7 @@ end
 -- -----------------------------------------------------------------------------
 do
 local ConfigSub = SettingsTab:AddSubTab("Configuration")
+local THEMES = Library.Themes
 local selectedTheme = Library._currentTheme or "Dark"
 local themePickerGui
 local function openThemePicker()
@@ -7413,32 +7421,39 @@ local function openThemePicker()
         themePickerGui = nil
         return
     end
-    themePickerGui = Instance.new("ScreenGui")
+    -- Use a Frame inside the existing ScreenGui. A ScreenGui cannot be
+    -- parented to another ScreenGui, which prevented the style list from opening.
+    local themeColors = THEMES[selectedTheme] or THEMES.Dark
+    themePickerGui = Instance.new("Frame")
     themePickerGui.Name = "EL2BThemePicker"
-    themePickerGui.ResetOnSpawn = false
-    themePickerGui.IgnoreGuiInset = true
-    themePickerGui.DisplayOrder = 900
+    themePickerGui.Size = UDim2.fromScale(1, 1)
+    themePickerGui.Position = UDim2.fromScale(0, 0)
+    themePickerGui.BackgroundTransparency = 1
+    themePickerGui.BorderSizePixel = 0
+    themePickerGui.ZIndex = 900
     themePickerGui.Parent = Window.ScreenGui
     local panel = Instance.new("Frame")
     panel.Size = UDim2.fromOffset(330, 390)
     panel.Position = UDim2.fromScale(0.5, 0.5)
     panel.AnchorPoint = Vector2.new(0.5, 0.5)
-    panel.BackgroundColor3 = C.CardBg
+    panel.BackgroundColor3 = themeColors.CardBg
     panel.BorderSizePixel = 0
+    panel.ZIndex = 901
     panel.Parent = themePickerGui
     Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 10)
     local stroke = Instance.new("UIStroke", panel)
-    stroke.Color = C.Accent
+    stroke.Color = themeColors.Accent
     stroke.Thickness = 1
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, -55, 0, 42)
     title.Position = UDim2.fromOffset(16, 8)
     title.BackgroundTransparency = 1
     title.Text = "EL2B HUB • STYLE LIST"
-    title.TextColor3 = C.White
+    title.TextColor3 = themeColors.White
     title.Font = Enum.Font.GothamBold
     title.TextSize = 16
     title.TextXAlignment = Enum.TextXAlignment.Left
+    title.ZIndex = 902
     title.Parent = panel
     local close = Instance.new("TextButton")
     close.Size = UDim2.fromOffset(32, 32)
@@ -7446,8 +7461,9 @@ local function openThemePicker()
     close.Text = "×"
     close.TextSize = 22
     close.Font = Enum.Font.GothamBold
-    close.TextColor3 = C.TextGray
-    close.BackgroundColor3 = C.Element
+    close.TextColor3 = themeColors.TextGray
+    close.BackgroundColor3 = themeColors.Element
+    close.ZIndex = 902
     close.Parent = panel
     Instance.new("UICorner", close).CornerRadius = UDim.new(0, 6)
     close.MouseButton1Click:Connect(function() themePickerGui:Destroy(); themePickerGui = nil end)
@@ -7458,6 +7474,7 @@ local function openThemePicker()
     scroll.BorderSizePixel = 0
     scroll.ScrollBarThickness = 4
     scroll.CanvasSize = UDim2.fromOffset(0, 0)
+    scroll.ZIndex = 902
     scroll.Parent = panel
     local layout = Instance.new("UIListLayout", scroll)
     layout.Padding = UDim.new(0, 6)
@@ -7470,12 +7487,13 @@ local function openThemePicker()
         local button = Instance.new("TextButton")
         button.Size = UDim2.new(1, -6, 0, 34)
         button.Text = "  " .. name .. (name == selectedTheme and "  ✓" or "")
-        button.TextColor3 = theme.AccentText
+        button.TextColor3 = theme.AccentText or theme.White
         button.Font = Enum.Font.GothamBold
         button.TextSize = 13
         button.TextXAlignment = Enum.TextXAlignment.Left
         button.BackgroundColor3 = theme.Element
         button.AutoButtonColor = true
+        button.ZIndex = 903
         button.Parent = scroll
         Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
         local bar = Instance.new("Frame")
@@ -7483,6 +7501,7 @@ local function openThemePicker()
         bar.Position = UDim2.new(1, -13, 0.5, -11)
         bar.BackgroundColor3 = theme.Accent
         bar.BorderSizePixel = 0
+        bar.ZIndex = 904
         bar.Parent = button
         Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
         button.MouseButton1Click:Connect(function()
