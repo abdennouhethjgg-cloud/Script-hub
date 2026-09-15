@@ -1997,7 +1997,16 @@ local function playEL2BIntro(parent)
         if skipped then return end
         skipped = true
         if sound then pcall(function() sound:Stop(); sound:Destroy() end) end
-        task.delay(0.25, function() pcall(function() intro:Destroy() end) end)
+        task.delay(0.25, function()
+            pcall(function()
+                local main = parent:FindFirstChild("EL2BContainer", true)
+                local mainFrame = main and main:FindFirstChild("Main")
+                local hotbar = main and main:FindFirstChild("TabHotbar")
+                if mainFrame then mainFrame.Visible = true end
+                if hotbar then hotbar.Visible = true end
+                intro:Destroy()
+            end)
+        end)
     end
     tap.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then finish() end
@@ -2249,7 +2258,7 @@ function Library:CreateWindow(opts)
         Name = "Main", Size = windowSize,
         Position = UDim2.fromOffset(0, 0),
         BackgroundColor3 = C.WindowBg, ClipsDescendants = true,
-        Visible = not loadingEnabled, ZIndex = 2, Parent = container,
+        Visible = not loadingEnabled and opts.UseFreeIntro ~= true, ZIndex = 2, Parent = container,
     })
     corner(main, 12); stroke(main, C.Border)
 
@@ -2307,7 +2316,7 @@ function Library:CreateWindow(opts)
         AutomaticSize = Enum.AutomaticSize.X,
         BackgroundColor3 = C.HotbarBg,
         ClipsDescendants = false,
-        Visible = not loadingEnabled,
+        Visible = not loadingEnabled and opts.UseFreeIntro ~= true,
         ZIndex = 3, Parent = container,
     })
     corner(hotbar, 11)
@@ -7250,6 +7259,97 @@ do
 local MoveSub     = PlayerTab:AddSubTab("Movement")
 local AreaTpSub   = PlayerTab:AddSubTab("Area Travel")
 local PlotTpSub   = PlayerTab:AddSubTab("Plot Travel")
+local PlayersInfoSub = PlayerTab:AddSubTab("Players")
+local playersInfoParagraph
+local gameInfoParagraph
+local selectedProfileName
+local function buildPlayersInfo()
+    local lines = {}
+    local currentPlayers = Players:GetPlayers()
+    table.sort(currentPlayers, function(a, b)
+        return string.lower(a.DisplayName) < string.lower(b.DisplayName)
+    end)
+    for i, player in ipairs(currentPlayers) do
+        local you = player == LP and " [YOU]" or ""
+        lines[#lines + 1] = string.format(
+            "%d. %s (@%s)%s\n   UserId: %s  |  Account age: %s days",
+            i, player.DisplayName, player.Name, you, tostring(player.UserId), tostring(player.AccountAge)
+        )
+    end
+    if #lines == 0 then lines[1] = "No players found" end
+    return table.concat(lines, "\n\n")
+end
+local function buildGameInfo()
+    local placeName = "Unknown game"
+    pcall(function()
+        local info = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
+        if info and info.Name then placeName = info.Name end
+    end)
+    return string.format(
+        "Game: %s\nPlaceId: %s\nServer JobId: %s\nPlayers: %d/%d",
+        placeName, tostring(game.PlaceId), tostring(game.JobId), #Players:GetPlayers(), Players.MaxPlayers
+    )
+end
+playersInfoParagraph = PlayersInfoSub:AddParagraph({
+    Title = "PLAYER PROFILES",
+    Content = buildPlayersInfo()
+})
+gameInfoParagraph = PlayersInfoSub:AddParagraph({
+    Title = "CURRENT GAME",
+    Content = buildGameInfo()
+})
+local function refreshPlayersInfo()
+    if playersInfoParagraph then playersInfoParagraph:Set(buildPlayersInfo()) end
+    if gameInfoParagraph then gameInfoParagraph:Set(buildGameInfo()) end
+end
+track(Players.PlayerAdded:Connect(function()
+    task.defer(refreshPlayersInfo)
+end))
+track(Players.PlayerRemoving:Connect(function()
+    task.defer(refreshPlayersInfo)
+end))
+PlayersInfoSub:AddButton({
+    Name = "Refresh Players & Game Info", Primary = true,
+    Callback = safeCallback(function()
+        playersInfoParagraph:Set(buildPlayersInfo())
+        gameInfoParagraph:Set(buildGameInfo())
+        Notify("Players", "Profiles and game information refreshed", "Success")
+    end)
+})
+local profileNames = {}
+for _, player in ipairs(Players:GetPlayers()) do
+    table.insert(profileNames, player.Name)
+end
+if #profileNames == 0 then profileNames = { "(no players)" } end
+selectedProfileName = profileNames[1]
+local profileDropdown = PlayersInfoSub:AddDropdown({
+    Name = "Select Player Profile", Options = profileNames, Items = profileNames,
+    Default = profileNames[1],
+    Callback = function(value) selectedProfileName = value end
+})
+PlayersInfoSub:AddButton({
+    Name = "Refresh Profile List",
+    Callback = function()
+        local names = {}
+        for _, player in ipairs(Players:GetPlayers()) do table.insert(names, player.Name) end
+        if #names == 0 then names = { "(no players)" } end
+        profileDropdown:SetOptions(names)
+        playersInfoParagraph:Set(buildPlayersInfo())
+        gameInfoParagraph:Set(buildGameInfo())
+    end
+})
+PlayersInfoSub:AddButton({
+    Name = "Show Selected Profile",
+    Callback = safeCallback(function()
+        local player = selectedProfileName and Players:FindFirstChild(selectedProfileName)
+        if not player then
+            Notify("Players", "Select a valid player first", "Error")
+            return
+        end
+        Notify("Profile", string.format("%s (@%s) | UserId %s | %s days old", player.DisplayName, player.Name, player.UserId, player.AccountAge), "Info", 5)
+    end)
+})
+
 local PlayerTpSub = PlayerTab:AddSubTab("Player Travel")
 local PerfSub     = PlayerTab:AddSubTab("Visuals & Performance")
 
