@@ -1,11 +1,11 @@
 --[[
-  Oxide HUB | Ein Ei stehlen (Steal an Egg) — Standalone Combined
+  EL2B HUB | Ein Ei stehlen (Steal an Egg) — Standalone Combined
   Library + Script tek dosyada. Executor'da loadstring / execute ile çalıştır.
   PlaceId: 107778070777162 (Steal an Egg)
 ]]
 
 -- ==============================================================================
--- UI LIBRARY (OxideUiLibary2)
+-- UI LIBRARY (EL2BUiLibary2)
 -- ==============================================================================
 local Library = (function()
 local TweenService     = game:GetService("TweenService")
@@ -224,6 +224,30 @@ local THEMES = {
         KnobAccent   = Color3.fromRGB(8, 12, 20),
     },
 }
+
+local function makeTheme(accent, accentDim, windowBg, cardBg, element)
+    local t = table.clone(THEMES.Dark)
+    t.WindowBg = windowBg or t.WindowBg
+    t.CardBg = cardBg or t.CardBg
+    t.Element = element or t.Element
+    t.ElementHover = t.Element
+    t.Accent = accent
+    t.AccentDim = accentDim
+    t.AccentText = Color3.fromRGB(255, 255, 255)
+    t.KnobAccent = accent
+    return t
+end
+THEMES.Cyber = makeTheme(Color3.fromRGB(0, 235, 255), Color3.fromRGB(0, 65, 85), Color3.fromRGB(7, 12, 24), Color3.fromRGB(11, 20, 36), Color3.fromRGB(16, 31, 50))
+THEMES.Rogue = makeTheme(Color3.fromRGB(255, 70, 92), Color3.fromRGB(90, 20, 34), Color3.fromRGB(17, 8, 14), Color3.fromRGB(28, 13, 22), Color3.fromRGB(45, 19, 32))
+THEMES.Rose = makeTheme(Color3.fromRGB(255, 105, 175), Color3.fromRGB(92, 25, 60), Color3.fromRGB(20, 9, 17), Color3.fromRGB(35, 15, 28), Color3.fromRGB(54, 22, 42))
+THEMES.Ocean = makeTheme(Color3.fromRGB(50, 155, 255), Color3.fromRGB(20, 55, 105), Color3.fromRGB(6, 14, 25), Color3.fromRGB(10, 24, 42), Color3.fromRGB(15, 38, 62))
+THEMES.Purple = makeTheme(Color3.fromRGB(175, 105, 255), Color3.fromRGB(65, 28, 105), Color3.fromRGB(13, 8, 23), Color3.fromRGB(25, 14, 43), Color3.fromRGB(38, 21, 64))
+THEMES.Emerald = makeTheme(Color3.fromRGB(45, 235, 150), Color3.fromRGB(18, 82, 58), Color3.fromRGB(6, 17, 15), Color3.fromRGB(10, 29, 25), Color3.fromRGB(15, 45, 36))
+THEMES.Sunset = makeTheme(Color3.fromRGB(255, 145, 55), Color3.fromRGB(100, 45, 20), Color3.fromRGB(22, 12, 8), Color3.fromRGB(39, 21, 12), Color3.fromRGB(58, 30, 15))
+THEMES.Blood = makeTheme(Color3.fromRGB(220, 25, 40), Color3.fromRGB(85, 10, 18), Color3.fromRGB(18, 5, 8), Color3.fromRGB(34, 9, 14), Color3.fromRGB(52, 13, 20))
+THEMES.Gold = makeTheme(Color3.fromRGB(255, 205, 70), Color3.fromRGB(95, 68, 20), Color3.fromRGB(18, 15, 7), Color3.fromRGB(33, 27, 12), Color3.fromRGB(52, 42, 18))
+THEMES.Mint = makeTheme(Color3.fromRGB(80, 255, 210), Color3.fromRGB(20, 85, 70), Color3.fromRGB(6, 18, 17), Color3.fromRGB(11, 32, 28), Color3.fromRGB(17, 48, 41))
+local THEME_NAMES = { "Dark", "Light", "OLED", "Cyber", "Rogue", "Rose", "Ocean", "Purple", "Emerald", "Sunset", "Blood", "Gold", "Mint" }
 
 local REVERSE = {}
 local function rebuildReverse()
@@ -567,7 +591,7 @@ local function ensureTagGui()
     if not targetParent then targetParent = localPlayer:WaitForChild("PlayerGui") end
 
     local sg = Instance.new("ScreenGui")
-    sg.Name               = "OxideTagGui"
+    sg.Name               = "EL2BTagGui"
     sg.ResetOnSpawn       = false
     sg.IgnoreGuiInset     = true
     sg.ZIndexBehavior     = Enum.ZIndexBehavior.Sibling
@@ -587,7 +611,7 @@ local function buildTagFrame(player)
 
     -- Root container: fixed pixel size, positioned by RenderStepped loop
     local root = Instance.new("Frame")
-    root.Name              = "OxideTag_" .. player.UserId
+    root.Name              = "EL2BTag_" .. player.UserId
     root.Size              = UDim2.fromOffset(TAG_W, TAG_H)
     root.AnchorPoint       = Vector2.new(0.5, 0.5)
     root.BackgroundColor3  = Color3.fromRGB(22, 22, 26)
@@ -757,7 +781,7 @@ local function buildTagFrame(player)
     userLabel.ZIndex         = 2
     userLabel.Parent         = root
 
-    -- "Oxide" badge (bottom right, small pill)
+    -- "EL2B" badge (bottom right, small pill)
     local badge = Instance.new("Frame")
     badge.Size             = UDim2.fromOffset(badgeW, 16)
     badge.AnchorPoint      = Vector2.new(1, 1)
@@ -778,7 +802,7 @@ local function buildTagFrame(player)
     badgeStroke.Parent = badge
 
     local badgeLabel = Instance.new("TextLabel")
-    badgeLabel.Text              = "Oxide"
+    badgeLabel.Text              = "EL2B"
     badgeLabel.Font              = Enum.Font.GothamBold
     badgeLabel.TextSize          = 8
     badgeLabel.TextColor3        = Color3.fromRGB(222, 236, 253)
@@ -813,11 +837,11 @@ local function applyOutline(player)
     if not char then return nil end
 
     -- Remove any existing highlight first
-    local existing = char:FindFirstChild("OxideOutline")
+    local existing = char:FindFirstChild("EL2BOutline")
     if existing then existing:Destroy() end
 
     local hl = Instance.new("Highlight")
-    hl.Name             = "OxideOutline"
+    hl.Name             = "EL2BOutline"
     hl.FillColor        = Color3.fromRGB(0, 0, 0)
     hl.FillTransparency = 1            -- outline only, no fill
     hl.OutlineColor     = TAG_OUTLINE_COLOR
@@ -831,7 +855,7 @@ end
 local function clearOutline(player)
     local char = player.Character
     if not char then return end
-    local existing = char:FindFirstChild("OxideOutline")
+    local existing = char:FindFirstChild("EL2BOutline")
     if existing then existing:Destroy() end
 end
 
@@ -858,7 +882,7 @@ local function addTag(player)
     local function refreshOutline()
         local char = player.Character
         if not char then return end
-        local existing = char:FindFirstChild("OxideOutline")
+        local existing = char:FindFirstChild("EL2BOutline")
         if not existing then applyOutline(player) end
     end
     refreshOutline()
@@ -883,7 +907,7 @@ local function addTag(player)
         end
 
         -- Ensure outline exists on the current character, and animate it
-        local outline = char:FindFirstChild("OxideOutline")
+        local outline = char:FindFirstChild("EL2BOutline")
         if not outline then outline = applyOutline(player) end
 
         local camera = Workspace.CurrentCamera
@@ -1024,7 +1048,7 @@ local function tagRegister()
     -- If the server has queued this user for an admin kick, comply.
     local sok, data = pcall(function() return HttpService:JSONDecode(res.Body) end)
     if sok and type(data) == "table" and data.kick == true then
-        pcall(function() lp:Kick("[Oxide] Disconnected by admin") end)
+        pcall(function() lp:Kick("[EL2B] Disconnected by admin") end)
     end
 end
 
@@ -1135,7 +1159,7 @@ local Library = {
     Flags         = {},        -- [flag] = { kind = <string>, api = <handle> }
     State         = {},        -- Unlimited reactive variables / state store
     _stateListeners = {},
-    ConfigFolder  = "OxideUI/configs",
+    ConfigFolder  = "EL2BUI/configs",
     _windows      = {},
     _windowObjects= {},
     _currentTheme = "Dark",
@@ -1224,14 +1248,14 @@ function Library:SetTheme(theme)
     if type(theme) == "string" then
         themeName = theme
         theme = THEMES[theme]
-        if not theme then warn(("[Oxide UI] unknown theme %q"):format(themeName)); return false end
+        if not theme then warn(("[EL2B UI] unknown theme %q"):format(themeName)); return false end
     elseif type(theme) ~= "table" then
-        warn("[Oxide UI] SetTheme expects a built-in theme name or theme table"); return false
+        warn("[EL2B UI] SetTheme expects a built-in theme name or theme table"); return false
     end
     for key in pairs(C) do
         local value = theme[key]
         if value ~= nil and typeof(value) ~= "Color3" then
-            warn(("[Oxide UI] theme key %s must be a Color3"):format(key)); return false
+            warn(("[EL2B UI] theme key %s must be a Color3"):format(key)); return false
         end
     end
     for key in pairs(C) do
@@ -1371,23 +1395,23 @@ end
 -- Persist the current state of all flags to a named config file.
 function Library:SaveConfig(name)
     if not hasFileApi() then
-        warn("[Oxide UI] SaveConfig requires an executor file API (writefile)")
+        warn("[EL2B UI] SaveConfig requires an executor file API (writefile)")
         return false
     end
     ensureConfigFolder()
     local ok, encoded = pcall(function()
         return HttpService:JSONEncode(Library:GetConfig())
     end)
-    if not ok then warn("[Oxide UI] SaveConfig failed to encode config"); return false end
+    if not ok then warn("[EL2B UI] SaveConfig failed to encode config"); return false end
     local wrote = pcall(writefile, configPath(name), encoded)
-    if not wrote then warn("[Oxide UI] SaveConfig failed to write file"); return false end
+    if not wrote then warn("[EL2B UI] SaveConfig failed to write file"); return false end
     return true
 end
 
 -- Load a named config file and apply it to all matching flags.
 function Library:LoadConfig(name)
     if not hasFileApi() then
-        warn("[Oxide UI] LoadConfig requires an executor file API (readfile)")
+        warn("[EL2B UI] LoadConfig requires an executor file API (readfile)")
         return false
     end
     local path = configPath(name)
@@ -1395,7 +1419,7 @@ function Library:LoadConfig(name)
     local ok, raw = pcall(readfile, path)
     if not ok or not raw then return false end
     local decoded, data = pcall(function() return HttpService:JSONDecode(raw) end)
-    if not decoded then warn("[Oxide UI] LoadConfig failed to decode config"); return false end
+    if not decoded then warn("[EL2B UI] LoadConfig failed to decode config"); return false end
     return Library:LoadConfigData(data)
 end
 
@@ -1428,7 +1452,7 @@ function Library:Notify(opts)
             return window:Notify(opts)
         end
     end
-    warn("[Oxide UI] create a window before calling Library:Notify")
+    warn("[EL2B UI] create a window before calling Library:Notify")
     return nil
 end
 function Library:Notification(opts) return self:Notify(opts) end
@@ -1521,7 +1545,7 @@ local function buildMusicPlayer(cfg)
     local CLOSE_RED_HI   = Color3.fromRGB(212, 80, 80)
     local MIN_YELLOW     = Color3.fromRGB(255, 195, 0)
     local MIN_YELLOW_HI  = Color3.fromRGB(255, 211, 70)
-    local MUSIC_FOLDER   = tostring(opts.MusicFolder or "OxideMusic")
+    local MUSIC_FOLDER   = tostring(opts.MusicFolder or "EL2BMusic")
     local musicWidth     = profileWidth
     local fullHeight     = 384
     local compactHeight  = 190
@@ -1534,7 +1558,7 @@ local function buildMusicPlayer(cfg)
     -- 2D audio playback via SoundService
     local SoundService = game:GetService("SoundService")
     local musicSound   = Instance.new("Sound")
-    musicSound.Name   = "OxideMusicPlayer"
+    musicSound.Name   = "EL2BMusicPlayer"
     musicSound.Volume = 0.5
     musicSound.Looped = false
     pcall(function() musicSound.Parent = SoundService end)
@@ -1745,7 +1769,7 @@ local function buildMusicPlayer(cfg)
         end
     end
     local BUILTIN_TRACKS = {
-        { name = "Oxide Anthem", id = "rbxassetid://75485931767123", startTime = 3, endTime = 115 },
+        { name = "EL2B Anthem", id = "rbxassetid://75485931767123", startTime = 3, endTime = 115 },
         { name = "Lofi Chill Beats", id = "rbxassetid://9043887091" },
         { name = "Phonk Drift", id = "rbxassetid://9048375035" },
         { name = "Synthwave Glow", id = "rbxassetid://9048376510" },
@@ -1882,6 +1906,125 @@ local function buildMusicPlayer(cfg)
     return toggleMusic, closeMusic
 end
 
+
+-- EL2B HUB animated intro (integrated from the supplied Freeintro asset list).
+local function playEL2BIntro(parent)
+    if not parent then return end
+    local images = {
+        "rbxassetid://96533744445232",
+        "rbxassetid://118993542874276",
+        "rbxassetid://99866892158060",
+        "rbxassetid://84540124030580",
+        "rbxassetid://132934292097292",
+        "rbxassetid://104010736352149",
+        "rbxassetid://94361033271077",
+        "rbxassetid://72190372137981",
+        "rbxassetid://103523696318850",
+        "rbxassetid://101803539971689",
+        "rbxassetid://107529606059299",
+        "rbxassetid://130784948902307",
+        "rbxassetid://114784420279972",
+        "rbxassetid://105123015099972",
+        "rbxassetid://131596264264581",
+        "rbxassetid://117641319299892",
+        "rbxassetid://77534392596501",
+        "rbxassetid://137414609886581",
+        "rbxassetid://83131507934505",
+        "rbxassetid://120539267437814",
+        "rbxassetid://75439074806720",
+        "rbxassetid://115488810796302",
+        "rbxassetid://112728809681073",
+        "rbxassetid://134318680085983",
+        "rbxassetid://123066810237014",
+        "rbxassetid://102121135737318",
+        "rbxassetid://139699026047974",
+        "rbxassetid://74182313853112",
+        "rbxassetid://121416642632033",
+        "rbxassetid://134801197105164",
+        "rbxassetid://93349115381247",
+        "rbxassetid://128713300077569",
+        "rbxassetid://105980529035481",
+        "rbxassetid://120098855834318",
+        "rbxassetid://78738310303690",
+        "rbxassetid://120357336501453",
+        "rbxassetid://118779397888922",
+        "rbxassetid://132769993677180",
+        "rbxassetid://104815503921105",
+        "rbxassetid://77088103549177",
+        "rbxassetid://72670821879917",
+        "rbxassetid://70849955940425",
+        "rbxassetid://108744596090889",
+        "rbxassetid://76080560700977",
+        "rbxassetid://78134833803844",
+        "rbxassetid://88784536566963",
+        "rbxassetid://98157171075972",
+        "rbxassetid://110334342917414",
+        "rbxassetid://97359534131775",
+        "rbxassetid://72958519562189",
+        "rbxassetid://92480523122234",
+        "rbxassetid://117453595633818"
+    }
+    local playerGui = Players.LocalPlayer and Players.LocalPlayer:FindFirstChildOfClass("PlayerGui")
+    local intro = Instance.new("ScreenGui")
+    intro.Name = "EL2BIntro"
+    intro.IgnoreGuiInset = true
+    intro.ResetOnSpawn = false
+    intro.DisplayOrder = 1000
+    intro.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    intro.Parent = parent
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.fromScale(1, 1)
+    frame.BackgroundColor3 = Color3.new(0, 0, 0)
+    frame.BorderSizePixel = 0
+    frame.Parent = intro
+    local a = Instance.new("ImageLabel")
+    a.Size = UDim2.fromScale(1, 1); a.BackgroundTransparency = 1
+    a.ScaleType = Enum.ScaleType.Crop; a.ZIndex = 2; a.Parent = frame
+    local b = a:Clone(); b.ZIndex = 1; b.Parent = frame
+    a.Image, b.Image = images[1], images[1]
+    local tap = Instance.new("TextLabel")
+    tap.Size = UDim2.fromOffset(360, 60); tap.Position = UDim2.fromScale(0.5, 0.5)
+    tap.AnchorPoint = Vector2.new(0.5, 0.5); tap.BackgroundTransparency = 1
+    tap.Text = "TAP TO CONTINUE"; tap.TextColor3 = Color3.new(1, 1, 1)
+    tap.TextSize = 28; tap.Font = Enum.Font.GothamBlack
+    tap.TextTransparency = 0.35; tap.TextStrokeTransparency = 0.5
+    tap.ZIndex = 100; tap.Parent = intro
+    local sound
+    local skipped = false
+    local function finish()
+        if skipped then return end
+        skipped = true
+        if sound then pcall(function() sound:Stop(); sound:Destroy() end) end
+        task.delay(0.25, function() pcall(function() intro:Destroy() end) end)
+    end
+    tap.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then finish() end
+    end)
+    task.spawn(function()
+        pcall(function() ContentProvider:PreloadAsync(images) end)
+        local okFileApi = typeof(isfile) == "function" and typeof(writefile) == "function" and typeof(getcustomasset) == "function"
+        if okFileApi then
+            local fileName = "EL2BHubIntro.mp3"
+            pcall(function()
+                if not isfile(fileName) then writefile(fileName, game:HttpGet("https://files.catbox.moe/iyw1cb.mp3")) end
+                sound = Instance.new("Sound"); sound.SoundId = getcustomasset(fileName)
+                sound.Volume = 0.7; sound.Parent = workspace; sound:Play()
+            end)
+        end
+        local idx, frameDelay = 1, 1 / 30
+        local started = os.clock()
+        while not skipped and intro.Parent and os.clock() - started < 9 do
+            local nextIdx = (idx % #images) + 1
+            local behind, front = (a.ZIndex == 1) and a or b, (a.ZIndex == 1) and b or a
+            behind.Image = images[nextIdx]; task.wait(0.01)
+            behind.ZIndex, front.ZIndex = 2, 1; idx = nextIdx
+            local t = os.clock()
+            while not skipped and os.clock() - t < frameDelay do task.wait(0.03) end
+        end
+        finish()
+    end)
+end
+
 function Library:CreateWindow(opts)
     opts = opts or {}
 
@@ -1895,7 +2038,7 @@ function Library:CreateWindow(opts)
     local logoZoom       = math.clamp(tonumber(opts.LogoZoom) or (logoAsset == DEFAULT_LOGO and 2.4 or 1), 1, 6)
     local windowSize     = opts.Size or UDim2.fromOffset(700, 490)
     local windowPosition = opts.Position or UDim2.fromScale(0.5, 0.5)
-    local guiName        = opts.GuiName or "OxideUI"
+    local guiName        = opts.GuiName or "EL2BUI"
 
     -- Mobile detection (auto, or forced via opts.Mobile = true/false).
     -- Platform is the most reliable signal (iOS/Android), with the touch
@@ -1942,13 +2085,14 @@ function Library:CreateWindow(opts)
         removeExistingGui(targetParent)
         screenGui.Parent = targetParent
     end
+    if opts.UseFreeIntro == true then playEL2BIntro(screenGui) end
     table.insert(Library._windows, screenGui)
 
     local containerW = windowSize.X.Offset
     local containerH = windowSize.Y.Offset + HOTBAR_GAP + HOTBAR_HEIGHT
 
     local container = make("Frame", {
-        Name = "OxideContainer",
+        Name = "EL2BContainer",
         Size = UDim2.fromOffset(containerW, containerH),
         Position = windowPosition,
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -1959,11 +2103,11 @@ function Library:CreateWindow(opts)
     local containerScale = make("UIScale", { Scale = 1, Parent = container })
 
     -- ── LOADING SCREEN (slam-in intro, themed with the accent colour) ─────
-    local loadingEnabled      = opts.LoadingAnimation ~= false
+    local loadingEnabled      = opts.LoadingAnimation ~= false and opts.UseFreeIntro ~= true
     local loadingDuration     = math.clamp(tonumber(opts.LoadingDuration) or 1.2, 0.4, 8)
-    local loadingText         = tostring(opts.LoadingText or opts.Name or "Oxide")
+    local loadingText         = tostring(opts.LoadingText or opts.Name or "EL2B")
     local loadingSub          = tostring(opts.LoadingSubtitle or "HUB")
-    local loadingFooter       = tostring(opts.LoadingFooter or "Oxide HUB")
+    local loadingFooter       = tostring(opts.LoadingFooter or "EL2B HUB")
     local overlayTransparency = math.clamp(tonumber(opts.LoadingOverlayTransparency) or 0.35, 0, 0.9)
 
     -- accent palette derived from the active theme
@@ -2436,8 +2580,8 @@ function Library:CreateWindow(opts)
     -- unless the caller opts in via `LogoZoom`.
     local logoHolder = make("Frame", { Position=UDim2.fromOffset(9,9), Size=UDim2.fromOffset(46,46), BackgroundTransparency=1, ClipsDescendants=true, Parent=brand })
     local brandLogo = make("ImageLabel",{Name="Logo",Image=logoAsset,BackgroundTransparency=1,AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.5),Size=UDim2.fromScale(logoZoom,logoZoom),ScaleType=Enum.ScaleType.Fit,Parent=logoHolder})
-    make("TextLabel",{Text=opts.Name or "Oxide UI",Font=Enum.Font.GothamBold,TextSize=13,TextColor3=C.White,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,BackgroundTransparency=1,Position=UDim2.fromOffset(64,16),Size=UDim2.new(1,-72,0,17),Parent=brand})
-    make("TextLabel",{Text=opts.BrandSubtitle or ("Oxide FREE..."..Library.Version),Font=Enum.Font.GothamMedium,TextSize=9,TextColor3=C.TextDim,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,BackgroundTransparency=1,Position=UDim2.fromOffset(64,35),Size=UDim2.new(1,-72,0,13),Parent=brand})
+    make("TextLabel",{Text=opts.Name or "EL2B UI",Font=Enum.Font.GothamBold,TextSize=13,TextColor3=C.White,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,BackgroundTransparency=1,Position=UDim2.fromOffset(64,16),Size=UDim2.new(1,-72,0,17),Parent=brand})
+    make("TextLabel",{Text=opts.BrandSubtitle or ("EL2B FREE..."..Library.Version),Font=Enum.Font.GothamMedium,TextSize=9,TextColor3=C.TextDim,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,BackgroundTransparency=1,Position=UDim2.fromOffset(64,35),Size=UDim2.new(1,-72,0,13),Parent=brand})
 
     -- Player mini-card (fills the sidebar and gives identity at a glance)
     local lp = Players.LocalPlayer
@@ -2526,7 +2670,7 @@ function Library:CreateWindow(opts)
 
     local statusDot = make("Frame",{AnchorPoint=Vector2.new(0,0.5),Position=UDim2.new(0,16,1,-19),Size=UDim2.fromOffset(6,6),BackgroundColor3=NOTIFICATION_STYLES.success.Color,Parent=sidebar})
     circle(statusDot)
-    make("TextLabel",{Text=opts.StatusText or "Oxide is ready",Font=Enum.Font.GothamMedium,TextSize=10,TextColor3=C.TextDim,TextXAlignment=Enum.TextXAlignment.Left,BackgroundTransparency=1,Position=UDim2.new(0,28,1,-27),Size=UDim2.new(1,-40,0,16),Parent=sidebar})
+    make("TextLabel",{Text=opts.StatusText or "EL2B is ready",Font=Enum.Font.GothamMedium,TextSize=10,TextColor3=C.TextDim,TextXAlignment=Enum.TextXAlignment.Left,BackgroundTransparency=1,Position=UDim2.new(0,28,1,-27),Size=UDim2.new(1,-40,0,16),Parent=sidebar})
     local divLine=make("Frame",{Position=UDim2.fromOffset(190,0),Size=UDim2.new(0,1,1,0),BackgroundColor3=C.Accent,Parent=main})
     make("UIGradient",{Rotation=90,Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(0.5,0.5),NumberSequenceKeypoint.new(1,1)}),Parent=divLine})
     local content = make("Frame",{Position=UDim2.fromOffset(191,0),Size=UDim2.new(1,-191,1,0),BackgroundTransparency=1,Parent=main})
@@ -3346,7 +3490,7 @@ function Library:CreateWindow(opts)
     -- On mobile there is no toggle key, so add a draggable floating button.
     if isMobile then
         local fab = make("TextButton", {
-            Name = "OxideMobileToggle", Text = "", AutoButtonColor = false,
+            Name = "EL2BMobileToggle", Text = "", AutoButtonColor = false,
             AnchorPoint = Vector2.new(0, 0), Position = UDim2.fromOffset(14, safeInset.Y + 14),
             Size = UDim2.fromOffset(46, 46), BackgroundColor3 = C.CardBg,
             ZIndex = 60, Parent = screenGui,
@@ -4325,32 +4469,33 @@ end
 return Library
 end)()
 
-_G.OxideLib = Library
-local Library = _G.OxideLib  -- StealAnEgg expects local Library in scope
+_G.EL2BLib = Library
+local Library = _G.EL2BLib  -- StealAnEgg expects local Library in scope
 
 -- ==============================================================================
 -- STEAL AN EGG SCRIPT
 -- ==============================================================================
 -- === HUB STRIP POINT - when executed through the hub ScriptLoader, which injects
---     "local Library = _G.OxideLib" above this line instead. ===
+--     "local Library = _G.EL2BLib" above this line instead. ===
 -- ==============================================================================
 
 -- ==============================================================================
 -- RE-EXECUTION GUARD + RESOURCE TRACKING
 -- ==============================================================================
 do
-    local prev = _G.OxideStealAnEgg
+    local prev = _G.EL2BStealAnEgg
     if prev and type(prev.Unload) == "function" then pcall(prev.Unload) end
 end
 local HUB = { conns = {}, drawings = {}, highlights = {}, dead = false }
-_G.OxideStealAnEgg = HUB
+_G.EL2BStealAnEgg = HUB
 local function track(conn) table.insert(HUB.conns, conn); return conn end
 local function trackDrawing(d) if d then table.insert(HUB.drawings, d) end; return d end
 
 local Window = Library:CreateWindow({
-    Name = "Oxide HUB | Ein Ei stehlen",
+    Name = "EL2B HUB",
     LoadingAnimation = true,
-    LoadingText = "Oxide",
+    LoadingText = "EL2B HUB",
+    UseFreeIntro = true,
     LoadingDuration = 2.0,
 })
 
@@ -4427,7 +4572,7 @@ local function safeCallback(fn)
     return function(...)
         local ok, err = pcall(fn, ...)
         if not ok then
-            pcall(Notify, "Oxide HUB", "Error: " .. tostring(err), "Error", 4)
+            pcall(Notify, "EL2B HUB", "Error: " .. tostring(err), "Error", 4)
         end
     end
 end
@@ -7260,6 +7405,106 @@ end
 -- -----------------------------------------------------------------------------
 do
 local ConfigSub = SettingsTab:AddSubTab("Configuration")
+local selectedTheme = Library._currentTheme or "Dark"
+local themePickerGui
+local function openThemePicker()
+    if themePickerGui and themePickerGui.Parent then
+        themePickerGui:Destroy()
+        themePickerGui = nil
+        return
+    end
+    themePickerGui = Instance.new("ScreenGui")
+    themePickerGui.Name = "EL2BThemePicker"
+    themePickerGui.ResetOnSpawn = false
+    themePickerGui.IgnoreGuiInset = true
+    themePickerGui.DisplayOrder = 900
+    themePickerGui.Parent = Window.ScreenGui
+    local panel = Instance.new("Frame")
+    panel.Size = UDim2.fromOffset(330, 390)
+    panel.Position = UDim2.fromScale(0.5, 0.5)
+    panel.AnchorPoint = Vector2.new(0.5, 0.5)
+    panel.BackgroundColor3 = C.CardBg
+    panel.BorderSizePixel = 0
+    panel.Parent = themePickerGui
+    Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 10)
+    local stroke = Instance.new("UIStroke", panel)
+    stroke.Color = C.Accent
+    stroke.Thickness = 1
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -55, 0, 42)
+    title.Position = UDim2.fromOffset(16, 8)
+    title.BackgroundTransparency = 1
+    title.Text = "EL2B HUB • STYLE LIST"
+    title.TextColor3 = C.White
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 16
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = panel
+    local close = Instance.new("TextButton")
+    close.Size = UDim2.fromOffset(32, 32)
+    close.Position = UDim2.new(1, -42, 0, 12)
+    close.Text = "×"
+    close.TextSize = 22
+    close.Font = Enum.Font.GothamBold
+    close.TextColor3 = C.TextGray
+    close.BackgroundColor3 = C.Element
+    close.Parent = panel
+    Instance.new("UICorner", close).CornerRadius = UDim.new(0, 6)
+    close.MouseButton1Click:Connect(function() themePickerGui:Destroy(); themePickerGui = nil end)
+    local scroll = Instance.new("ScrollingFrame")
+    scroll.Size = UDim2.new(1, -24, 1, -62)
+    scroll.Position = UDim2.fromOffset(12, 54)
+    scroll.BackgroundTransparency = 1
+    scroll.BorderSizePixel = 0
+    scroll.ScrollBarThickness = 4
+    scroll.CanvasSize = UDim2.fromOffset(0, 0)
+    scroll.Parent = panel
+    local layout = Instance.new("UIListLayout", scroll)
+    layout.Padding = UDim.new(0, 6)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        scroll.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y + 8)
+    end)
+    for _, name in ipairs(THEME_NAMES) do
+        local theme = THEMES[name]
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(1, -6, 0, 34)
+        button.Text = "  " .. name .. (name == selectedTheme and "  ✓" or "")
+        button.TextColor3 = theme.AccentText
+        button.Font = Enum.Font.GothamBold
+        button.TextSize = 13
+        button.TextXAlignment = Enum.TextXAlignment.Left
+        button.BackgroundColor3 = theme.Element
+        button.AutoButtonColor = true
+        button.Parent = scroll
+        Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
+        local bar = Instance.new("Frame")
+        bar.Size = UDim2.fromOffset(5, 22)
+        bar.Position = UDim2.new(1, -13, 0.5, -11)
+        bar.BackgroundColor3 = theme.Accent
+        bar.BorderSizePixel = 0
+        bar.Parent = button
+        Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
+        button.MouseButton1Click:Connect(function()
+            if Library:SetTheme(name) then
+                selectedTheme = name
+                Notify("Theme", name .. " style applied", "Success")
+                task.defer(function() if themePickerGui and themePickerGui.Parent then themePickerGui:Destroy(); themePickerGui = nil end end)
+            end
+        end)
+    end
+end
+ConfigSub:AddButton({
+    Name = "Open Theme Style List", Primary = true,
+    Callback = safeCallback(openThemePicker)
+})
+ConfigSub:AddDropdown({
+    Name = "Quick Theme Style", Options = THEME_NAMES, Items = THEME_NAMES,
+    Default = selectedTheme, Flag = "theme_style",
+    Callback = function(v)
+        if v and THEMES[v] then selectedTheme = v; Library:SetTheme(v); Notify("Theme", v .. " style applied", "Success") end
+    end
+})
 
 if HAS_CONFIG then
     ConfigSub:AddInput({
@@ -7297,14 +7542,14 @@ ConfigSub:AddKeybind({
 ConfigSub:AddDivider()
 
 ConfigSub:AddButton({
-    Name = "Unload Oxide HUB",
+    Name = "Unload EL2B HUB",
     Callback = safeCallback(function()
         pcall(function() HUB.Unload() end)
     end)
 })
 
     ConfigSub:AddParagraph({
-        Title = "Oxide HUB | Ein Ei stehlen",
+        Title = "EL2B HUB",
         Content = "Version 4.2.0 (Production)\nEquipped with UGI / Client AC Neutralizer, BAC Telemetry Spoofer, Evidence Scrubber, Strict Rarity Filtering, clean open walkway travel without wall clipping, automatic return to trigger position, and auto egg placement in pen.\nAutomated egg stealing, hatching, homestead base upgrades, treadmill speed training, rewards collector, bat aura, ESP tracker."
     })
 end
@@ -7335,7 +7580,7 @@ HUB.Unload = function()
     end
 
     pcall(function() Window:Destroy() end)
-    _G.OxideStealAnEgg = nil
+    _G.EL2BStealAnEgg = nil
 end
 
-Notify("Oxide HUB", "Ein Ei stehlen script loaded successfully!", "Success", 3.5)
+Notify("EL2B HUB", "Ein Ei stehlen script loaded successfully!", "Success", 3.5)
