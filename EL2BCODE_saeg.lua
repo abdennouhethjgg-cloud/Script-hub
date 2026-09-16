@@ -4492,7 +4492,11 @@ local Library = _G.EL2BLib  -- StealAnEgg expects local Library in scope
 local bootstrapPlayers = game:GetService("Players")
 local bootstrapLocalPlayer = bootstrapPlayers.LocalPlayer
 if not bootstrapLocalPlayer then
-    bootstrapLocalPlayer = bootstrapPlayers.PlayerAdded:Wait()
+    for _ = 1, 100 do
+        task.wait(0.1)
+        bootstrapLocalPlayer = bootstrapPlayers.LocalPlayer
+        if bootstrapLocalPlayer then break end
+    end
 end
 -- ==============================================================================
 -- STEAL AN EGG SCRIPT
