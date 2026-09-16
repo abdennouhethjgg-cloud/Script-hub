@@ -7256,13 +7256,25 @@ end
 -- TAB 4: PLAYER & MOVEMENT
 -- -----------------------------------------------------------------------------
 do
+local PlayersInfoSub = PlayerTab:AddSubTab("Profiles")
 local MoveSub     = PlayerTab:AddSubTab("Movement")
 local AreaTpSub   = PlayerTab:AddSubTab("Area Travel")
 local PlotTpSub   = PlayerTab:AddSubTab("Plot Travel")
-local PlayersInfoSub = PlayerTab:AddSubTab("Players")
 local playersInfoParagraph
 local gameInfoParagraph
 local selectedProfileName
+local profilesSessionStartedAt = os.clock()
+local function formatUptime(seconds)
+    seconds = math.max(0, math.floor(tonumber(seconds) or 0))
+    local days = math.floor(seconds / 86400)
+    seconds = seconds % 86400
+    local hours = math.floor(seconds / 3600)
+    seconds = seconds % 3600
+    local minutes = math.floor(seconds / 60)
+    local secs = seconds % 60
+    if days > 0 then return string.format("%dd %02dh %02dm", days, hours, minutes) end
+    return string.format("%02dh %02dm %02ds", hours, minutes, secs)
+end
 local function buildPlayersInfo()
     local lines = {}
     local currentPlayers = Players:GetPlayers()
@@ -7272,8 +7284,9 @@ local function buildPlayersInfo()
     for i, player in ipairs(currentPlayers) do
         local you = player == LP and " [YOU]" or ""
         lines[#lines + 1] = string.format(
-            "%d. %s (@%s)%s\n   UserId: %s  |  Account age: %s days",
-            i, player.DisplayName, player.Name, you, tostring(player.UserId), tostring(player.AccountAge)
+            "%d. Full name: %s%s\n   Username: @%s  |  UserId: %s\n   Account age: %s days  |  Client uptime: %s",
+            i, player.DisplayName, you, player.Name, tostring(player.UserId),
+            tostring(player.AccountAge), formatUptime(os.clock() - profilesSessionStartedAt)
         )
     end
     if #lines == 0 then lines[1] = "No players found" end
@@ -7286,8 +7299,9 @@ local function buildGameInfo()
         if info and info.Name then placeName = info.Name end
     end)
     return string.format(
-        "Game: %s\nPlaceId: %s\nServer JobId: %s\nPlayers: %d/%d",
-        placeName, tostring(game.PlaceId), tostring(game.JobId), #Players:GetPlayers(), Players.MaxPlayers
+        "Game: %s\nPlaceId: %s\nServer JobId: %s\nPlayers: %s/%s\nClient uptime: %s",
+        placeName, tostring(game.PlaceId), tostring(game.JobId), tostring(#Players:GetPlayers()), tostring(tonumber(Players.MaxPlayers) or 0),
+        formatUptime(os.clock() - profilesSessionStartedAt)
     )
 end
 playersInfoParagraph = PlayersInfoSub:AddParagraph({
