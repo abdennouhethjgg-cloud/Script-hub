@@ -4522,7 +4522,8 @@ local HAS_CONFIG = type(Library.SaveConfig) == "function"
     and type(Library.LoadConfig) == "function"
     and type(Library.ListConfigs) == "function"
 local CONFIG_NAME = "stealanegg"
-
+local AUTO_SAVE_INTERVAL = 30
+local autoSaveEnabled = true
 local dropdownResync = {}
 local function registerResync(handle, applyFn)
     if handle and applyFn then
@@ -4532,6 +4533,14 @@ end
 local function ResyncAll()
     for _, fn in ipairs(dropdownResync) do pcall(fn) end
 end
+task.spawn(function()
+    while not HUB.dead do
+        task.wait(AUTO_SAVE_INTERVAL)
+        if autoSaveEnabled and HAS_CONFIG and type(Library.SaveConfig) == "function" then
+            pcall(function() Library:SaveConfig(CONFIG_NAME) end)
+        end
+    end
+end)
 
 -- ==============================================================================
 -- SERVICES & LOCALS
@@ -7525,6 +7534,31 @@ end
 -- TAB 5: SETTINGS & CONFIG
 -- -----------------------------------------------------------------------------
 do
+local EGG_PLACE_ID = 107778070777162
+local BRAINROT_PLACE_ID = 109983668079237
+local activeGameMode = game.PlaceId == BRAINROT_PLACE_ID and "Steal a Brainrot" or "Steal an Egg"
+local GameModeSub = SettingsTab:AddSubTab("Game Mode")
+local gameModeInfo = GameModeSub:AddParagraph({
+    Title = "ACTIVE GAME MODE",
+    Content = string.format("Selected: %s\nCurrent PlaceId: %s", activeGameMode, tostring(game.PlaceId))
+})
+local function selectGameMode(mode, placeId)
+    activeGameMode = mode
+    gameModeInfo:Set(string.format("Selected: %s\nCurrent PlaceId: %s\nThe GUI is ready for this game mode.", mode, tostring(game.PlaceId)))
+    Notify("Game Mode", mode .. " selected", "Success")
+end
+GameModeSub:AddButton({
+    Name = "Steal an Egg", Primary = activeGameMode == "Steal an Egg",
+    Callback = safeCallback(function() selectGameMode("Steal an Egg", EGG_PLACE_ID) end)
+})
+GameModeSub:AddButton({
+    Name = "Steal a Brainrot", Primary = activeGameMode == "Steal a Brainrot",
+    Callback = safeCallback(function() selectGameMode("Steal a Brainrot", BRAINROT_PLACE_ID) end)
+})
+GameModeSub:AddParagraph({
+    Title = "GAME DETECTION",
+    Content = "The mode is detected automatically from the Roblox PlaceId. Use the buttons above to choose the interface mode manually."
+})
 local ConfigSub = SettingsTab:AddSubTab("Configuration")
 local THEMES = Library.Themes
 local selectedTheme = Library._currentTheme or "Dark"
@@ -7636,6 +7670,17 @@ ConfigSub:AddDropdown({
     Default = selectedTheme, Flag = "theme_style",
     Callback = function(v)
         if v and THEMES[v] then selectedTheme = v; Library:SetTheme(v); Notify("Theme", v .. " style applied", "Success") end
+    end
+})
+ConfigSub:AddToggle({
+    Name = "Auto Save GUI Settings", Default = true, Flag = "auto_save_settings",
+    Callback = function(v)
+        autoSaveEnabled = v == true
+        Library._autoSaveDisabled = not autoSaveEnabled
+        if autoSaveEnabled and HAS_CONFIG then
+            pcall(function() Library:SaveConfig(CONFIG_NAME) end)
+        end
+        Notify("Config", autoSaveEnabled and "Auto-save enabled (every 30s)" or "Auto-save disabled", autoSaveEnabled and "Success" or "Info")
     end
 })
 
