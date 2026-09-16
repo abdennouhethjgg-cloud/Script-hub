@@ -667,8 +667,61 @@ local function persistPos(frame, key)
         ox = frame.Position.X.Offset,
         sy = frame.Position.Y.Scale,
         oy = frame.Position.Y.Offset,
+        sw = frame.Size.X.Scale,
+        ow = frame.Size.X.Offset,
+        sh = frame.Size.Y.Scale,
+        oh = frame.Size.Y.Offset,
     }
     saveUILayout()
+end
+local function applySavedSize(frame, key)
+    local s = uiLayout[key]
+    if s and type(s.ow) == "number" and type(s.oh) == "number" then
+        pcall(function()
+            frame.Size = UDim2.new(s.sw or 0, s.ow, s.sh or 0, s.oh)
+        end)
+    end
+end
+local function addResizeHandle(frame, key, minW, minH, maxW, maxH)
+    local handle = Instance.new("TextButton")
+    handle.Name = "ResizeHandle"
+    handle.Size = UDim2.new(0, 18, 0, 18)
+    handle.Position = UDim2.new(1, -18, 1, -18)
+    handle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    handle.BackgroundTransparency = 0.82
+    handle.BorderSizePixel = 0
+    handle.Text = ""
+    handle.AutoButtonColor = false
+    handle.ZIndex = 100
+    handle.Parent = frame
+    Instance.new("UICorner", handle).CornerRadius = UDim.new(0, 5)
+    local dragging, startInput, startSize
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging, startInput, startSize = true, input.Position, frame.Size
+        end
+    end)
+    handle.InputChanged:Connect(function(input)
+        if not dragging then return end
+        if input.UserInputType ~= Enum.UserInputType.MouseMovement and input.UserInputType ~= Enum.UserInputType.Touch then return end
+        local delta = input.Position - startInput
+        local width = math.clamp(startSize.X.Offset + delta.X, minW, maxW)
+        local height = math.clamp(startSize.Y.Offset + delta.Y, minH, maxH)
+        frame.Size = UDim2.new(startSize.X.Scale, width, startSize.Y.Scale, height)
+        local inner = frame:FindFirstChild("Win") or frame:FindFirstChild("BWin")
+        if inner and inner:IsA("GuiObject") then
+            inner.Size = UDim2.new(0, math.max(20, width - 4), 0, math.max(20, height - 4))
+        elseif frame.Parent and frame.Parent:IsA("GuiObject") and frame.Parent.Name == "BorderFrame" then
+            frame.Parent.Size = UDim2.new(0, width + 4, 0, height + 4)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+            dragging = false
+            persistPos(frame, key)
+        end
+    end)
+    return handle
 end
 local function loadSettings()
     local ok, data = pcall(function()
@@ -2593,6 +2646,7 @@ Win.Active=false
 Win.Selectable=false
 Win.Parent=EL2B_SCRIPT_GUI
 applySavedPos(Win, "MainWin", L.posX)
+applySavedSize(Win, "MainWin")
 BorderFrame.Position = Win.Position
 BorderFrame.Size = UDim2.new(0, L.winW + 4, 0, L.winH + 4)
 
@@ -2724,6 +2778,20 @@ local hbOff=DEVICE=="mobile" and {-118,-98,-78,-58,-38,-18} or {-130,-108,-86,-6
 local RecoverHdrBtn=headerButton("RecoverR","R",hbOff[1])
 local BrainrotsHdrBtn=headerButton("BrainrotsB","B",hbOff[2])
 local SettingsHdrBtn=headerButton("SettingsS","⚙",hbOff[3])
+local GroupGuiBtn=headerButton("GroupGui","▣",hbOff[1]-22)
+GroupGuiBtn:SetAttribute("Tooltip", "GUI")
+local groupGuiVisible=true
+local function setGroupedGuiVisible(visible)
+    groupGuiVisible = visible and true or false
+    for _, gui in ipairs({PlayerGui:FindFirstChild("EL2BHubSettingsFloat"), PlayerGui:FindFirstChild("EL2BHubBrainrotsFloat"), PlayerGui:FindFirstChild("EL2BHubQuickAP")}) do
+        if gui then gui.Enabled = groupGuiVisible end
+    end
+    GroupGuiBtn.Text = groupGuiVisible and "▣" or "□"
+    GroupGuiBtn.TextColor3 = groupGuiVisible and C.accent or C.textMute
+end
+GroupGuiBtn.MouseButton1Click:Connect(function()
+    setGroupedGuiVisible(not groupGuiVisible)
+end)
 local SettingsScale=Instance.new("UIScale")
 SettingsScale.Scale=1
 SettingsScale.Parent=SettingsHdrBtn
@@ -3835,6 +3903,7 @@ do
     Border.Parent = FloatGui
     Instance.new("UICorner", Border).CornerRadius = UDim.new(0, 12)
     applySavedPos(Border, "SettingsFloat", UDim2.new(0.5, 0, 0.5, 0))
+applySavedSize(Border, "SettingsFloat")
 
     local Win = Instance.new("Frame")
     Win.Size = UDim2.new(0, SF_W, 0, SF_H)
@@ -4189,6 +4258,7 @@ do
         end
     end)
 
+    addResizeHandle(Border, "SettingsFloat", 240, 230, 520, 640)
     print("[EL2B HUB PVP] Fenêtre Settings prête (bouton S)")
 end
 
@@ -4219,6 +4289,7 @@ do
     BBorder.Parent = BFloatGui
     Instance.new("UICorner", BBorder).CornerRadius = UDim.new(0, 12)
     applySavedPos(BBorder, "BrainrotsFloat", UDim2.new(0.5, -90, 0.35, 0))
+applySavedSize(BBorder, "BrainrotsFloat")
 
     local BWin = Instance.new("Frame")
     BWin.Size = UDim2.new(0, BF_W, 0, BF_H)
@@ -4393,6 +4464,7 @@ do
         end
     end)
 
+    addResizeHandle(BBorder, "BrainrotsFloat", 150, 100, 420, 420)
     print("[EL2B HUB PVP] Fenêtre Brainrots prête (bouton B)")
 end
 
@@ -4571,6 +4643,7 @@ end
 end)
 end
 
+addResizeHandle(Win, "MainWin", 180, 70, 520, 360)
 local activeTab="brainrots"
 local function setTab(tab)
 if tab==activeTab then return end
@@ -4663,7 +4736,7 @@ end
 hookButton(FLASHTP,C.card,C.iconBg)
 hookButton(BLOCK,C.card,C.iconBg)
 hookButton(RESET,C.card,C.iconBg)
-for _,b in ipairs({RecoverHdrBtn,BrainrotsHdrBtn,SettingsHdrBtn,LockBtn,MinBtn,CloseBtn}) do hookButton(b,C.card,C.iconBg) end
+for _,b in ipairs({RecoverHdrBtn,BrainrotsHdrBtn,SettingsHdrBtn,GroupGuiBtn,LockBtn,MinBtn,CloseBtn}) do hookButton(b,C.card,C.iconBg) end
 
 local function flashBar(bar)
 bar.BackgroundColor3=C.accentHi
@@ -6504,6 +6577,7 @@ task.spawn(function()
             local main = PlayerGui:FindFirstChild("EL2B HUB PVP")
                 or (gethui and gethui():FindFirstChild("EL2B HUB PVP"))
                 or CoreGui:FindFirstChild("EL2B HUB PVP")
+            setGroupedGuiVisible(true)
             if main then
                 main.Enabled = true
                 for _, fr in ipairs(main:GetDescendants()) do
