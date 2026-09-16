@@ -4487,7 +4487,13 @@ end)()
 
 _G.EL2BLib = Library
 local Library = _G.EL2BLib  -- StealAnEgg expects local Library in scope
-
+-- Wait for the client player when the script is executed immediately after
+-- teleport/join; otherwise GUI creation can fail silently in some executors.
+local bootstrapPlayers = game:GetService("Players")
+local bootstrapLocalPlayer = bootstrapPlayers.LocalPlayer
+if not bootstrapLocalPlayer then
+    bootstrapLocalPlayer = bootstrapPlayers.PlayerAdded:Wait()
+end
 -- ==============================================================================
 -- STEAL AN EGG SCRIPT
 -- ==============================================================================
