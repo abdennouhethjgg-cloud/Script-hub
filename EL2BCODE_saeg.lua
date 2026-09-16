@@ -1,4 +1,4 @@
-print("[175] script loading...")
+print("[EL2B HUB PVP] Script loading...")
 task.wait(0.05)
 local Players=game:GetService("Players")
 local CollectionService=game:GetService("CollectionService")
@@ -714,6 +714,10 @@ local function saveSettings()
             AntiStealMode = _G.AntiStealMode,
         AntiStealDelay = _G.AntiStealDelay,
             AntiStealAP = _G.AntiStealAP,
+            ThemeMode = _G.EL2BThemeMode or "dark",
+            ThemeAccentR = _G.EL2BThemeAccentR or 220,
+            ThemeAccentG = _G.EL2BThemeAccentG or 25,
+            ThemeAccentB = _G.EL2BThemeAccentB or 45,
             dropPositionX = dropPosition.X,
             dropPositionY = dropPosition.Y,
             dropAutoOff = dropAutoOff,
@@ -721,6 +725,10 @@ local function saveSettings()
     end)
 end
 local savedSettings = loadSettings()
+if savedSettings.ThemeMode ~= nil then _G.EL2BThemeMode = tostring(savedSettings.ThemeMode) end
+if savedSettings.ThemeAccentR ~= nil then _G.EL2BThemeAccentR = tonumber(savedSettings.ThemeAccentR) or 220 end
+if savedSettings.ThemeAccentG ~= nil then _G.EL2BThemeAccentG = tonumber(savedSettings.ThemeAccentG) or 25 end
+if savedSettings.ThemeAccentB ~= nil then _G.EL2BThemeAccentB = tonumber(savedSettings.ThemeAccentB) or 45 end
 if savedSettings.AutoResetOnBalloon ~= nil then _G.AutoResetOnBalloon = savedSettings.AutoResetOnBalloon end
 if savedSettings.AutoGiant ~= nil then _G.AutoGiant = savedSettings.AutoGiant end
 if savedSettings.AutoBlock ~= nil then _G.AutoBlock = savedSettings.AutoBlock end
@@ -2396,9 +2404,9 @@ end
 -- GUI en función aparte para no pasar el límite de 200 locals del chunk principal
 local function __build175GUI()
 
-local old=PlayerGui:FindFirstChild("175 Flash & Block")
+local old=PlayerGui:FindFirstChild("EL2B HUB PVP")
 if old then old:Destroy() end
-local oldB=PlayerGui:FindFirstChild("HugoHubBanner") or PlayerGui:FindFirstChild("DnkPvpBanner")
+local oldB=PlayerGui:FindFirstChild("EL2BHubBanner") or PlayerGui:FindFirstChild("DnkPvpBanner")
 if oldB then oldB:Destroy() end
 
 local C={
@@ -2421,6 +2429,76 @@ knobOff=Color3.fromRGB(110,60,60),
 trackOff=Color3.fromRGB(50,18,18)
 }
 
+-- ===== THEME SYSTEM =====
+local ThemePresets = {
+    dark = {
+        body=Color3.fromRGB(18,8,8), panel=Color3.fromRGB(24,12,12), tabBar=Color3.fromRGB(20,9,9),
+        card=Color3.fromRGB(40,14,14), iconBg=Color3.fromRGB(55,14,14), stroke=Color3.fromRGB(100,30,30),
+        strokeDim=Color3.fromRGB(65,20,20), textBright=Color3.fromRGB(255,220,220), textRed=Color3.fromRGB(255,100,100),
+        textMute=Color3.fromRGB(170,80,80), textDim=Color3.fromRGB(130,50,50), knobOn=Color3.fromRGB(255,200,200),
+        knobOff=Color3.fromRGB(110,60,60), trackOff=Color3.fromRGB(50,18,18)
+    },
+    light = {
+        body=Color3.fromRGB(245,245,248), panel=Color3.fromRGB(232,234,240), tabBar=Color3.fromRGB(220,223,232),
+        card=Color3.fromRGB(255,255,255), iconBg=Color3.fromRGB(238,240,246), stroke=Color3.fromRGB(190,194,207),
+        strokeDim=Color3.fromRGB(210,213,224), textBright=Color3.fromRGB(35,38,48), textRed=Color3.fromRGB(190,25,45),
+        textMute=Color3.fromRGB(95,100,115), textDim=Color3.fromRGB(125,130,145), knobOn=Color3.fromRGB(255,255,255),
+        knobOff=Color3.fromRGB(145,150,165), trackOff=Color3.fromRGB(205,209,220)
+    }
+}
+local function clampRGB(v) return math.clamp(tonumber(v) or 0, 0, 255) end
+local function makeCustomTheme(r, g, b)
+    local accent = Color3.fromRGB(clampRGB(r), clampRGB(g), clampRGB(b))
+    return {
+        body=Color3.fromRGB(20,20,24), panel=Color3.fromRGB(28,28,34), tabBar=Color3.fromRGB(24,24,30),
+        card=Color3.fromRGB(42,42,50), iconBg=Color3.fromRGB(54,54,64), stroke=accent, strokeDim=Color3.fromRGB(82,82,94),
+        textBright=Color3.fromRGB(245,245,250), textRed=accent, textMute=Color3.fromRGB(170,172,185), textDim=Color3.fromRGB(125,128,142),
+        knobOn=Color3.fromRGB(255,255,255), knobOff=Color3.fromRGB(120,124,138), trackOff=Color3.fromRGB(64,66,78), accent=accent,
+        accentHi=Color3.new(math.min(1, accent.R + 0.18), math.min(1, accent.G + 0.18), math.min(1, accent.B + 0.18)),
+        deepRed=Color3.new(accent.R * 0.35, accent.G * 0.35, accent.B * 0.35)
+    }
+end
+local function themeAccent(palette)
+    return palette.accent or Color3.fromRGB(220,25,45)
+end
+local function refreshTheme(palette, root)
+    local old = {}
+    for key, value in pairs(C) do old[key] = value end
+    for key, value in pairs(palette) do C[key] = value end
+    C.accent = themeAccent(palette)
+    C.accentHi = C.accentHi or C.accent
+    C.deepRed = C.deepRed or C.accent
+    local roots = {root}
+    if EL2B_SCRIPT_GUI then table.insert(roots, EL2B_SCRIPT_GUI) end
+    for _, gui in ipairs(roots) do
+        if gui then
+            for _, obj in ipairs(gui:GetDescendants()) do
+                pcall(function()
+                    if obj:IsA("GuiObject") and obj.BackgroundTransparency < 1 then
+                        for key, previous in pairs(old) do if obj.BackgroundColor3 == previous and C[key] then obj.BackgroundColor3 = C[key] end end
+                    end
+                    if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+                        for key, previous in pairs(old) do if obj.TextColor3 == previous and C[key] then obj.TextColor3 = C[key] end end
+                    end
+                    if obj:IsA("UIStroke") then
+                        for key, previous in pairs(old) do if obj.Color == previous and C[key] then obj.Color = C[key] end end
+                    end
+                end)
+            end
+        end
+    end
+    C.accent = themeAccent(palette)
+    C.accentHi = palette.accentHi or C.accent
+    C.deepRed = palette.deepRed or C.accent
+    return palette
+end
+local selectedTheme = _G.EL2BThemeMode or "dark"
+if selectedTheme ~= "dark" and selectedTheme ~= "light" and selectedTheme ~= "custom" then selectedTheme = "dark" end
+local initialTheme = selectedTheme == "light" and ThemePresets.light or (selectedTheme == "custom" and makeCustomTheme(_G.EL2BThemeAccentR, _G.EL2BThemeAccentG, _G.EL2BThemeAccentB) or ThemePresets.dark)
+for key, value in pairs(initialTheme) do C[key] = value end
+C.accent = C.accent or Color3.fromRGB(220,25,45)
+C.accentHi = C.accentHi or Color3.fromRGB(255,60,80)
+C.deepRed = C.deepRed or Color3.fromRGB(60,10,10)
 local borderGradientSeq=ColorSequence.new({
 ColorSequenceKeypoint.new(0,C.accentHi),
 ColorSequenceKeypoint.new(0.25,C.deepRed),
@@ -2449,35 +2527,35 @@ mobile={winW=185,winH=88,posX=UDim2.new(0.5,0,0.5,0),bannerW=155,bannerH=46,bann
 }
 local L=LAYOUT[DEVICE]
 
-local HUGO_SCRIPT_GUI=Instance.new("ScreenGui")
-HUGO_SCRIPT_GUI.Name="175 Flash & Block"
-HUGO_SCRIPT_GUI.SelectionGroup=false
-HUGO_SCRIPT_GUI.ResetOnSpawn=false
-HUGO_SCRIPT_GUI.DisplayOrder=999999
-HUGO_SCRIPT_GUI.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
-HUGO_SCRIPT_GUI.IgnoreGuiInset=true
+local EL2B_SCRIPT_GUI=Instance.new("ScreenGui")
+EL2B_SCRIPT_GUI.Name="EL2B HUB PVP"
+EL2B_SCRIPT_GUI.SelectionGroup=false
+EL2B_SCRIPT_GUI.ResetOnSpawn=false
+EL2B_SCRIPT_GUI.DisplayOrder=999999
+EL2B_SCRIPT_GUI.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
+EL2B_SCRIPT_GUI.IgnoreGuiInset=true
 pcall(function()
-    if syn and syn.protect_gui then syn.protect_gui(HUGO_SCRIPT_GUI) end
+    if syn and syn.protect_gui then syn.protect_gui(EL2B_SCRIPT_GUI) end
 end)
 do
     local parented = false
     pcall(function()
         if gethui then
-            HUGO_SCRIPT_GUI.Parent = gethui()
+            EL2B_SCRIPT_GUI.Parent = gethui()
             parented = true
         end
     end)
     if not parented then
         pcall(function()
-            HUGO_SCRIPT_GUI.Parent = CoreGui
-            parented = HUGO_SCRIPT_GUI.Parent ~= nil
+            EL2B_SCRIPT_GUI.Parent = CoreGui
+            parented = EL2B_SCRIPT_GUI.Parent ~= nil
         end)
     end
     if not parented then
-        HUGO_SCRIPT_GUI.Parent = PlayerGui
+        EL2B_SCRIPT_GUI.Parent = PlayerGui
     end
 end
-print("[175] GUI parent:", tostring(HUGO_SCRIPT_GUI.Parent))
+print("[EL2B HUB PVP] GUI parent:", tostring(EL2B_SCRIPT_GUI.Parent))
 
 local BorderFrame=Instance.new("Frame")
 BorderFrame.Name="BorderFrame"
@@ -2490,7 +2568,7 @@ BorderFrame.BorderSizePixel=0
 BorderFrame.ClipsDescendants=true
 BorderFrame.Active=false
 BorderFrame.Selectable=false
-BorderFrame.Parent=HUGO_SCRIPT_GUI
+BorderFrame.Parent=EL2B_SCRIPT_GUI
 
 local BorderCorner=Instance.new("UICorner")
 BorderCorner.CornerRadius=UDim.new(0,11)
@@ -2513,7 +2591,7 @@ Win.ZIndex=2
 Win.ClipsDescendants=true
 Win.Active=false
 Win.Selectable=false
-Win.Parent=HUGO_SCRIPT_GUI
+Win.Parent=EL2B_SCRIPT_GUI
 applySavedPos(Win, "MainWin", L.posX)
 BorderFrame.Position = Win.Position
 BorderFrame.Size = UDim2.new(0, L.winW + 4, 0, L.winH + 4)
@@ -2613,7 +2691,7 @@ TextLabel.Size=UDim2.new(1,-130,1,0)
 TextLabel.Position=UDim2.new(0,16,0,0)
 TextLabel.BackgroundTransparency=1
 TextLabel.ZIndex=5
-TextLabel.Text="175 Flash"
+TextLabel.Text="EL2B HUB PVP"
 TextLabel.TextColor3=C.textBright
 TextLabel.TextSize=11
 TextLabel.Font=Enum.Font.GothamBold
@@ -2645,7 +2723,50 @@ end
 local hbOff=DEVICE=="mobile" and {-118,-98,-78,-58,-38,-18} or {-130,-108,-86,-64,-42,-20}
 local RecoverHdrBtn=headerButton("RecoverR","R",hbOff[1])
 local BrainrotsHdrBtn=headerButton("BrainrotsB","B",hbOff[2])
-local SettingsHdrBtn=headerButton("SettingsS","S",hbOff[3])
+local SettingsHdrBtn=headerButton("SettingsS","⚙",hbOff[3])
+local SettingsScale=Instance.new("UIScale")
+SettingsScale.Scale=1
+SettingsScale.Parent=SettingsHdrBtn
+local SettingsIndicator=Instance.new("Frame")
+SettingsIndicator.Name="ActiveIndicator"
+SettingsIndicator.Size=UDim2.new(1,-6,0,2)
+SettingsIndicator.Position=UDim2.new(0,3,1,-3)
+SettingsIndicator.BackgroundColor3=C.accent
+SettingsIndicator.BorderSizePixel=0
+SettingsIndicator.Visible=false
+SettingsIndicator.ZIndex=8
+SettingsIndicator.Parent=SettingsHdrBtn
+Instance.new("UICorner",SettingsIndicator).CornerRadius=UDim.new(0,1)
+local SettingsTip=Instance.new("TextLabel")
+SettingsTip.Name="SettingsTooltip"
+SettingsTip.Size=UDim2.new(0,68,0,18)
+SettingsTip.Position=UDim2.new(0.5,-34,1,5)
+SettingsTip.BackgroundColor3=C.deepRed
+SettingsTip.BackgroundTransparency=0.08
+SettingsTip.BorderSizePixel=0
+SettingsTip.Text="SETTINGS"
+SettingsTip.TextColor3=C.textBright
+SettingsTip.TextSize=8
+SettingsTip.Font=Enum.Font.GothamBold
+SettingsTip.Visible=false
+SettingsTip.ZIndex=20
+SettingsTip.Parent=SettingsHdrBtn
+Instance.new("UICorner",SettingsTip).CornerRadius=UDim.new(0,4)
+SettingsHdrBtn.MouseEnter:Connect(function()
+    SettingsTip.Visible=true
+    SettingsTip.TextTransparency=1
+    TweenService:Create(SettingsTip,TweenInfo.new(0.16),{TextTransparency=0}):Play()
+end)
+SettingsHdrBtn.MouseLeave:Connect(function()
+    SettingsTip.Visible=false
+end)
+SettingsHdrBtn.MouseButton1Down:Connect(function()
+    TweenService:Create(SettingsScale,TweenInfo.new(0.07,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Scale=0.86}):Play()
+end)
+SettingsHdrBtn.MouseButton1Up:Connect(function()
+    TweenService:Create(SettingsScale,TweenInfo.new(0.16,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Scale=1.08}):Play()
+    task.delay(0.16,function() pcall(function() TweenService:Create(SettingsScale,TweenInfo.new(0.1),{Scale=1}):Play() end) end)
+end)
 local LockBtn=headerButton("Lock","🔓",hbOff[4])
 local MinBtn=headerButton("Min","–",hbOff[5])
 local CloseBtn=headerButton("Close","X",hbOff[6])
@@ -3692,11 +3813,11 @@ end)
 -- ===== SETTINGS FLOAT (botón S → UI centrada independiente) =====
 do
     local settingsOpen = false
-    local SF_W = 165
-    local SF_H = 195
+    local SF_W = 292
+    local SF_H = 344
 
     local FloatGui = Instance.new("ScreenGui")
-    FloatGui.Name = "175SettingsFloat"
+    FloatGui.Name = "EL2BHubSettingsFloat"
     FloatGui.ResetOnSpawn = false
     FloatGui.DisplayOrder = 1001
     FloatGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -3786,17 +3907,234 @@ do
     CloseS.Parent = Hdr
     Instance.new("UICorner", CloseS).CornerRadius = UDim.new(0, 4)
 
+    -- Barre de navigation moderne : les onglets pilotent le scroll existant.
+    local MenuBar = Instance.new("Frame")
+    MenuBar.Name = "SettingsMenu"
+    MenuBar.Size = UDim2.new(1, -12, 0, 28)
+    MenuBar.Position = UDim2.new(0, 6, 0, 34)
+    MenuBar.BackgroundColor3 = C.card
+    MenuBar.BackgroundTransparency = 0.12
+    MenuBar.BorderSizePixel = 0
+    MenuBar.ZIndex = 4
+    MenuBar.Parent = Win
+    Instance.new("UICorner", MenuBar).CornerRadius = UDim.new(0, 7)
+
+    local ThemeBar = Instance.new("Frame")
+    ThemeBar.Name = "ThemeBar"
+    ThemeBar.Size = UDim2.new(1, -12, 0, 28)
+    ThemeBar.Position = UDim2.new(0, 6, 0, 64)
+    ThemeBar.BackgroundColor3 = C.card
+    ThemeBar.BackgroundTransparency = 0.12
+    ThemeBar.BorderSizePixel = 0
+    ThemeBar.ZIndex = 4
+    ThemeBar.Parent = Win
+    Instance.new("UICorner", ThemeBar).CornerRadius = UDim.new(0, 7)
+    local ThemeLabel = Instance.new("TextLabel")
+    ThemeLabel.Size = UDim2.new(0, 54, 1, 0)
+    ThemeLabel.Position = UDim2.new(0, 8, 0, 0)
+    ThemeLabel.BackgroundTransparency = 1
+    ThemeLabel.Text = "THEME"
+    ThemeLabel.TextColor3 = C.textMute
+    ThemeLabel.TextSize = 9
+    ThemeLabel.Font = Enum.Font.GothamBold
+    ThemeLabel.TextXAlignment = Enum.TextXAlignment.Left
+    ThemeLabel.ZIndex = 5
+    ThemeLabel.Parent = ThemeBar
+    local function themeButton(label, x)
+        local b = Instance.new("TextButton")
+        b.Size = UDim2.new(0, 48, 0, 20)
+        b.Position = UDim2.new(0, x, 0.5, -10)
+        b.BackgroundColor3 = C.body
+        b.BorderSizePixel = 0
+        b.Text = label
+        b.TextColor3 = C.textMute
+        b.TextSize = 9
+        b.Font = Enum.Font.GothamBold
+        b.AutoButtonColor = false
+        b.ZIndex = 5
+        b.Parent = ThemeBar
+        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 5)
+        return b
+    end
+    local darkThemeBtn = themeButton("DARK", 66)
+    local lightThemeBtn = themeButton("LIGHT", 118)
+    local customThemeBtn = themeButton("CUSTOM", 170)
+    local rgbBox = Instance.new("TextBox")
+    rgbBox.Size = UDim2.new(0, 62, 0, 20)
+    rgbBox.Position = UDim2.new(1, -68, 0.5, -10)
+    rgbBox.BackgroundColor3 = C.body
+    rgbBox.BorderSizePixel = 0
+    rgbBox.ClearTextOnFocus = false
+    rgbBox.PlaceholderText = "R,G,B"
+    rgbBox.Text = tostring(_G.EL2BThemeAccentR or 220) .. "," .. tostring(_G.EL2BThemeAccentG or 25) .. "," .. tostring(_G.EL2BThemeAccentB or 45)
+    rgbBox.TextColor3 = C.textBright
+    rgbBox.PlaceholderColor3 = C.textMute
+    rgbBox.TextSize = 9
+    rgbBox.Font = Enum.Font.Gotham
+    rgbBox.Visible = selectedTheme == "custom"
+    rgbBox.ZIndex = 5
+    rgbBox.Parent = ThemeBar
+    Instance.new("UICorner", rgbBox).CornerRadius = UDim.new(0, 5)
+
+    local Search = Instance.new("TextBox")
+    Search.Name = "SettingsSearch"
+    Search.Size = UDim2.new(0, 88, 0, 22)
+    Search.Position = UDim2.new(1, -94, 0.5, -11)
+    Search.BackgroundColor3 = C.body
+    Search.BackgroundTransparency = 0.08
+    Search.BorderSizePixel = 0
+    Search.ClearTextOnFocus = false
+    Search.PlaceholderText = "Search..."
+    Search.Text = ""
+    Search.TextColor3 = C.textBright
+    Search.PlaceholderColor3 = C.textMute
+    Search.TextSize = 10
+    Search.Font = Enum.Font.Gotham
+    Search.ZIndex = 5
+    Search.Parent = MenuBar
+    Instance.new("UICorner", Search).CornerRadius = UDim.new(0, 5)
+
+    local TabStrip = Instance.new("Frame")
+    TabStrip.Size = UDim2.new(1, -100, 1, 0)
+    TabStrip.BackgroundTransparency = 1
+    TabStrip.Parent = MenuBar
+
+    local tabLayout = Instance.new("UIListLayout")
+    tabLayout.FillDirection = Enum.FillDirection.Horizontal
+    tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    tabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    tabLayout.Padding = UDim.new(0, 3)
+    tabLayout.Parent = TabStrip
+
+    local activeTab = nil
+    local function makeTab(label, fraction)
+        local button = Instance.new("TextButton")
+        button.Name = "Tab_" .. label
+        button.Size = UDim2.new(0, 42, 0, 22)
+        button.BackgroundColor3 = C.body
+        button.BackgroundTransparency = 0.18
+        button.BorderSizePixel = 0
+        button.Text = label
+        button.TextColor3 = C.textMute
+        button.TextSize = 9
+        button.Font = Enum.Font.GothamBold
+        button.AutoButtonColor = false
+        button.ZIndex = 5
+        button.Parent = TabStrip
+        Instance.new("UICorner", button).CornerRadius = UDim.new(0, 5)
+        button.MouseEnter:Connect(function()
+            if button ~= activeTab then
+                TweenService:Create(button, TweenInfo.new(0.12), {BackgroundColor3 = C.stroke, TextColor3 = C.textBright}):Play()
+            end
+        end)
+        button.MouseLeave:Connect(function()
+            if button ~= activeTab then
+                TweenService:Create(button, TweenInfo.new(0.12), {BackgroundColor3 = C.body, TextColor3 = C.textMute}):Play()
+            end
+        end)
+        button.MouseButton1Click:Connect(function()
+            activeTab = button
+            for _, other in ipairs(TabStrip:GetChildren()) do
+                if other:IsA("TextButton") and other ~= button then
+                    other.BackgroundColor3 = C.body
+                    other.TextColor3 = C.textMute
+                end
+            end
+            button.BackgroundColor3 = C.accent
+            button.TextColor3 = C.textBright
+            pcall(function()
+                local maxY = math.max(0, ScrollingFrame2.AbsoluteCanvasSize.Y - ScrollingFrame2.AbsoluteWindowSize.Y)
+                TweenService:Create(ScrollingFrame2, TweenInfo.new(0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {CanvasPosition = Vector2.new(0, maxY * fraction)}):Play()
+            end)
+        end)
+        return button
+    end
+    local allTab = makeTab("ALL", 0)
+    makeTab("MAIN", 0.18)
+    makeTab("VIS", 0.48)
+    makeTab("MISC", 0.82)
+
     -- Mover el scroll de settings al panel flotante
     pcall(function()
         ScrollingFrame2.Parent = Win
-        ScrollingFrame2.Size = UDim2.new(1, 0, 1, -34)
-        ScrollingFrame2.Position = UDim2.new(0, 0, 0, 32)
+        ScrollingFrame2.Size = UDim2.new(1, -12, 1, -136)
+        ScrollingFrame2.Position = UDim2.new(0, 6, 0, 100)
+        ScrollingFrame2.ScrollBarThickness = 3
+        ScrollingFrame2.ScrollBarImageColor3 = C.accent
         Frame21.Visible = false
     end)
 
+    local function refreshSearch()
+        local query = string.lower(Search.Text or "")
+        for _, item in ipairs(ScrollingFrame2:GetChildren()) do
+            if item:IsA("Frame") then
+                local haystack = string.lower(item.Name .. " " .. (item:GetAttribute("SearchText") or ""))
+                for _, desc in ipairs(item:GetDescendants()) do
+                    if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                        haystack = haystack .. " " .. string.lower(desc.Text or "")
+                    end
+                end
+                item.Visible = query == "" or string.find(haystack, query, 1, true) ~= nil
+            end
+        end
+    end
+    Search:GetPropertyChangedSignal("Text"):Connect(function()
+        pcall(refreshSearch)
+    end)
+    local function setTheme(mode)
+        local palette = mode == "light" and ThemePresets.light or (mode == "custom" and makeCustomTheme(_G.EL2BThemeAccentR, _G.EL2BThemeAccentG, _G.EL2BThemeAccentB) or ThemePresets.dark)
+        selectedTheme = mode
+        _G.EL2BThemeMode = mode
+        refreshTheme(palette, FloatGui)
+        rgbBox.Visible = mode == "custom"
+        for _, b in ipairs({darkThemeBtn, lightThemeBtn, customThemeBtn}) do b.BackgroundColor3 = C.body; b.TextColor3 = C.textMute end
+        local active = mode == "dark" and darkThemeBtn or (mode == "light" and lightThemeBtn or customThemeBtn)
+        active.BackgroundColor3 = C.accent
+        active.TextColor3 = C.textBright
+        pcall(function()
+            ThemeBar.BackgroundColor3 = C.card
+            ThemeLabel.TextColor3 = C.textMute
+            Search.BackgroundColor3 = C.body
+            Search.TextColor3 = C.textBright
+            ScrollingFrame2.ScrollBarImageColor3 = C.accent
+        end)
+        saveSettings()
+    end
+    local function bindThemeButton(button, mode)
+        button.MouseButton1Click:Connect(function() setTheme(mode) end)
+        button.MouseEnter:Connect(function() if selectedTheme ~= mode then TweenService:Create(button, TweenInfo.new(0.12), {BackgroundColor3=C.stroke}):Play() end end)
+        button.MouseLeave:Connect(function() if selectedTheme ~= mode then TweenService:Create(button, TweenInfo.new(0.12), {BackgroundColor3=C.body}):Play() end end)
+    end
+    bindThemeButton(darkThemeBtn, "dark")
+    bindThemeButton(lightThemeBtn, "light")
+    bindThemeButton(customThemeBtn, "custom")
+    rgbBox.FocusLost:Connect(function()
+        local r, g, b = string.match(rgbBox.Text, "(%d+)%s*,%s*(%d+)%s*,%s*(%d+)")
+        if r and g and b then
+            _G.EL2BThemeAccentR, _G.EL2BThemeAccentG, _G.EL2BThemeAccentB = clampRGB(r), clampRGB(g), clampRGB(b)
+            if selectedTheme == "custom" then setTheme("custom") end
+        else
+            rgbBox.Text = tostring(_G.EL2BThemeAccentR or 220) .. "," .. tostring(_G.EL2BThemeAccentG or 25) .. "," .. tostring(_G.EL2BThemeAccentB or 45)
+        end
+    end)
+
+    local fullSize = UDim2.new(0, SF_W + 4, 0, SF_H + 4)
+    local closedSize = UDim2.new(0, SF_W + 4, 0, 34)
     local function setSettingsOpen(v, skipSave)
         settingsOpen = v and true or false
-        Border.Visible = settingsOpen
+        SettingsIndicator.Visible = settingsOpen
+        if settingsOpen then
+            Border.Visible = true
+            Border.Size = closedSize
+            TweenService:Create(Border, TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = fullSize}):Play()
+            TweenService:Create(Win, TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundTransparency = 0.08}):Play()
+        else
+            local closeTween = TweenService:Create(Border, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = closedSize})
+            closeTween:Play()
+            closeTween.Completed:Connect(function()
+                if not settingsOpen then Border.Visible = false end
+            end)
+        end
         pcall(function()
             SettingsHdrBtn.TextColor3 = settingsOpen and C.accent or C.textMute
         end)
@@ -3805,6 +4143,10 @@ do
             saveUILayout()
         end
     end
+    activeTab = allTab
+    setTheme(selectedTheme)
+    allTab.BackgroundColor3 = C.accent
+    allTab.TextColor3 = C.textBright
 
     CloseS.MouseButton1Click:Connect(function()
         setSettingsOpen(false)
@@ -3847,7 +4189,7 @@ do
         end
     end)
 
-    print("[175] Settings float listo (botón S)")
+    print("[EL2B HUB PVP] Fenêtre Settings prête (bouton S)")
 end
 
 
@@ -3858,7 +4200,7 @@ do
     local BF_H = 150
 
     local BFloatGui = Instance.new("ScreenGui")
-    BFloatGui.Name = "175BrainrotsFloat"
+    BFloatGui.Name = "EL2BHubBrainrotsFloat"
     BFloatGui.ResetOnSpawn = false
     BFloatGui.DisplayOrder = 1000
     BFloatGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -4051,25 +4393,25 @@ do
         end
     end)
 
-    print("[175] Brainrots float listo (botón B)")
+    print("[EL2B HUB PVP] Fenêtre Brainrots prête (bouton B)")
 end
 
 
-local HugoHubBanner=Instance.new("ScreenGui")
-HugoHubBanner.Name="HugoHubBanner"
-HugoHubBanner.SelectionGroup=false
-HugoHubBanner.ResetOnSpawn=false
-HugoHubBanner.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
-HugoHubBanner.IgnoreGuiInset=false
+local EL2BHubBanner=Instance.new("ScreenGui")
+EL2BHubBanner.Name="EL2BHubBanner"
+EL2BHubBanner.SelectionGroup=false
+EL2BHubBanner.ResetOnSpawn=false
+EL2BHubBanner.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
+EL2BHubBanner.IgnoreGuiInset=false
 do
     local parented=false
     pcall(function()
-        if gethui then HugoHubBanner.Parent=gethui() parented=true end
+        if gethui then EL2BHubBanner.Parent=gethui() parented=true end
     end)
     if not parented then
-        pcall(function() HugoHubBanner.Parent=CoreGui parented=HugoHubBanner.Parent~=nil end)
+        pcall(function() EL2BHubBanner.Parent=CoreGui parented=EL2BHubBanner.Parent~=nil end)
     end
-    if not parented then HugoHubBanner.Parent=PlayerGui end
+    if not parented then EL2BHubBanner.Parent=PlayerGui end
 end
 
 local BFrame=Instance.new("Frame")
@@ -4078,7 +4420,7 @@ BFrame.Position=L.bannerPos
 BFrame.BackgroundColor3=C.accent
 BFrame.BorderSizePixel=0
 BFrame.ClipsDescendants=true
-BFrame.Parent=HugoHubBanner
+BFrame.Parent=EL2BHubBanner
 Instance.new("UICorner",BFrame).CornerRadius=UDim.new(0,10)
 
 local BUIGradient=Instance.new("UIGradient")
@@ -4121,7 +4463,7 @@ local BTitle=Instance.new("TextLabel")
 BTitle.Size=UDim2.new(1,-4,0,16)
 BTitle.Position=UDim2.new(0,2,0,2)
 BTitle.BackgroundTransparency=1
-BTitle.Text='<font color="rgb(255,220,220)">175</font> <font color="rgb(255,50,50)">Flash</font>'
+BTitle.Text='<font color="rgb(255,220,220)">EL2B</font> <font color="rgb(255,50,50)">HUB PVP</font>'
 BTitle.TextSize=12
 BTitle.Font=Enum.Font.GothamBold
 BTitle.RichText=true
@@ -4133,7 +4475,7 @@ local BDiscord=Instance.new("TextLabel")
 BDiscord.Size=UDim2.new(1,-6,0,12)
 BDiscord.Position=UDim2.new(0,3,0,18)
 BDiscord.BackgroundTransparency=1
-BDiscord.Text='<font color="rgb(255,50,50)">dc:</font> discord.gg/QhffEaSJK'
+BDiscord.Text='<font color="rgb(255,50,50)">dc:</font> discord.gg/hefasXbf6'
 BDiscord.TextColor3=C.textBright
 BDiscord.TextSize=8
 BDiscord.Font=Enum.Font.GothamMedium
@@ -4300,7 +4642,7 @@ local info=TweenInfo.new(0.2,Enum.EasingStyle.Quad,Enum.EasingDirection.In)
 local t1=TweenService:Create(Win,info,{Size=UDim2.new(0,0,0,0)})
 local t2=TweenService:Create(BorderFrame,info,{Size=UDim2.new(0,0,0,0)})
 t1:Play(); t2:Play()
-t1.Completed:Connect(function() HUGO_SCRIPT_GUI:Destroy() end)
+t1.Completed:Connect(function() EL2B_SCRIPT_GUI:Destroy() end)
 end)
 
 local function hookButton(btn,normal,hover)
@@ -4445,7 +4787,7 @@ for _,conn in ipairs(ActiveConnections) do
 if conn then pcall(function() conn:Disconnect() end) end
 end
 pcall(function()
-    local g = PlayerGui:FindFirstChild("175 Flash & Block") or (gethui and gethui():FindFirstChild("175 Flash & Block"))
+    local g = PlayerGui:FindFirstChild("EL2B HUB PVP") or (gethui and gethui():FindFirstChild("EL2B HUB PVP"))
     if g then g:Destroy() end
 end)
 _G.Formega_Script_Purge=nil
@@ -4454,9 +4796,9 @@ end
 end -- fin __build175GUI
 local okGUI, errGUI = pcall(__build175GUI)
 if not okGUI then
-    warn("[175] Error GUI:", errGUI)
+    warn("[EL2B HUB PVP] Erreur GUI :", errGUI)
 else
-    print("[175] GUI construida OK")
+    print("[EL2B HUB PVP] Interface chargée correctement")
 end
 
 -- ===== ESP BEST MEJORADO =====
@@ -4653,7 +4995,7 @@ local function showTopNotifyBest(name, value)
             end
         end
         clone.Parent = vp
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/OpBrairnotV2/Ui_Library/refs/heads/main/Ui.lua"))()
+        -- UI externe supprimée : elle provoquait des erreurs lorsque la requête HTTP était bloquée.
         local cf, size = clone:GetBoundingBox()
         local dist = math.max(size.Magnitude * 1.35, 2.5)
         local height = size.Y * 0.15
@@ -5058,7 +5400,7 @@ end
 local function createQAP()
     destroyQAP()
     local gui = Instance.new("ScreenGui")
-    gui.Name = "175QuickAP"
+    gui.Name = "EL2BHubQuickAP"
     gui.ResetOnSpawn = false
     gui.DisplayOrder = 1200
     gui.IgnoreGuiInset = true
@@ -5813,9 +6155,9 @@ if _G.BackpackESP then _G._175_SetBackpackESP(true) end
 if _G.BrainrotHighlight then _G._175_SetBrainrotHL(true) end
 if _G.QuickAP then task.defer(function() _G._175_SetQuickAP(true) end) end
 
-print("[175] Extra features OK")
+        print("[EL2B HUB PVP] Extra features OK")
 end)
-if not okExtra then warn("[175] Extra error:", errExtra) end
+if not okExtra then warn("[EL2B HUB PVP] Extra error:", errExtra) end
 end)
 
 -- Auto Turret
@@ -5934,7 +6276,7 @@ _G._175_AT = function(state)
     if autoTurretEnabled then startAutoTurret() else disconnectAll() end
 end
 if _G.AutoTurretEnabled == true then _G._175_AT(true) end
-print("[175] AutoTurret ready")
+        print("[EL2B HUB PVP] AutoTurret ready")
 ]=]
     local fn, err = loadstring(src)
     if fn then pcall(fn) end
@@ -6159,7 +6501,9 @@ task.spawn(function()
     local function recoverAll()
         pcall(function()
             -- Main GUI
-            local main = PlayerGui:FindFirstChild("HUGO_SCRIPT_GUI")
+            local main = PlayerGui:FindFirstChild("EL2B HUB PVP")
+                or (gethui and gethui():FindFirstChild("EL2B HUB PVP"))
+                or CoreGui:FindFirstChild("EL2B HUB PVP")
             if main then
                 main.Enabled = true
                 for _, fr in ipairs(main:GetDescendants()) do
@@ -6172,7 +6516,7 @@ task.spawn(function()
             end
 
             -- Settings float
-            local sf = PlayerGui:FindFirstChild("175SettingsFloat")
+            local sf = PlayerGui:FindFirstChild("EL2BHubSettingsFloat")
             if sf then
                 sf.Enabled = true
                 local b = sf:FindFirstChild("Border")
@@ -6184,7 +6528,7 @@ task.spawn(function()
             end
 
             -- Brainrots float
-            local bf = PlayerGui:FindFirstChild("175BrainrotsFloat")
+            local bf = PlayerGui:FindFirstChild("EL2BHubBrainrotsFloat")
             if bf then
                 bf.Enabled = true
                 local b = bf:FindFirstChild("Border")
@@ -6203,12 +6547,12 @@ task.spawn(function()
             end
 
             -- Banner si existe
-            local banner = PlayerGui:FindFirstChild("HugoHubBanner")
+            local banner = PlayerGui:FindFirstChild("EL2BHubBanner")
             if banner then
                 banner.Enabled = true
             end
         end)
-        print("[175] GUIs restablecidas a posición original (R)")
+        print("[EL2B HUB PVP] GUIs restaurées à leur position d’origine (R)")
     end
 
     _G._175_RecoverGUIs = recoverAll
@@ -6378,10 +6722,10 @@ local function bloodDripAllPanels()
         pcall(function() if gethui then table.insert(parents, gethui()) end end)
         pcall(function() table.insert(parents, CoreGui) end)
         local names = {
-            "175 Flash & Block",
-            "HugoHubBanner",
-            "175SettingsFloat",
-            "175BrainrotsFloat",
+            "EL2B HUB PVP",
+            "EL2BHubBanner",
+            "EL2BHubSettingsFloat",
+            "EL2BHubBrainrotsFloat",
             "DropBrainrotGui",
         }
         for _, parent in ipairs(parents) do
@@ -7460,7 +7804,7 @@ task.spawn(function()
         end
     end)
     if not okFPS then
-        warn("[175] FPS Boost error:", tostring(errFPS))
+        warn("[EL2B HUB PVP] FPS Boost error:", tostring(errFPS))
     end
 end)
 
@@ -7772,4 +8116,4 @@ do
     end
 end
 
-print("175 Flash & Block cargado correctamente!")
+print("EL2B HUB PVP chargé correctement !")
