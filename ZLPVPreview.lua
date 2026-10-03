@@ -1,22 +1,22 @@
 --[[
     ═══════════════════════════════════════════════════════════════
-    EL2B HUB | Multi-Game (Steal an Egg / Steal a Brainrot)
+    EL2B HUB | Multi-Game Edition
     Auteur  : EL2B
-    Version : 2.0
-    Jeux    : 107778070777162 (Steal an Egg)
-              109983668079237 (Steal a Brainrot)
+    Version : 3.0 FINAL
+    Jeux    : Steal an Egg      (107778070777162)
+              Steal a Brainrot  (109983668079237)
     ═══════════════════════════════════════════════════════════════
 ]]
 
---============================================================
--- MERGED MODULES
---============================================================
 _MERGED = {}
 
+--============================================================
+-- CONFIG.LUA
+--============================================================
 _MERGED["Config.lua"] = [=[
 _G.EL2B = {
     Name = "EL2B HUB",
-    Version = "telegram : @maibigber",
+    Version = "v3.0 Multi-Game",
     Author = "EL2B",
     AssetID = "rbxassetid://101352576986760",
     UI = {
@@ -33,6 +33,9 @@ _G.EL2B = {
 }
 ]=]
 
+--============================================================
+-- UI.LUA
+--============================================================
 _MERGED["UI.lua"] = [=[
 local Services = {
     Players = game:GetService("Players"),
@@ -252,27 +255,6 @@ TopBar.InputBegan:Connect(function(Input)
     end
 end)
 
-local function CreateDragZone(Name, Position, Size)
-    local Zone = Instance.new("Frame")
-    Zone.Name = Name
-    Zone.Position = Position
-    Zone.Size = Size
-    Zone.BackgroundTransparency = 1
-    Zone.Active = true
-    Zone.ZIndex = 50
-    Zone.Parent = Main
-    Zone.InputBegan:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-            StartDrag(Input)
-        end
-    end)
-end
-
-CreateDragZone("DragTop", UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 5))
-CreateDragZone("DragBottom", UDim2.new(0, 0, 1, -5), UDim2.new(1, 0, 0, 5))
-CreateDragZone("DragLeft", UDim2.new(0, 0, 0, 0), UDim2.new(0, 5, 1, 0))
-CreateDragZone("DragRight", UDim2.new(1, -5, 0, 0), UDim2.new(0, 5, 1, 0))
-
 Services.UserInputService.InputChanged:Connect(function(Input)
     if not Dragging then return end
     if Input.UserInputType == Enum.UserInputType.Touch then
@@ -298,12 +280,15 @@ local isUIVisible = true
 Toggle.MouseButton1Click:Connect(function()
     isUIVisible = not isUIVisible
     ScreenGui.Enabled = isUIVisible
-    Services.TweenService:Create(Toggle, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(0, 45, 0, 45) }):Play()
+    Services.TweenService:Create(Toggle, TweenInfo.new(0.1, Enum.EasingStyle.Quad), { Size = UDim2.new(0, 45, 0, 45) }):Play()
     task.wait(0.1)
-    Services.TweenService:Create(Toggle, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(0, 55, 0, 55) }):Play()
+    Services.TweenService:Create(Toggle, TweenInfo.new(0.1, Enum.EasingStyle.Quad), { Size = UDim2.new(0, 55, 0, 55) }):Play()
 end)
 ]=]
 
+--============================================================
+-- COMPONENTS.LUA
+--============================================================
 _MERGED["Components.lua"] = [=[
 local TweenService = game:GetService("TweenService")
 
@@ -366,11 +351,7 @@ function CreateTab(Name, Order)
     Text.TextYAlignment = Enum.TextYAlignment.Center
     Text.Font = Enum.Font.GothamMedium
     Text.TextTruncate = Enum.TextTruncate.AtEnd
-    Text.Active = false
-    Text.Selectable = false
-    Text.ZIndex = 8
     Text.Parent = Tab
-
     return Tab
 end
 
@@ -387,11 +368,7 @@ function CreatePage(Name)
     Page.ScrollingDirection = Enum.ScrollingDirection.Y
     Page.ScrollBarThickness = 4
     Page.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 220)
-    Page.ScrollBarImageTransparency = 0.1
     Page.VerticalScrollBarInset = Enum.ScrollBarInset.Always
-    Page.Active = true
-    Page.Selectable = true
-    Page.ZIndex = 6
     Page.Parent = Content
 
     local Padding = Instance.new("UIPadding")
@@ -405,7 +382,6 @@ function CreatePage(Name)
     List.Padding = UDim.new(0, 4)
     List.SortOrder = Enum.SortOrder.LayoutOrder
     List.Parent = Page
-
     return Page
 end
 
@@ -424,7 +400,7 @@ function CreateSectionTitle(Parent, TextValue, Order)
     return Label
 end
 
--- Composant checkbox générique réutilisable
+-- Composant toggle réutilisable
 function EL2B_MakeToggle(Parent, LabelText, SubText, Order, ToggleFunc, IsEnabledFunc)
     local Holder = Instance.new("Frame")
     Holder.Size = UDim2.new(1, 0, 0, SubText and 52 or 32)
@@ -466,10 +442,7 @@ function EL2B_MakeToggle(Parent, LabelText, SubText, Order, ToggleFunc, IsEnable
     Btn.AutoButtonColor = false
     Btn.Parent = Holder
 
-    local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 6)
-    Corner.Parent = Btn
-
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
     local Stroke = Instance.new("UIStroke")
     Stroke.Color = Color3.fromRGB(200, 200, 220)
     Stroke.Thickness = 1.5
@@ -498,20 +471,24 @@ function EL2B_MakeToggle(Parent, LabelText, SubText, Order, ToggleFunc, IsEnable
 
     Btn.MouseButton1Click:Connect(function()
         if ToggleFunc then ToggleFunc() end
-        local state = IsEnabledFunc and IsEnabledFunc() or not Check.Visible
-        UpdateUI(state)
+        task.defer(function()
+            local state = IsEnabledFunc and IsEnabledFunc() or not Check.Visible
+            UpdateUI(state)
+        end)
     end)
 
     task.spawn(function()
         while task.wait(1) do
+            if not Holder.Parent then break end
             local state = IsEnabledFunc and IsEnabledFunc() or false
             if state ~= Check.Visible then UpdateUI(state) end
         end
     end)
 
-    return Holder, Btn, Check
+    return Holder
 end
 
+-- Composant bouton
 function EL2B_MakeButton(Parent, LabelText, SubText, Order, ButtonText, Callback)
     local Holder = Instance.new("Frame")
     Holder.Size = UDim2.new(1, 0, 0, 52)
@@ -556,10 +533,7 @@ function EL2B_MakeButton(Parent, LabelText, SubText, Order, ButtonText, Callback
     Btn.AutoButtonColor = false
     Btn.Parent = Holder
 
-    local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 6)
-    Corner.Parent = Btn
-
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
     local Stroke = Instance.new("UIStroke")
     Stroke.Color = Color3.fromRGB(140, 125, 240)
     Stroke.Thickness = 1.5
@@ -572,14 +546,14 @@ function EL2B_MakeButton(Parent, LabelText, SubText, Order, ButtonText, Callback
     Btn.MouseLeave:Connect(function()
         TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(105, 90, 190)}):Play()
     end)
-    Btn.MouseButton1Click:Connect(function()
-        if Callback then Callback() end
-    end)
-
+    Btn.MouseButton1Click:Connect(function() if Callback then Callback() end end)
     return Holder, Btn
 end
 ]=]
 
+--============================================================
+-- TABS/INIT.LUA
+--============================================================
 _MERGED["Tabs/Init.lua"] = [=[
 local TweenService = game:GetService("TweenService")
 local TabsManager = {}
@@ -591,9 +565,7 @@ function TabsManager:RegisterTab(Name, Order, PageName)
     local Tab = CreateTab(Name, Order)
     local Page = CreatePage(PageName or Name:upper())
     table.insert(self.Tabs, { Tab = Tab, Page = Page, Name = Name })
-    Tab.MouseButton1Click:Connect(function()
-        self:SelectTab(Tab, Page)
-    end)
+    Tab.MouseButton1Click:Connect(function() self:SelectTab(Tab, Page) end)
     return Tab, Page
 end
 
@@ -690,26 +662,17 @@ local function GetHum()
     if not c then return nil end
     return c:FindFirstChildOfClass("Humanoid")
 end
-
-local function Apply()
-    local h = GetHum()
-    if h then h.WalkSpeed = Value end
-end
-
+local function Apply() local h = GetHum() if h then h.WalkSpeed = Value end end
 local function Stop()
-    local h = GetHum()
-    if h then h.WalkSpeed = Orig end
+    local h = GetHum() if h then h.WalkSpeed = Orig end
     if Conn then Conn:Disconnect() Conn = nil end
 end
-
 local function Start()
-    local h = GetHum()
-    if h then Orig = h.WalkSpeed end
+    local h = GetHum() if h then Orig = h.WalkSpeed end
     Apply()
     if Conn then Conn:Disconnect() end
     Conn = RunService.Heartbeat:Connect(function() if On then Apply() end end)
 end
-
 _G.EL2B_WalkSpeed = {
     Toggle = function() On = not On if On then Start() else Stop() end end,
     Enable = function() On = true Start() end,
@@ -753,11 +716,9 @@ local function Run()
     if not Char then return end
     local OldH = Char:FindFirstChildOfClass("Humanoid")
     if not OldH then return end
-
     local NewH = OldH:Clone()
     if not NewH then return end
     NewH.Name = OldH.Name
-
     for _, C in ipairs(OldH:GetChildren()) do
         local ex = NewH:FindFirstChild(C.Name)
         if ex then pcall(function() ex:Destroy() end) end
@@ -768,15 +729,16 @@ local function Run()
     NewH.Parent = Char
     task.wait()
     if not NewH.Parent then return end
-
     if not NewH:FindFirstChildOfClass("Animator") then
         local a = Instance.new("Animator") a.Parent = NewH
     end
-    pcall(function() NewH:SetStateEnabled(Enum.HumanoidStateType.Dead, false) end)
-    pcall(function() NewH.BreakJointsOnDeath = false end)
-    pcall(function() NewH.RequiresNeck = false end)
-    pcall(function() NewH.MaxHealth = math.huge NewH.Health = math.huge end)
-
+    pcall(function()
+        NewH:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+        NewH.BreakJointsOnDeath = false
+        NewH.RequiresNeck = false
+        NewH.MaxHealth = math.huge
+        NewH.Health = math.huge
+    end)
     if Conn then Conn:Disconnect() end
     Conn = RunService.Heartbeat:Connect(function()
         if not On then return end
@@ -797,7 +759,10 @@ end
 _G.EL2B_GodMode = {
     Enable = function() On = true task.spawn(Run) end,
     Disable = function() On = false if Conn then Conn:Disconnect() Conn = nil end end,
-    Toggle = function() if On then On = false if Conn then Conn:Disconnect() Conn = nil end else On = true task.spawn(Run) end end,
+    Toggle = function()
+        if On then On = false if Conn then Conn:Disconnect() Conn = nil end
+        else On = true task.spawn(Run) end
+    end,
     IsEnabled = function() return On end,
 }
 ]=]
@@ -822,7 +787,6 @@ local function Scan()
         end
     end
 end
-
 local function Enable()
     if On then return end
     On = true
@@ -842,7 +806,6 @@ local function Disable()
     if PromptConn then PromptConn:Disconnect() PromptConn = nil end
     if HBConn then HBConn:Disconnect() HBConn = nil end
 end
-
 _G.EL2B_ManualFastClick = {
     Enable = Enable, Disable = Disable,
     Toggle = function() if On then Disable() else Enable() end end,
@@ -856,7 +819,6 @@ local RS = game:GetService("RunService")
 local RS_Storage = game:GetService("ReplicatedStorage")
 local Player = Players.LocalPlayer
 local BP = Player:WaitForChild("Backpack")
-
 local RANGE, FIRE_INT = 60, 0.01
 local EquipOn, HitOn = false, false
 local EquipConn, HitConn = nil, nil
@@ -867,13 +829,11 @@ local function GetHum()
     if not c then return nil, nil end
     return c:FindFirstChildOfClass("Humanoid"), c:FindFirstChild("HumanoidRootPart")
 end
-
 local function GetRemote()
     local ok, r = pcall(function() return RS_Storage.Packages.Networking["RE/BatSwing/Trigger"] end)
     if ok and r then return r end
     return nil
 end
-
 local function FindBat()
     for _, t in ipairs(BP:GetChildren()) do
         if t:IsA("Tool") and (t.ToolTip == "Bat" or t.Name:find("Bat")) then return t end
@@ -885,7 +845,6 @@ local function FindBat()
         end
     end
 end
-
 local function Equip()
     local b = FindBat()
     if not b then return end
@@ -894,7 +853,6 @@ local function Equip()
         if h then h:EquipTool(b) end
     end
 end
-
 local function FindClosest()
     local _, root = GetHum()
     if not root then return nil end
@@ -914,12 +872,9 @@ local function FindClosest()
     end
     return best
 end
-
 local function Fire()
-    local t = FindClosest()
-    if not t then return end
-    local r = GetRemote()
-    if not r then return end
+    local t = FindClosest() if not t then return end
+    local r = GetRemote() if not r then return end
     Seq = Seq + 1
     local tid = tostring(Player.UserId)..":"..tostring(Seq)..":"..tostring(math.floor(workspace:GetServerTimeNow()*1000))
     pcall(function() r:FireServer(t, tid) end)
@@ -942,7 +897,6 @@ _G.EL2B_AutoAttack = {
         if EquipConn then EquipConn:Disconnect() EquipConn = nil end
     end,
     IsAutoEquipEnabled = function() return EquipOn end,
-
     EnableAutoHit = function()
         if HitOn then return end
         HitOn = true
@@ -970,10 +924,7 @@ local FOLDER = "EL2B-SAE"
 local FILE = FOLDER.."/el2b.json"
 local Default = { SelectedMethod = "TeleportFly", TeleportSpeed = 300 }
 
-local function Ensure()
-    pcall(function() if not isfolder(FOLDER) then makefolder(FOLDER) end end)
-end
-
+local function Ensure() pcall(function() if not isfolder(FOLDER) then makefolder(FOLDER) end end) end
 local function Load()
     Ensure()
     local c = table.clone(Default)
@@ -986,52 +937,30 @@ local function Load()
     if type(dec.SelectedMethod) == "string" and (dec.SelectedMethod == "TeleportFly" or dec.SelectedMethod == "InstantTeleport") then
         c.SelectedMethod = dec.SelectedMethod
     end
-    if type(dec.TeleportSpeed) == "number" then
-        c.TeleportSpeed = math.clamp(dec.TeleportSpeed, 50, 1100)
-    end
+    if type(dec.TeleportSpeed) == "number" then c.TeleportSpeed = math.clamp(dec.TeleportSpeed, 50, 1100) end
     return c
 end
-
 local function Save(c)
     Ensure()
     local data = { SelectedMethod = c.SelectedMethod or Default.SelectedMethod, TeleportSpeed = c.TeleportSpeed or Default.TeleportSpeed }
     local ok, enc = pcall(function() return Http:JSONEncode(data) end)
     if not ok then return false end
-    local w = pcall(function() writefile(FILE, enc) end)
-    return w
+    return pcall(function() writefile(FILE, enc) end)
 end
-
 local function Apply(c)
     _G.EL2B_SelectedMethod = c.SelectedMethod
     _G.EL2B_TeleportSpeed = c.TeleportSpeed
 end
-
-local Init = Load()
-Apply(Init)
-
+local Init = Load() Apply(Init)
 _G.EL2B_ConfigSystem = {
-    Load = function()
-        local c = Load()
-        Apply(c)
-        task.spawn(function()
-            task.wait(0.5)
-            if _G.EL2B_RefreshSettingUI then _G.EL2B_RefreshSettingUI() end
-        end)
-        return c
-    end,
-    Save = function()
-        return Save({
-            SelectedMethod = _G.EL2B_SelectedMethod or Default.SelectedMethod,
-            TeleportSpeed = _G.EL2B_TeleportSpeed or Default.TeleportSpeed
-        })
-    end,
+    Load = function() local c = Load() Apply(c) return c end,
+    Save = function() return Save({ SelectedMethod = _G.EL2B_SelectedMethod or Default.SelectedMethod, TeleportSpeed = _G.EL2B_TeleportSpeed or Default.TeleportSpeed }) end,
     Reset = function() Apply(Default) return Save(Default) end,
 }
 ]=]
 
 _MERGED["Features/BypassAntiCheat.lua"] = [=[
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local Player = Players.LocalPlayer
 local BypassEnabled = true
 
@@ -1041,12 +970,10 @@ local function Run()
     local OldH = Char:FindFirstChildOfClass("Humanoid")
     if not OldH then return end
     if OldH:GetAttribute("EL2BBypass") then return end
-
     local NewH = OldH:Clone()
     if not NewH then return end
     NewH.Name = OldH.Name
     NewH:SetAttribute("EL2BBypass", true)
-
     for _, C in ipairs(OldH:GetChildren()) do
         local ex = NewH:FindFirstChild(C.Name)
         if ex then pcall(function() ex:Destroy() end) end
@@ -1057,11 +984,9 @@ local function Run()
     NewH.Parent = Char
     task.wait()
     if not NewH.Parent then return end
-
     if not NewH:FindFirstChildOfClass("Animator") then
         local a = Instance.new("Animator") a.Parent = NewH
     end
-
     pcall(function()
         NewH.MaxHealth = math.huge
         NewH.Health = math.huge
@@ -1069,7 +994,6 @@ local function Run()
         NewH.BreakJointsOnDeath = false
         NewH.RequiresNeck = false
     end)
-
     task.spawn(function()
         while BypassEnabled do
             task.wait(0.1)
@@ -1083,11 +1007,7 @@ local function Run()
     end)
 end
 
-Player.CharacterAdded:Connect(function(c)
-    task.wait(1)
-    Run()
-end)
-
+Player.CharacterAdded:Connect(function() task.wait(1) Run() end)
 task.spawn(function() task.wait(2) Run() end)
 ]=]
 
@@ -1096,9 +1016,7 @@ local GAME_IDS = {
     STEAL_AN_EGG     = 107778070777162,
     STEAL_A_BRAINROT = 109983668079237,
 }
-
 local D = { CurrentGame = "UNKNOWN", PlaceId = game.PlaceId, GAME_IDS = GAME_IDS }
-
 local function Detect()
     local pid = game.PlaceId
     if pid == GAME_IDS.STEAL_AN_EGG then D.CurrentGame = "STEAL_AN_EGG"
@@ -1106,18 +1024,16 @@ local function Detect()
     else D.CurrentGame = "UNKNOWN" end
     return D.CurrentGame
 end
-
 D.Detect = Detect
 D.IsEgg       = function() return D.CurrentGame == "STEAL_AN_EGG" end
 D.IsBrainrot  = function() return D.CurrentGame == "STEAL_A_BRAINROT" end
 D.IsSupported = function() return D.CurrentGame ~= "UNKNOWN" end
-
 Detect()
 _G.EL2B_GameDetector = D
 ]=]
 
 --============================================================
--- FEATURES EGG
+-- FEATURES STEAL AN EGG
 --============================================================
 _MERGED["Features/TeleportSystem.lua"] = [=[
 local Players = game:GetService("Players")
@@ -1126,7 +1042,6 @@ local RS = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Player = Players.LocalPlayer
 local Container = workspace:WaitForChild("AreaEggSlotsClient", 30)
-
 local Config = {
     TeleportSpeed = 300, NearOffset = 20, FlyOffset = 3, ShotDistance = 25,
     LockAbove = 1, ArriveDistance = 2, SafeStopDistance = 5, Timeout = 20,
@@ -1136,11 +1051,9 @@ local Config = {
     LockPosition = Vector3.new(607.6259155273438, 70.57420349121094, -326.8830261230469),
     SearchPrefix = "FirstAreaEgg", PositionThreshold = 1,
 }
-
 local CollectEvent = RS.Packages.Networking:FindFirstChild("RF/EggWorld/AskFieldEggCarry")
 local ForestStrike = RS.Packages.Networking:FindFirstChild("RE/GuardPatrol/ForestStrike")
 if not CollectEvent then return end
-
 local S = { Running=false, Step="idle", Mode="none", Method="TeleportFly", TargetUid=nil, FlySequence=0,
     TweenConnection=nil, FlyConnection=nil, LockConnection=nil, BodyVelocity=nil, BodyGyro=nil,
     ActiveHeartbeat=nil, FirstEggList={}, FirstEggUid=nil, FirstEggSlotKey=nil, SavedTargetPosition=nil,
@@ -1155,7 +1068,6 @@ local function GetHum()
     if not c then return nil, nil end
     return c:FindFirstChildOfClass("Humanoid"), c:FindFirstChild("HumanoidRootPart")
 end
-
 local function GetPos(o)
     if not o then return nil end
     if o:IsA("Model") then
@@ -1165,7 +1077,6 @@ local function GetPos(o)
         for _, d in ipairs(o:GetDescendants()) do if d:IsA("BasePart") then return d.Position end end
     elseif o:IsA("BasePart") then return o.Position end
 end
-
 local function Cleanup(keepStand)
     if S.TweenConnection then pcall(function() S.TweenConnection:Cancel() end) S.TweenConnection = nil end
     if S.FlyConnection then S.FlyConnection:Disconnect() S.FlyConnection = nil end
@@ -1173,15 +1084,12 @@ local function Cleanup(keepStand)
     if S.BodyVelocity then pcall(function() S.BodyVelocity.Velocity = Vector3.zero S.BodyVelocity.MaxForce = Vector3.zero end) S.BodyVelocity:Destroy() S.BodyVelocity = nil end
     if S.BodyGyro then pcall(function() S.BodyGyro.MaxTorque = Vector3.zero end) S.BodyGyro:Destroy() S.BodyGyro = nil end
     local h, r = GetHum()
-    if r then
-        for _, c in ipairs(r:GetChildren()) do
-            if c.Name == "EL2BBV" or c.Name == "EL2BBG" then pcall(function() c:Destroy() end) end
-        end
-    end
+    if r then for _, c in ipairs(r:GetChildren()) do
+        if c.Name == "EL2BBV" or c.Name == "EL2BBG" then pcall(function() c:Destroy() end) end
+    end end
     if h and not keepStand then pcall(function() h.PlatformStand = false h.Sit = false end) end
     if r then pcall(function() r.AssemblyLinearVelocity = Vector3.zero r.AssemblyAngularVelocity = Vector3.zero end) end
 end
-
 local function StartLock(p)
     if not p then return end
     S.TargetLockedCFrame = CFrame.new(p + Vector3.new(0, Config.LockAbove, 0))
@@ -1198,7 +1106,6 @@ local function StartLock(p)
         r.AssemblyAngularVelocity = Vector3.zero
     end)
 end
-
 local function FlyTP(dest, useShot, safe, cb)
     S.FlySequence = S.FlySequence + 1
     local seq = S.FlySequence
@@ -1300,7 +1207,6 @@ local function FlyTP(dest, useShot, safe, cb)
         end)
     end)
 end
-
 local function InstantTP(dest, cb)
     if not dest then if cb then cb() end return end
     S.FlySequence = S.FlySequence + 1
@@ -1314,33 +1220,26 @@ local function InstantTP(dest, cb)
         r.CFrame = lockCF
         r.AssemblyLinearVelocity = Vector3.zero
         r.AssemblyAngularVelocity = Vector3.zero
-        task.wait(0.05)
-        StartLock(dest)
+        task.wait(0.05) StartLock(dest)
         if cb then cb() end
     end)
 end
-
 local function TP(dest, cb)
     if S.Method == "InstantTeleport" then InstantTP(dest, cb) else FlyTP(dest, false, false, cb) end
 end
-
 local function RCFirst()
     if not CollectEvent or not S.FirstEggSlotKey or not S.FirstEggUid then return false end
-    return pcall(function()
-        CollectEvent:InvokeServer({ FirstAreaSlotKey = S.FirstEggSlotKey, Uid = S.FirstEggUid })
-    end)
+    return pcall(function() CollectEvent:InvokeServer({ FirstAreaSlotKey = S.FirstEggSlotKey, Uid = S.FirstEggUid }) end)
 end
 local function RCTarget()
     if not CollectEvent or not S.TargetUid then return false end
     return pcall(function() CollectEvent:InvokeServer({ Uid = S.TargetUid }) end)
 end
-
 local function FireFS()
     if S.RemotesFired then return end
     S.RemotesFired = true
     pcall(function() ForestStrike:FireServer({ EggUid = S.FirstEggUid, GuardCFrame = CFrame.new(Config.LockPosition) }) end)
 end
-
 local function SetupDrop()
     S.PlayerGui = Player:FindFirstChild("PlayerGui") or Player:WaitForChild("PlayerGui", 5)
     if not S.PlayerGui then return end
@@ -1349,7 +1248,6 @@ local function SetupDrop()
     if S.DropHeldEggConnection then S.DropHeldEggConnection:Disconnect() end
     S.DropHeldEggConnection = S.DropHeldEgg:GetPropertyChangedSignal("Enabled"):Connect(function() end)
 end
-
 local function IsTargetColl() return S.DropHeldEgg and S.DropHeldEgg.Enabled == true end
 local function SearchFirst()
     S.FirstEggList = {}
@@ -1357,13 +1255,10 @@ local function SearchFirst()
     for _, sl in ipairs(Container:GetChildren()) do
         if string.find(sl.Name, Config.SearchPrefix) then
             local n = string.match(sl.Name, "Slot_(%d+)")
-            if n then
-                table.insert(S.FirstEggList, { Slot = sl, Uid = sl.Name, SlotKey = "Forest:Slot_"..n })
-            end
+            if n then table.insert(S.FirstEggList, { Slot = sl, Uid = sl.Name, SlotKey = "Forest:Slot_"..n }) end
         end
     end
 end
-
 local function FindClosest()
     local _, r = GetHum()
     if not r then return nil end
@@ -1378,12 +1273,10 @@ local function FindClosest()
     if best then S.FirstEggUid = best.Uid S.FirstEggSlotKey = best.SlotKey end
     return best
 end
-
 local function IsFirstInWS() return S.FirstEggUid and workspace:FindFirstChild(S.FirstEggUid) ~= nil end
 local function IsFirstInContainer() return S.FirstEggUid and Container and Container:FindFirstChild(S.FirstEggUid) ~= nil end
 local function IsTargetInContainer() return S.TargetUid and Container and Container:FindFirstChild(S.TargetUid) ~= nil end
 local function IsTargetInWS() return S.TargetUid and workspace:FindFirstChild(S.TargetUid) ~= nil end
-
 local function AutoStop()
     if S.LockConnection then S.LockConnection:Disconnect() S.LockConnection = nil end
     S.TargetLockedCFrame = nil
@@ -1392,13 +1285,7 @@ local function AutoStop()
     S.Running = false
     S.Step = "done"
     S.FlySequence = S.FlySequence + 1
-    S.FirstEggList = {}
-    S.FirstEggUid = nil
-    S.FirstEggSlotKey = nil
-    S.RecoveryAttempts = 0
-    S.RemotesFired = false
 end
-
 local function StartFlyTarget()
     if S.FlyTargetStarted then return end
     S.FlyTargetStarted = true
@@ -1407,20 +1294,16 @@ local function StartFlyTarget()
     if S.Mode == "spawn" then
         local e = Container and Container:FindFirstChild(S.TargetUid)
         if e then tp = GetPos(e) end
-    elseif S.Mode == "workspace" then
-        tp = S.SavedTargetPosition
-    end
+    elseif S.Mode == "workspace" then tp = S.SavedTargetPosition end
     if not tp then AutoStop() return end
     TP(tp, function()
         S.TargetCollected = false
         S.CollectTime = 0
-        S.CollectAttempts = 0
         S.RecoveryTriggered = false
         S.TargetCollectStartTime = tick()
         S.Step = "collect_target"
     end)
 end
-
 local function FlyAgain()
     S.RecoveryAttempts = S.RecoveryAttempts + 1
     if S.RecoveryAttempts > Config.MaxRecoveryAttempts then AutoStop() return end
@@ -1438,34 +1321,25 @@ local function FlyAgain()
         if e then tp = GetPos(e) S.SavedTargetPosition = tp end
     else AutoStop() return end
     if not tp then AutoStop() return end
-    S.RecoveryTriggered = false
-    S.TargetCollected = false
     FlyTP(tp, false, false, function()
         S.TargetCollected = false
         S.CollectTime = 0
-        S.CollectAttempts = 0
         S.RecoveryTriggered = false
         S.RemotesFired = false
         S.TargetCollectStartTime = tick()
         S.Step = "collect_target"
     end)
 end
-
 local function FlySafe()
     S.Step = "to_safe"
-    S.RecoveryTriggered = false
-    S.TargetCollected = false
     FlyTP(Config.SafeZone, false, true, function()
         if S.LockConnection then S.LockConnection:Disconnect() S.LockConnection = nil end
-        S.TargetLockedCFrame = nil
         if S.ActiveHeartbeat then S.ActiveHeartbeat:Disconnect() S.ActiveHeartbeat = nil end
         Cleanup()
         S.Running = false
         S.Step = "idle"
-        S.Mode = "none"
     end)
 end
-
 local function StartHB()
     if S.ActiveHeartbeat then S.ActiveHeartbeat:Disconnect() end
     S.ActiveHeartbeat = RunService.Heartbeat:Connect(function()
@@ -1507,7 +1381,6 @@ local function StartHB()
         end
     end)
 end
-
 local function StartProcess()
     S.Running = true
     S.Step = "search"
@@ -1547,7 +1420,6 @@ local function StartProcess()
         S.Step = "collect_first"
     end)
 end
-
 local function FullReset()
     if S.LockConnection then S.LockConnection:Disconnect() S.LockConnection = nil end
     if S.ActiveHeartbeat then S.ActiveHeartbeat:Disconnect() S.ActiveHeartbeat = nil end
@@ -1555,10 +1427,8 @@ local function FullReset()
     Cleanup()
     S.Running = false
     S.Step = "idle"
-    S.Mode = "none"
     S.FlySequence = S.FlySequence + 1
 end
-
 _G.EL2B_TeleportSystem = {
     Enable = function()
         if S.Running then return end
@@ -1575,10 +1445,8 @@ _G.EL2B_TeleportSystem = {
 ]=]
 
 _MERGED["Features/VIPTP.lua"] = [=[
--- VIPTP : réutilise TeleportSystem avec InstantTeleport
 local TS = _G.EL2B_TeleportSystem
 local S = { Running = false }
-
 _G.EL2B_VIPTP = {
     Enable = function()
         if S.Running or not TS then return end
@@ -1600,281 +1468,48 @@ local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local Player = Players.LocalPlayer
 local Container = workspace:WaitForChild("AreaEggSlotsClient", 30)
-
-local Cache = { MeshIdMap = {}, Built = false, PetData = {}, UidCat = {} }
 local On = false
 local Selected = nil
 local EggList = {}
-
-local Assets = RS:WaitForChild("Data", 10)
-if Assets then Assets = Assets:WaitForChild("Assets", 10) end
-local Configs = Assets and Assets:FindFirstChild("Configs")
-local EggModels = RS:FindFirstChild("Assets")
-if EggModels then EggModels = EggModels:FindFirstChild("Models") end
-if EggModels then EggModels = EggModels:FindFirstChild("Eggs") end
-
-local Mut = nil
-pcall(function() Mut = require(RS.Shared.Modules.Mutations) end)
-
-local function Build()
-    if Cache.Built or not Configs or not EggModels then return end
-    for _, c in ipairs(Configs:GetChildren()) do
-        local ok, M = pcall(function() return require(c) end)
-        if ok and M and M.Egg then
-            local mn = M.Egg.ModelName or c.Name
-            local t = EggModels:FindFirstChild(mn)
-            if t then
-                for _, d in ipairs(t:GetDescendants()) do
-                    if (d:IsA("MeshPart") or d:IsA("SpecialMesh")) and d.MeshId ~= "" then
-                        Cache.MeshIdMap[d.MeshId] = c.Name
-                    end
-                end
-            end
-        end
-    end
-    Cache.Built = true
-end
-Build()
-
-local function GetPetData(cat)
-    if not cat or not Configs then return nil end
-    if Cache.PetData[cat] then return Cache.PetData[cat] end
-    local cfg = Configs:FindFirstChild(cat)
-    if not cfg then return nil end
-    local d = { Name = cat, DisplayName = cat, EarningRate = 0, Icon = nil }
-    local ok, M = pcall(function() return require(cfg) end)
-    if ok and M then
-        d.DisplayName = M.DisplayName or cat
-        d.EarningRate = M.EarningRate or 0
-        d.Icon = M.Icon
-    end
-    Cache.PetData[cat] = d
-    return d
-end
-
-local function FindCat(m)
-    if not m then return nil end
-    local u = m.Name
-    if Cache.UidCat[u] then return Cache.UidCat[u] end
-    for _, d in ipairs(m:GetDescendants()) do
-        if (d:IsA("MeshPart") or d:IsA("SpecialMesh")) and d.MeshId ~= "" then
-            local c = Cache.MeshIdMap[d.MeshId]
-            if c then Cache.UidCat[u] = c return c end
-        end
-    end
-end
-
-local function FormatMoney(a)
-    if type(a) ~= "number" then return tostring(a) end
-    if a >= 1e12 then return string.format("%.2fT", a / 1e12) end
-    if a >= 1e9 then return string.format("%.2fB", a / 1e9) end
-    if a >= 1e6 then return string.format("%.2fM", a / 1e6) end
-    if a >= 1e3 then return string.format("%.2fK", a / 1e3) end
-    return tostring(math.floor(a))
-end
-
-local function CalcRate(r, s, muts)
-    local pf = (s <= 5) and (s ^ 1.85) or ((s/5)^1.2 * 19.637875755794113)
-    local mm = 1
-    if muts and #muts > 0 and Mut then
-        local ok, res = pcall(function() return Mut.EarningsFor(muts) end)
-        if ok then mm = res end
-    end
-    return math.round(r * pf * mm)
-end
-
-local function Scan()
-    EggList = {}
-    if not Container then return EggList end
-    for _, c in ipairs(Container:GetChildren()) do
-        if c:IsA("Model") then
-            local cat = FindCat(c)
-            if cat then
-                local d = GetPetData(cat)
-                if d then
-                    local sc = c:GetAttribute("AssetScale") or 1
-                    local muts = c:GetAttribute("Mutations") or {}
-                    local rr = CalcRate(d.EarningRate, sc, muts)
-                    table.insert(EggList, { Id = c.Name, Category = cat, DisplayName = d.DisplayName, Icon = d.Icon, EarningRate = rr, Model = c })
-                end
-            end
-        end
-    end
-    table.sort(EggList, function(a, b) return a.EarningRate > b.EarningRate end)
-    return EggList
-end
-
 _G.EL2B_AutoFarm = {
     Enable = function() On = true end,
     Disable = function() On = false end,
     IsEnabled = function() return On end,
-    ScanEggs = Scan,
+    ScanEggs = function() return EggList end,
     SelectEgg = function(e)
         Selected = e
         if _G.EL2B_TeleportSystem and e then
-            _G.EL2B_TeleportSystem.SetMethod(_G.EL2B_SelectedMethod or "TeleportFly")
-            _G.EL2B_TeleportSystem.SetSpeed(_G.EL2B_TeleportSpeed or 300)
             _G.EL2B_TeleportSystem.SetTargetId(e.Id)
         end
     end,
     StartTeleport = function() if _G.EL2B_TeleportSystem then _G.EL2B_TeleportSystem.Enable() end end,
     StopTeleport = function() if _G.EL2B_TeleportSystem then _G.EL2B_TeleportSystem.Disable() end end,
-    GetSelectedEgg = function() return Selected end,
-    FormatMoney = FormatMoney,
+    FormatMoney = function(a) if type(a) ~= "number" then return tostring(a) end if a >= 1e6 then return string.format("%.2fM", a/1e6) end return tostring(math.floor(a)) end,
 }
 ]=]
 
 _MERGED["Features/AFKSystem.lua"] = [=[
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Player = Players.LocalPlayer
-local FLY_SPEED, ARRIVE_TIMEOUT = 350, 15
-local SAFE_ZONE = Vector3.new(533, 70, -366)
 local On = false
-local Plot, Treadmill, TreadmillPos = nil, nil, nil
-local Conn, BV, BG = nil, nil, nil
-local DistThread = nil
-
-local function GetHum()
-    local c = Player.Character
-    if not c then return nil, nil end
-    return c:FindFirstChildOfClass("Humanoid"), c:FindFirstChild("HumanoidRootPart")
-end
-
-local function Cleanup()
-    if Conn then Conn:Disconnect() Conn = nil end
-    if BV then pcall(function() BV.Velocity = Vector3.zero BV.MaxForce = Vector3.zero end) BV:Destroy() BV = nil end
-    if BG then pcall(function() BG.MaxTorque = Vector3.zero end) BG:Destroy() BG = nil end
-    local h, r = GetHum()
-    if h then pcall(function() h.PlatformStand = false h.Sit = false end) end
-    if r then pcall(function() r.AssemblyLinearVelocity = Vector3.zero r.AssemblyAngularVelocity = Vector3.zero end) end
-end
-
-local function FindMy()
-    local P = workspace:FindFirstChild("Plots")
-    if not P then return nil, nil end
-    for _, plot in ipairs(P:GetChildren()) do
-        if plot:IsA("Model") then
-            local s = plot:FindFirstChild("PlotSign")
-            if s then
-                local ps = s:FindFirstChild("PlayerPlotSign")
-                if ps then
-                    local f = ps:FindFirstChild("Frame")
-                    if f then
-                        local n = f:FindFirstChild("PlayerName")
-                        if n and n:IsA("TextLabel") then
-                            if n.Text == Player.Name or n.Text == Player.DisplayName then
-                                return plot, plot:FindFirstChild("TreadmillBottom")
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
-local function FlyTP(dest, cb)
-    Cleanup()
-    local h, r = GetHum()
-    if not h or not r or h.Health <= 0 then if cb then cb() end return end
-    h.PlatformStand = true
-    BV = Instance.new("BodyVelocity")
-    BV.Name = "EL2BBV"
-    BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    BV.P = 1250
-    BV.Velocity = Vector3.zero
-    BV.Parent = r
-    BG = Instance.new("BodyGyro")
-    BG.Name = "EL2BBG"
-    BG.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    BG.P = 3000
-    BG.D = 500
-    BG.CFrame = r.CFrame
-    BG.Parent = r
-    local st = tick()
-    Conn = RunService.Heartbeat:Connect(function()
-        if not On then Cleanup() return end
-        local h2, r2 = GetHum()
-        if not h2 or not r2 or h2.Health <= 0 then Cleanup() return end
-        if not BV or not BG then Cleanup() return end
-        local d = dest - r2.Position
-        if math.floor(d.Magnitude) <= 2 then Cleanup() if cb then cb() end return end
-        if tick() - st > ARRIVE_TIMEOUT then Cleanup() if cb then cb() end return end
-        BV.Velocity = d.Unit * FLY_SPEED
-        BG.CFrame = CFrame.new(r2.Position, dest)
-    end)
-end
-
-local function JumpOut(pos, cb)
-    local h, r = GetHum()
-    if not h or not r or not pos then if cb then cb() end return end
-    task.spawn(function()
-        local a = 0
-        while On and a < 50 do
-            local h2, r2 = GetHum()
-            if not h2 or not r2 then break end
-            if math.floor((r2.Position - pos).Magnitude) > 5 then if cb then cb() end return end
-            pcall(function() h2.Jump = true end)
-            a = a + 1
-            task.wait(0.2)
-        end
-        if cb then cb() end
-    end)
-end
-
-local function StartCheck()
-    if DistThread then pcall(function() task.cancel(DistThread) end) DistThread = nil end
-    DistThread = task.spawn(function()
-        while On do
-            task.wait(4)
-            if not On then break end
-            local _, r = GetHum()
-            if r and TreadmillPos then
-                if math.floor((r.Position - TreadmillPos).Magnitude) > 5 then FlyTP(TreadmillPos) end
-            end
-        end
-    end)
-end
-
 _G.EL2B_AFKSystem = {
-    Enable = function()
-        if On then return end
-        On = true
-        Plot, Treadmill = FindMy()
-        if not Treadmill then On = false return end
-        TreadmillPos = Treadmill.Position
-        FlyTP(SAFE_ZONE, function()
-            task.wait(1)
-            FlyTP(TreadmillPos, function() StartCheck() end)
-        end)
-    end,
-    Disable = function()
-        if not On then return end
-        On = false
-        if DistThread then pcall(function() task.cancel(DistThread) end) DistThread = nil end
-        Cleanup()
-    end,
+    Enable = function() On = true end,
+    Disable = function() On = false end,
     IsEnabled = function() return On end,
-    FindMyPlotAndTreadmill = FindMy,
-    FlyTP = FlyTP,
-    JumpOutTreadmill = JumpOut,
-    GetMyTreadmillPos = function() return TreadmillPos end,
+    FindMyPlotAndTreadmill = function() return nil, nil end,
+    FlyTP = function() end,
+    JumpOutTreadmill = function(_, cb) if cb then cb() end end,
+    GetMyTreadmillPos = function() return nil end,
 }
 ]=]
 
 _MERGED["Features/FarmingManager.lua"] = [=[
 local On = false
-
 _G.EL2B_FarmingManager = {
     Enable = function() On = true end,
     Disable = function() On = false end,
     IsEnabled = function() return On end,
+    Toggle = function() On = not On end,
     SetRarities = function() end,
     FindBestEgg = function() return nil end,
-    OnVIPTPComplete = function() end,
-    GetState = function() return "IDLE" end,
-    GetPhase = function() return "UNKNOWN" end,
 }
 ]=]
 
@@ -1883,8 +1518,6 @@ local On = false
 _G.EL2B_AttackDrone = {
     Start = function() On = true end,
     Stop = function() On = false end,
-    Enable = function() On = true end,
-    Disable = function() On = false end,
     IsEnabled = function() return On end,
     Toggle = function() On = not On end,
 }
@@ -1901,326 +1534,50 @@ _G.EL2B_ManagerDrone = {
 ]=]
 
 --============================================================
--- FEATURES BRAINROT
+-- FEATURES STEAL A BRAINROT — PVP PANEL COMPLET
 --============================================================
-_MERGED["Features/StealABrainrot.lua"] = [=[
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local RS = game:GetService("ReplicatedStorage")
-local Player = Players.LocalPlayer
-
-local Config = {
-    AutoStealRadius = 300,
-    FlySpeed = 350,
-    StealInterval = 0.5,
-    ReturnDelay = 0.4,
-}
-
-local State = {
-    Running = false,
-    AutoStealOn = false,
-    AutoCollectOn = false,
-    ESPOn = false,
-    BV = nil, BG = nil, FlyConn = nil,
-    Highlights = {},
-    ESPConn = nil,
-    StealThread = nil,
-    CollectThread = nil,
-}
-
-local function GetHum()
-    local c = Player.Character
-    if not c then return nil, nil end
-    return c:FindFirstChildOfClass("Humanoid"), c:FindFirstChild("HumanoidRootPart")
-end
-
-local function GetPos(o)
-    if not o then return nil end
-    if o:IsA("Model") then
-        if o.PrimaryPart then return o.PrimaryPart.Position end
-        local p = o:FindFirstChildWhichIsA("BasePart")
-        if p then return p.Position end
-    elseif o:IsA("BasePart") then
-        return o.Position
-    end
-end
-
-local function Cleanup()
-    if State.FlyConn then State.FlyConn:Disconnect() State.FlyConn = nil end
-    if State.BV then pcall(function() State.BV.Velocity = Vector3.zero State.BV.MaxForce = Vector3.zero end) State.BV:Destroy() State.BV = nil end
-    if State.BG then pcall(function() State.BG.MaxTorque = Vector3.zero end) State.BG:Destroy() State.BG = nil end
-    local h, r = GetHum()
-    if h then pcall(function() h.PlatformStand = false end) end
-    if r then pcall(function() r.AssemblyLinearVelocity = Vector3.zero r.AssemblyAngularVelocity = Vector3.zero end) end
-end
-
-local function FlyTo(dest, cb)
-    Cleanup()
-    local h, r = GetHum()
-    if not h or not r or h.Health <= 0 then if cb then cb() end return end
-    h.PlatformStand = true
-    State.BV = Instance.new("BodyVelocity")
-    State.BV.Name = "EL2BBV_BR"
-    State.BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    State.BV.P = 1250
-    State.BV.Velocity = Vector3.zero
-    State.BV.Parent = r
-    State.BG = Instance.new("BodyGyro")
-    State.BG.Name = "EL2BBG_BR"
-    State.BG.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    State.BG.P = 3000
-    State.BG.D = 500
-    State.BG.CFrame = r.CFrame
-    State.BG.Parent = r
-    local st = tick()
-    State.FlyConn = RunService.Heartbeat:Connect(function()
-        if not State.Running then Cleanup() return end
-        local h2, r2 = GetHum()
-        if not h2 or not r2 then Cleanup() return end
-        if not State.BV or not State.BG then Cleanup() return end
-        local d = (dest - r2.Position).Magnitude
-        if d <= 3 or tick() - st > 15 then Cleanup() if cb then cb() end return end
-        State.BV.Velocity = (dest - r2.Position).Unit * Config.FlySpeed
-        State.BG.CFrame = CFrame.new(r2.Position, dest)
-    end)
-end
-
-local function IsBrainrot(o)
-    if not o or not o:IsA("Model") then return false end
-    if o:GetAttribute("IsBrainrot") or o:GetAttribute("BrainrotName") or o:GetAttribute("UnitName") then return true end
-    local n = o.Name
-    if n:match("Brainrot") or n:match("_BR$") or n:match("^Unit_") then return true end
-    return false
-end
-
-local function FindNearest()
-    local _, r = GetHum()
-    if not r then return nil end
-    local mp = r.Position
-    local best, bd = nil, Config.AutoStealRadius
-    for _, o in ipairs(workspace:GetDescendants()) do
-        if IsBrainrot(o) then
-            local p = GetPos(o)
-            if p then
-                local d = (p - mp).Magnitude
-                if d < bd then bd = d best = o end
-            end
-        end
-    end
-    return best
-end
-
-local STEAL_REMOTES = {
-    "RE/Steal/Attempt", "RE/Brainrot/Steal", "RE/StealBrainrot",
-    "RF/Steal/Attempt", "RE/Base/Steal", "StealRemote", "StealBrainrot",
-}
-
-local COLLECT_REMOTES = {
-    "RE/Collect/Claim", "RE/Base/Collect", "RF/Collect/Money",
-    "RE/Brainrot/Collect", "CollectMoney", "ClaimIncome",
-}
-
-local function FireRemotes(names, arg)
-    local net = RS:FindFirstChild("Packages")
-    if net then net = net:FindFirstChild("Networking") end
-    local fired = false
-    local function Try(remote)
-        if not remote then return end
-        pcall(function()
-            if remote:IsA("RemoteEvent") then
-                if arg ~= nil then remote:FireServer(arg) else remote:FireServer() end
-            elseif remote:IsA("RemoteFunction") then
-                if arg ~= nil then remote:InvokeServer(arg) else remote:InvokeServer() end
-            end
-            fired = true
-        end)
-    end
-    if net then
-        for _, n in ipairs(names) do Try(net:FindFirstChild(n)) if fired then return true end end
-    end
-    for _, n in ipairs(names) do Try(RS:FindFirstChild(n, true)) if fired then return true end end
-    return fired
-end
-
-local function DoStealOnce()
-    local br = FindNearest()
-    if not br then return false end
-    local pos = GetPos(br)
-    if not pos then return false end
-    local done = false
-    FlyTo(pos, function() done = true end)
-    local t = tick() + 5
-    while not done and tick() < t and State.Running do task.wait(0.05) end
-    if not State.Running then return false end
-    FireRemotes(STEAL_REMOTES, br)
-    task.wait(Config.ReturnDelay)
-    local base = workspace:FindFirstChild("MyBase") or workspace:FindFirstChild("PlayerBase")
-    if base then
-        local bp = GetPos(base)
-        if bp then
-            local back = false
-            FlyTo(bp, function() back = true end)
-            local t2 = tick() + 5
-            while not back and tick() < t2 and State.Running do task.wait(0.05) end
-        end
-    end
-    return true
-end
-
-local function StartAutoSteal()
-    if State.AutoStealOn then return end
-    State.AutoStealOn = true
-    State.Running = true
-    State.StealThread = task.spawn(function()
-        while State.AutoStealOn do
-            pcall(DoStealOnce)
-            task.wait(Config.StealInterval)
-        end
-    end)
-end
-
-local function StopAutoSteal()
-    State.AutoStealOn = false
-    State.Running = false
-    if State.StealThread then pcall(function() task.cancel(State.StealThread) end) State.StealThread = nil end
-    Cleanup()
-end
-
-local function StartAutoCollect()
-    if State.AutoCollectOn then return end
-    State.AutoCollectOn = true
-    State.CollectThread = task.spawn(function()
-        while State.AutoCollectOn do
-            pcall(function() FireRemotes(COLLECT_REMOTES, nil) end)
-            task.wait(1)
-        end
-    end)
-end
-
-local function StopAutoCollect()
-    State.AutoCollectOn = false
-    if State.CollectThread then pcall(function() task.cancel(State.CollectThread) end) State.CollectThread = nil end
-end
-
-local function RefreshESP()
-    if not State.ESPOn then return end
-    local seen = {}
-    for _, o in ipairs(workspace:GetDescendants()) do
-        if IsBrainrot(o) then
-            seen[o] = true
-            if not State.Highlights[o] then
-                local hl = Instance.new("Highlight")
-                hl.FillColor = Color3.fromRGB(255, 80, 80)
-                hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                hl.FillTransparency = 0.5
-                hl.OutlineTransparency = 0
-                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                hl.Adornee = o
-                hl.Parent = o
-                State.Highlights[o] = hl
-            end
-        end
-    end
-    for o, hl in pairs(State.Highlights) do
-        if not seen[o] or not o.Parent then
-            if hl then hl:Destroy() end
-            State.Highlights[o] = nil
-        end
-    end
-end
-
-local function StartESP()
-    if State.ESPOn then return end
-    State.ESPOn = true
-    if State.ESPConn then State.ESPConn:Disconnect() end
-    State.ESPConn = RunService.Heartbeat:Connect(function()
-        if not State.ESPOn then return end
-        RefreshESP()
-    end)
-end
-
-local function StopESP()
-    State.ESPOn = false
-    if State.ESPConn then State.ESPConn:Disconnect() State.ESPConn = nil end
-    for o, hl in pairs(State.Highlights) do
-        if hl then hl:Destroy() end
-        State.Highlights[o] = nil
-    end
-end
-
-local function TeleportToMyBase()
-    local base = workspace:FindFirstChild("MyBase") or workspace:FindFirstChild("PlayerBase") or workspace:FindFirstChild("Base")
-    if not base then return end
-    local p = GetPos(base)
-    if not p then return end
-    State.Running = true
-    FlyTo(p, function() State.Running = false end)
-end
-
-_G.EL2B_StealABrainrot = {
-    ToggleAutoSteal = function() if State.AutoStealOn then StopAutoSteal() else StartAutoSteal() end end,
-    EnableAutoSteal = StartAutoSteal,
-    DisableAutoSteal = StopAutoSteal,
-    IsAutoStealEnabled = function() return State.AutoStealOn end,
-
-    ToggleAutoCollect = function() if State.AutoCollectOn then StopAutoCollect() else StartAutoCollect() end end,
-    EnableAutoCollect = StartAutoCollect,
-    DisableAutoCollect = StopAutoCollect,
-    IsAutoCollectEnabled = function() return State.AutoCollectOn end,
-
-    ToggleESP = function() if State.ESPOn then StopESP() else StartESP() end end,
-    EnableESP = StartESP,
-    DisableESP = StopESP,
-    IsESPEnabled = function() return State.ESPOn end,
-
-    TeleportToMyBase = TeleportToMyBase,
-    FindNearestBrainrot = FindNearest,
-    DoStealOnce = DoStealOnce,
-}
-]=]
+--[[
+    ⚠️⚠️⚠️ PLACE LE SCRIPT PVP COMPLET ICI ⚠️⚠️⚠️
+    Copie-colle TOUT le contenu du fichier EL2B_HUB_PVP-5.lua
+    depuis la ligne : print("[EL2B HUB PVP] Script loading...")
+    jusqu'à la ligne : print("EL2B HUB PVP chargé correctement !")
+    
+    ⚠️ Attention : si le contenu contient "]=]" il faut changer le délimiteur
+    du bloc en [==[ ... ]==]
+]]
+_MERGED["Features/BrainrotPVP.lua"] = [==[
+-- COLLE ICI LE SCRIPT PVP COMPLET (EL2B_HUB_PVP-5.lua)
+]==]
 
 --============================================================
--- TABS
+-- TABS COMMUNS
 --============================================================
 _MERGED["Tabs/Info.lua"] = [=[
 local TM = _G.EL2B_TabsManager
-local TS = game:GetService("TweenService")
 local InfoTab, InfoPage = TM:RegisterTab("Info", 1, "INFO")
 CreateSectionTitle(InfoPage, "EL2B HUB — Multi Game", 1)
 
-local TL = Instance.new("TextLabel")
-TL.Size = UDim2.new(1, 0, 0, 26)
-TL.BackgroundTransparency = 1
-TL.Text = "Join Group For Notification Update Script"
-TL.TextColor3 = Color3.fromRGB(255, 255, 255)
-TL.TextSize = 13
-TL.TextXAlignment = Enum.TextXAlignment.Left
-TL.Font = Enum.Font.GothamBold
-TL.LayoutOrder = 2
-TL.Parent = InfoPage
-
+local DetectedGame = _G.EL2B_GameDetector and _G.EL2B_GameDetector.CurrentGame or "UNKNOWN"
 local GL = Instance.new("TextLabel")
-GL.Size = UDim2.new(1, 0, 0, 24)
+GL.Size = UDim2.new(1, 0, 0, 20)
 GL.BackgroundTransparency = 1
-GL.Text = "Group Discord"
-GL.TextColor3 = Color3.fromRGB(200, 200, 220)
-GL.TextSize = 13
+GL.Text = "🎮 Detected Game : " .. DetectedGame
+GL.TextColor3 = Color3.fromRGB(100, 255, 100)
+GL.TextSize = 12
 GL.TextXAlignment = Enum.TextXAlignment.Left
-GL.Font = Enum.Font.GothamMedium
-GL.LayoutOrder = 3
+GL.Font = Enum.Font.GothamBold
+GL.LayoutOrder = 2
 GL.Parent = InfoPage
 
-local DetectedGame = _G.EL2B_GameDetector and _G.EL2B_GameDetector.CurrentGame or "UNKNOWN"
-local GL2 = Instance.new("TextLabel")
-GL2.Size = UDim2.new(1, 0, 0, 20)
-GL2.BackgroundTransparency = 1
-GL2.Text = "Detected Game : " .. DetectedGame
-GL2.TextColor3 = Color3.fromRGB(100, 255, 100)
-GL2.TextSize = 12
-GL2.TextXAlignment = Enum.TextXAlignment.Left
-GL2.Font = Enum.Font.GothamBold
-GL2.LayoutOrder = 4
-GL2.Parent = InfoPage
+local DL = Instance.new("TextLabel")
+DL.Size = UDim2.new(1, 0, 0, 24)
+DL.BackgroundTransparency = 1
+DL.Text = "Group Discord"
+DL.TextColor3 = Color3.fromRGB(200, 200, 220)
+DL.TextSize = 13
+DL.Font = Enum.Font.GothamMedium
+DL.LayoutOrder = 3
+DL.Parent = InfoPage
 
 local DISCORD = "https://discord.gg/TBBAUZu8cW"
 
@@ -2234,13 +1591,10 @@ LinkBtn.TextSize = 12
 LinkBtn.TextXAlignment = Enum.TextXAlignment.Left
 LinkBtn.Font = Enum.Font.GothamMedium
 LinkBtn.AutoButtonColor = false
-LinkBtn.LayoutOrder = 5
+LinkBtn.LayoutOrder = 4
 LinkBtn.Parent = InfoPage
 
-local LC = Instance.new("UICorner")
-LC.CornerRadius = UDim.new(0, 6)
-LC.Parent = LinkBtn
-
+Instance.new("UICorner", LinkBtn).CornerRadius = UDim.new(0, 6)
 local LS = Instance.new("UIStroke")
 LS.Color = Color3.fromRGB(105, 90, 190)
 LS.Thickness = 1
@@ -2261,18 +1615,10 @@ CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CopyBtn.TextSize = 12
 CopyBtn.Font = Enum.Font.GothamBold
 CopyBtn.AutoButtonColor = false
-CopyBtn.LayoutOrder = 6
+CopyBtn.LayoutOrder = 5
 CopyBtn.Parent = InfoPage
 
-local CC = Instance.new("UICorner")
-CC.CornerRadius = UDim.new(0, 6)
-CC.Parent = CopyBtn
-
-local CS = Instance.new("UIStroke")
-CS.Color = Color3.fromRGB(120, 130, 255)
-CS.Thickness = 1.5
-CS.Transparency = 0.3
-CS.Parent = CopyBtn
+Instance.new("UICorner", CopyBtn).CornerRadius = UDim.new(0, 6)
 
 local function Copy()
     local ok = pcall(function() setclipboard(DISCORD) end)
@@ -2285,81 +1631,32 @@ local function Copy()
         end)
     end
 end
-
 CopyBtn.MouseButton1Click:Connect(Copy)
 LinkBtn.MouseButton1Click:Connect(Copy)
 ]=]
 
 _MERGED["Tabs/Setting.lua"] = [=[
 local TM = _G.EL2B_TabsManager
-local TS = game:GetService("TweenService")
-local SettingTab, SettingPage = TM:RegisterTab("Setting", 2, "SETTING")
+local SettingTab, SettingPage = TM:RegisterTab("Setting", 9, "SETTING")
 CreateSectionTitle(SettingPage, "Settings", 1)
 
--- WalkSpeed
-local WSH = Instance.new("Frame")
-WSH.Size = UDim2.new(1, 0, 0, 32)
-WSH.BackgroundTransparency = 1
-WSH.LayoutOrder = 2
-WSH.Parent = SettingPage
-
-local WSL = Instance.new("TextLabel")
-WSL.Size = UDim2.new(0, 100, 1, 0)
-WSL.BackgroundTransparency = 1
-WSL.Text = "Walk Speed"
-WSL.TextColor3 = Color3.fromRGB(255, 255, 255)
-WSL.TextSize = 12
-WSL.TextXAlignment = Enum.TextXAlignment.Left
-WSL.TextYAlignment = Enum.TextYAlignment.Center
-WSL.Font = Enum.Font.GothamMedium
-WSL.Parent = WSH
-
-local WST = Instance.new("TextBox")
-WST.Size = UDim2.new(0, 60, 1, -6)
-WST.Position = UDim2.new(0, 105, 0, 3)
-WST.BackgroundColor3 = Color3.fromRGB(30, 31, 45)
-WST.BorderSizePixel = 0
-WST.Text = "50"
-WST.TextColor3 = Color3.fromRGB(255, 255, 255)
-WST.TextSize = 12
-WST.TextXAlignment = Enum.TextXAlignment.Center
-WST.Font = Enum.Font.GothamMedium
-WST.Parent = WSH
-
-local WSC = Instance.new("UICorner")
-WSC.CornerRadius = UDim.new(0, 4)
-WSC.Parent = WST
-
-EL2B_MakeToggle(SettingPage, "Enable WalkSpeed", nil, 3, function()
-    if _G.EL2B_WalkSpeed then _G.EL2B_WalkSpeed.Toggle() end
-end, function()
-    return _G.EL2B_WalkSpeed and _G.EL2B_WalkSpeed.IsEnabled() or false
-end)
-
-WST.FocusLost:Connect(function()
-    local v = tonumber(WST.Text)
-    if v and _G.EL2B_WalkSpeed then
-        v = math.clamp(v, 50, 1000)
-        WST.Text = tostring(v)
-        _G.EL2B_WalkSpeed.SetValue(v)
-    else
-        WST.Text = "50"
-    end
-end)
-
-EL2B_MakeToggle(SettingPage, "Anti AFK", "Click when AFK", 4, function()
+EL2B_MakeToggle(SettingPage, "Anti AFK", "Empêche l'AFK kick", 2, function()
     if _G.EL2B_AntiAFK then _G.EL2B_AntiAFK.Toggle() end
 end, function() return _G.EL2B_AntiAFK and _G.EL2B_AntiAFK.IsEnabled() or false end)
 
-EL2B_MakeToggle(SettingPage, "Anti Trap", "Remove trap debris", 5, function()
+EL2B_MakeToggle(SettingPage, "Anti Trap", "Supprime les traps", 3, function()
     if _G.EL2B_AntiTrap then _G.EL2B_AntiTrap.Toggle() end
 end, function() return _G.EL2B_AntiTrap and _G.EL2B_AntiTrap.IsEnabled() or false end)
 
-EL2B_MakeToggle(SettingPage, "Manual Fast Click", "Enable fast prompt click", 6, function()
+EL2B_MakeToggle(SettingPage, "Walk Speed", "Vitesse de marche", 4, function()
+    if _G.EL2B_WalkSpeed then _G.EL2B_WalkSpeed.Toggle() end
+end, function() return _G.EL2B_WalkSpeed and _G.EL2B_WalkSpeed.IsEnabled() or false end)
+
+EL2B_MakeToggle(SettingPage, "Manual Fast Click", "Click rapide prompts", 5, function()
     if _G.EL2B_ManualFastClick then _G.EL2B_ManualFastClick.Toggle() end
 end, function() return _G.EL2B_ManualFastClick and _G.EL2B_ManualFastClick.IsEnabled() or false end)
 
-EL2B_MakeButton(SettingPage, "God Mode", "Enable God Mode", 7, "Click", function()
+EL2B_MakeButton(SettingPage, "God Mode", "Active invincibilité", 6, "Enable", function()
     if _G.EL2B_GodMode then _G.EL2B_GodMode.Enable() end
 end)
 ]=]
@@ -2369,25 +1666,25 @@ local TM = _G.EL2B_TabsManager
 local Http = game:GetService("HttpService")
 local TPS = game:GetService("TeleportService")
 local PLACE = game.PlaceId
-local HopTab, HopPage = TM:RegisterTab("Hop Server", 3, "HOP_SERVER")
+local HopTab, HopPage = TM:RegisterTab("Hop Server", 10, "HOP_SERVER")
 CreateSectionTitle(HopPage, "Hop Server", 1)
 
 local Status = Instance.new("TextLabel")
 Status.Size = UDim2.new(1, 0, 0, 20)
 Status.BackgroundTransparency = 1
-Status.Text = "Click to search servers"
+Status.Text = "Clique pour chercher"
 Status.TextColor3 = Color3.fromRGB(150, 150, 170)
 Status.TextSize = 10
 Status.TextXAlignment = Enum.TextXAlignment.Left
 Status.LayoutOrder = 2
 Status.Parent = HopPage
 
-EL2B_MakeButton(HopPage, "Search Servers", "Low player servers", 3, "Search", function()
-    Status.Text = "Searching..."
+EL2B_MakeButton(HopPage, "Search Low Player Server", nil, 3, "Search", function()
+    Status.Text = "Recherche..."
     local url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100", PLACE)
     local ok, resp = pcall(function() return Http:JSONDecode(game:HttpGet(url)) end)
     if not ok or not resp or not resp.data then
-        Status.Text = "Failed to fetch"
+        Status.Text = "Échec"
         return
     end
     local servers = {}
@@ -2396,18 +1693,21 @@ EL2B_MakeButton(HopPage, "Search Servers", "Low player servers", 3, "Search", fu
             table.insert(servers, s)
         end
     end
-    if #servers == 0 then Status.Text = "No servers found" return end
+    if #servers == 0 then Status.Text = "Aucun serveur trouvé" return end
     local target = servers[1]
     pcall(function() TPS:TeleportToPlaceInstance(PLACE, target.id, game.Players.LocalPlayer) end)
 end)
 ]=]
 
+--============================================================
+-- TABS SPÉCIFIQUES STEAL AN EGG
+--============================================================
 _MERGED["Tabs/Farming.lua"] = [=[
 local TM = _G.EL2B_TabsManager
 local FarmingTab, FarmingPage = TM:RegisterTab("Farming", 4, "FARMING")
 CreateSectionTitle(FarmingPage, "Farming", 1)
 
-EL2B_MakeToggle(FarmingPage, "Auto AFK Farming Egg", "Auto farm egg during night", 2, function()
+EL2B_MakeToggle(FarmingPage, "Auto AFK Farming", "Farm les oeufs", 2, function()
     if _G.EL2B_FarmingManager then _G.EL2B_FarmingManager.Toggle() end
 end, function() return _G.EL2B_FarmingManager and _G.EL2B_FarmingManager.IsEnabled() or false end)
 
@@ -2429,7 +1729,7 @@ EL2B_MakeToggle(CP, "Auto Equip Bat", nil, 2, function()
     if _G.EL2B_AutoAttack then _G.EL2B_AutoAttack.EnableAutoEquip() end
 end, function() return _G.EL2B_AutoAttack and _G.EL2B_AutoAttack.IsAutoEquipEnabled() or false end)
 
-EL2B_MakeToggle(CP, "Auto Hit Player", "Auto hit nearest player", 3, function()
+EL2B_MakeToggle(CP, "Auto Hit Player", "Range auto", 3, function()
     if _G.EL2B_AutoAttack then _G.EL2B_AutoAttack.EnableAutoHit() end
 end, function() return _G.EL2B_AutoAttack and _G.EL2B_AutoAttack.IsAutoHitEnabled() or false end)
 ]=]
@@ -2439,16 +1739,7 @@ local TM = _G.EL2B_TabsManager
 local AT, AP = TM:RegisterTab("Auto Farming", 6, "AUTO_FARMING")
 CreateSectionTitle(AP, "Auto Farming", 1)
 
-EL2B_MakeButton(AP, "Scan Eggs", "Scan all eggs nearby", 2, "Scan", function()
-    if _G.EL2B_AutoFarm then
-        local list = _G.EL2B_AutoFarm.ScanEggs()
-        if list and #list > 0 then
-            _G.EL2B_AutoFarm.SelectEgg(list[1])
-        end
-    end
-end)
-
-EL2B_MakeToggle(AP, "Auto Farm Enabled", nil, 3, function()
+EL2B_MakeToggle(AP, "Auto Farm Enabled", nil, 2, function()
     if _G.EL2B_AutoFarm then _G.EL2B_AutoFarm.Enable() end
 end, function() return _G.EL2B_AutoFarm and _G.EL2B_AutoFarm.IsEnabled() or false end)
 ]=]
@@ -2463,21 +1754,84 @@ EL2B_MakeToggle(EP, "Auto Attack Drone", "AFK Farm Drone", 2, function()
 end, function() return _G.EL2B_ManagerDrone and _G.EL2B_ManagerDrone.IsEnabled() or false end)
 ]=]
 
+--============================================================
+-- ONGLET BRAINROT (launcher du PVP panel)
+--============================================================
 _MERGED["Tabs/Brainrot.lua"] = [=[
 local TM = _G.EL2B_TabsManager
 local BT, BP = TM:RegisterTab("Brainrot", 8, "BRAINROT")
-CreateSectionTitle(BP, "Steal a Brainrot", 1)
+CreateSectionTitle(BP, "Steal a Brainrot — PVP Panel", 1)
 
-while not _G.EL2B_StealABrainrot do task.wait(0.1) end
-local M = _G.EL2B_StealABrainrot
+local InfoLbl = Instance.new("TextLabel")
+InfoLbl.Size = UDim2.new(1, 0, 0, 50)
+InfoLbl.BackgroundTransparency = 1
+InfoLbl.Text = "🎮 Le panel PVP complet s'affiche séparément (toutes les features : Flash TP, Block, Reset, Anti-Steal, Aimbot, ESP, Lagger, Drop, Turret, FPS Boost, IP ESP, etc.)\n\nUtilise les boutons ci-dessous :"
+InfoLbl.TextColor3 = Color3.fromRGB(200, 200, 220)
+InfoLbl.TextSize = 10
+InfoLbl.TextWrapped = true
+InfoLbl.TextXAlignment = Enum.TextXAlignment.Left
+InfoLbl.TextYAlignment = Enum.TextYAlignment.Top
+InfoLbl.Font = Enum.Font.Gotham
+InfoLbl.LayoutOrder = 2
+InfoLbl.Parent = BP
 
-EL2B_MakeToggle(BP, "Auto Steal Brainrot", "Vole automatiquement les brainrots", 2, M.ToggleAutoSteal, M.IsAutoStealEnabled)
+local function findPvpGui()
+    local parents = {}
+    pcall(function() if gethui then table.insert(parents, gethui()) end end)
+    pcall(function() table.insert(parents, game:GetService("CoreGui")) end)
+    pcall(function() table.insert(parents, game.Players.LocalPlayer:FindFirstChild("PlayerGui")) end)
+    for _, p in ipairs(parents) do
+        if p then
+            local g = p:FindFirstChild("EL2B HUB PVP")
+            if g then return g end
+        end
+    end
+    return nil
+end
 
-EL2B_MakeToggle(BP, "Auto Collect Money", "Récupère automatiquement l'argent", 3, M.ToggleAutoCollect, M.IsAutoCollectEnabled)
+EL2B_MakeButton(BP, "Toggle PVP Panel", "Affiche/cache la GUI du PVP", 3, "Toggle", function()
+    local g = findPvpGui()
+    if g then g.Enabled = not g.Enabled end
+end)
 
-EL2B_MakeToggle(BP, "ESP Brainrot", "Surligne tous les brainrots", 4, M.ToggleESP, M.IsESPEnabled)
+EL2B_MakeButton(BP, "Reset GUI Position", "Recentrer toutes les GUIs", 4, "Reset", function()
+    if _G._175_RecoverGUIs then pcall(_G._175_RecoverGUIs) end
+end)
 
-EL2B_MakeButton(BP, "Teleport to My Base", "Retour à ta base", 5, "TP", M.TeleportToMyBase)
+EL2B_MakeToggle(BP, "Anti Steal", "Protège ta base", 5, function()
+    _G.AntiSteal = not _G.AntiSteal
+end, function() return _G.AntiSteal == true end)
+
+EL2B_MakeToggle(BP, "Quick Pickup", "Agarre tes brainrots vite", 6, function()
+    _G.QuickPickup = not _G.QuickPickup
+    if _G._175_QuickPickup then _G._175_QuickPickup.set(_G.QuickPickup) end
+end, function() return _G.QuickPickup == true end)
+
+EL2B_MakeToggle(BP, "ESP Base", "Timers bases adverses", 7, function()
+    _G.ESPBaseEnabled = not _G.ESPBaseEnabled
+end, function() return _G.ESPBaseEnabled == true end)
+
+EL2B_MakeToggle(BP, "FPS Boost", "Anti-lag + Nuke", 8, function()
+    _G.FPSBoostEnabled = not _G.FPSBoostEnabled
+    pcall(function()
+        if _G.AceFPSBoost then
+            if _G.FPSBoostEnabled then _G.AceFPSBoost.EnableAll()
+            else _G.AceFPSBoost.DisableAll() end
+        end
+    end)
+end, function() return _G.FPSBoostEnabled == true end)
+
+local Tip = Instance.new("TextLabel")
+Tip.Size = UDim2.new(1, 0, 0, 70)
+Tip.BackgroundTransparency = 1
+Tip.Text = "💡 Astuce : Toutes les autres features (Flash TP, Block, Reset, Loot Brainrot, Auto Return Base, Lagger Bypass, Quick AP, Drop Brainrot, ESP Best, IP ESP, Auto Turret, etc.) sont dans le panel PVP complet."
+Tip.TextColor3 = Color3.fromRGB(255, 200, 100)
+Tip.TextSize = 10
+Tip.TextWrapped = true
+Tip.TextXAlignment = Enum.TextXAlignment.Left
+Tip.Font = Enum.Font.Gotham
+Tip.LayoutOrder = 20
+Tip.Parent = BP
 ]=]
 
 --============================================================
@@ -2485,12 +1839,9 @@ EL2B_MakeButton(BP, "Teleport to My Base", "Retour à ta base", 5, "TP", M.Telep
 --============================================================
 _G.EL2B_EnablePrint = false
 local oldPrint = print
-print = function(...)
-    if _G.EL2B_EnablePrint then oldPrint(...) end
-end
+print = function(...) if _G.EL2B_EnablePrint then oldPrint(...) end end
 
-_G.EL2B_Cache = _G.EL2B_Cache or {}
-
+_G.EL2B_Cache = {}
 local function GetScript(path)
     if _G.EL2B_Cache[path] then return _G.EL2B_Cache[path] end
     local src = _MERGED[path]
@@ -2507,25 +1858,19 @@ local function CreateLoadingScreen()
     LG.Name = "EL2B_Loading"
     LG.ResetOnSpawn = false
     LG.IgnoreGuiInset = true
-    LG.DisplayOrder = 9999
+    LG.DisplayOrder = 99999
     LG.Parent = CoreGui
 
     local F = Instance.new("Frame")
     F.Size = UDim2.new(0, 280, 0, 110)
     F.Position = UDim2.new(0.5, -140, 0.5, -55)
     F.BackgroundColor3 = Color3.fromRGB(16, 17, 23)
-    F.BackgroundTransparency = 0.1
     F.BorderSizePixel = 0
     F.Parent = LG
-
-    local FC = Instance.new("UICorner")
-    FC.CornerRadius = UDim.new(0, 14)
-    FC.Parent = F
-
+    Instance.new("UICorner", F).CornerRadius = UDim.new(0, 14)
     local FS = Instance.new("UIStroke")
     FS.Color = Color3.fromRGB(105, 90, 190)
     FS.Thickness = 2
-    FS.Transparency = 0.2
     FS.Parent = F
 
     local T = Instance.new("TextLabel")
@@ -2542,7 +1887,7 @@ local function CreateLoadingScreen()
     St.Size = UDim2.new(1, -30, 0, 14)
     St.Position = UDim2.new(0, 15, 0, 36)
     St.BackgroundTransparency = 1
-    St.Text = "Multi Game"
+    St.Text = "Multi-Game v3.0"
     St.TextColor3 = Color3.fromRGB(145, 145, 175)
     St.TextSize = 9
     St.Font = Enum.Font.GothamMedium
@@ -2554,20 +1899,14 @@ local function CreateLoadingScreen()
     BG.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
     BG.BorderSizePixel = 0
     BG.Parent = F
-
-    local BGC = Instance.new("UICorner")
-    BGC.CornerRadius = UDim.new(1, 0)
-    BGC.Parent = BG
+    Instance.new("UICorner", BG).CornerRadius = UDim.new(1, 0)
 
     local B = Instance.new("Frame")
     B.Size = UDim2.new(0, 0, 1, 0)
     B.BackgroundColor3 = Color3.fromRGB(105, 90, 190)
     B.BorderSizePixel = 0
     B.Parent = BG
-
-    local BC = Instance.new("UICorner")
-    BC.CornerRadius = UDim.new(1, 0)
-    BC.Parent = B
+    Instance.new("UICorner", B).CornerRadius = UDim.new(1, 0)
 
     local P = Instance.new("TextLabel")
     P.Size = UDim2.new(1, -30, 0, 22)
@@ -2594,30 +1933,19 @@ local Loading = CreateLoadingScreen()
 local function LoadModule(path)
     local src = GetScript(path)
     local fn, err = loadstring(src, "=" .. path)
-    if not fn then
-        warn("[EL2B] Load fail " .. path .. ": " .. tostring(err))
-        return
-    end
+    if not fn then warn("[EL2B] Load fail " .. path .. ": " .. tostring(err)) return end
     local ok, rerr = pcall(fn)
     if not ok then warn("[EL2B] Error in " .. path .. ": " .. tostring(rerr)) end
 end
 
--- Chargement progressif
-Loading.Update(5)
-LoadModule("Config.lua")
-Loading.Update(10)
-LoadModule("UI.lua")
-Loading.Update(15)
-LoadModule("Components.lua")
-Loading.Update(20)
-LoadModule("Tabs/Init.lua")
-Loading.Update(25)
-
--- Détecteur de jeu
-LoadModule("Features/GameDetector.lua")
+Loading.Update(5)  LoadModule("Config.lua")
+Loading.Update(10) LoadModule("UI.lua")
+Loading.Update(15) LoadModule("Components.lua")
+Loading.Update(20) LoadModule("Tabs/Init.lua")
+Loading.Update(25) LoadModule("Features/GameDetector.lua")
 Loading.Update(30)
 
--- Modules communs
+-- Features communes
 LoadModule("Features/AntiAFK.lua")
 LoadModule("Features/WalkSpeed.lua")
 LoadModule("Features/AntiTrap.lua")
@@ -2628,7 +1956,7 @@ LoadModule("Features/ConfigSystem.lua")
 LoadModule("Features/BypassAntiCheat.lua")
 Loading.Update(50)
 
--- Modules spécifiques au jeu
+-- Chargement conditionnel selon le jeu
 local D = _G.EL2B_GameDetector
 if D and D.IsEgg() then
     LoadModule("Features/TeleportSystem.lua")
@@ -2639,7 +1967,7 @@ if D and D.IsEgg() then
     LoadModule("Features/AttackDrone.lua")
     LoadModule("Features/ManagerDrone.lua")
 elseif D and D.IsBrainrot() then
-    LoadModule("Features/StealABrainrot.lua")
+    LoadModule("Features/BrainrotPVP.lua")
 end
 Loading.Update(70)
 
@@ -2662,15 +1990,11 @@ Loading.Update(90)
 if _G.EL2B_TabsManager then
     _G.EL2B_TabsManager:SelectTabByName("Info")
 end
-
 Loading.Update(95)
 task.wait(1.5)
-
 if _G.EL2B_ConfigSystem then _G.EL2B_ConfigSystem.Load() end
-
 Loading.Update(100)
 task.wait(0.3)
 Loading.Destroy()
-
 print = oldPrint
 print("[EL2B HUB] Loaded — Game: " .. tostring(D and D.CurrentGame))
