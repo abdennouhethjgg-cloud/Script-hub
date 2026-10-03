@@ -3702,9 +3702,9 @@ elseif selectedPrompt and not selectedPrompt.Parent then
 end
 
 local C_list={
-card=Color3.fromRGB(40,14,14),
+card=Color3.fromRGB(21,21,26),
 accent=Color3.fromRGB(220,25,45),
-stroke=Color3.fromRGB(100,30,30),
+stroke=Color3.fromRGB(64,64,74),
 bright=Color3.fromRGB(255,255,255),
 mute=Color3.fromRGB(170,80,80)
 }
@@ -3953,30 +3953,30 @@ local C={
 accent=Color3.fromRGB(220,25,45),
 accentHi=Color3.fromRGB(255,60,80),
 deepRed=Color3.fromRGB(60,10,10),
-body=Color3.fromRGB(18,8,8),
-panel=Color3.fromRGB(24,12,12),
-tabBar=Color3.fromRGB(20,9,9),
-card=Color3.fromRGB(40,14,14),
-iconBg=Color3.fromRGB(55,14,14),
-stroke=Color3.fromRGB(100,30,30),
-strokeDim=Color3.fromRGB(65,20,20),
-textBright=Color3.fromRGB(255,220,220),
-textRed=Color3.fromRGB(255,100,100),
-textMute=Color3.fromRGB(170,80,80),
-textDim=Color3.fromRGB(130,50,50),
+body=Color3.fromRGB(8,8,10),
+panel=Color3.fromRGB(13,13,16),
+tabBar=Color3.fromRGB(10,10,13),
+card=Color3.fromRGB(21,21,26),
+iconBg=Color3.fromRGB(28,28,34),
+stroke=Color3.fromRGB(64,64,74),
+strokeDim=Color3.fromRGB(42,42,50),
+textBright=Color3.fromRGB(245,245,250),
+textRed=Color3.fromRGB(235,70,85),
+textMute=Color3.fromRGB(165,165,178),
+textDim=Color3.fromRGB(120,120,135),
 knobOn=Color3.fromRGB(255,200,200),
-knobOff=Color3.fromRGB(110,60,60),
-trackOff=Color3.fromRGB(50,18,18)
+knobOff=Color3.fromRGB(95,95,108),
+trackOff=Color3.fromRGB(45,45,54)
 }
 
 -- ===== THEME SYSTEM =====
 local ThemePresets = {
     dark = {
-        body=Color3.fromRGB(18,8,8), panel=Color3.fromRGB(24,12,12), tabBar=Color3.fromRGB(20,9,9),
-        card=Color3.fromRGB(40,14,14), iconBg=Color3.fromRGB(55,14,14), stroke=Color3.fromRGB(100,30,30),
-        strokeDim=Color3.fromRGB(65,20,20), textBright=Color3.fromRGB(255,220,220), textRed=Color3.fromRGB(255,100,100),
-        textMute=Color3.fromRGB(170,80,80), textDim=Color3.fromRGB(130,50,50), knobOn=Color3.fromRGB(255,200,200),
-        knobOff=Color3.fromRGB(110,60,60), trackOff=Color3.fromRGB(50,18,18)
+        body=Color3.fromRGB(8,8,10), panel=Color3.fromRGB(13,13,16), tabBar=Color3.fromRGB(10,10,13),
+        card=Color3.fromRGB(21,21,26), iconBg=Color3.fromRGB(28,28,34), stroke=Color3.fromRGB(64,64,74),
+        strokeDim=Color3.fromRGB(42,42,50), textBright=Color3.fromRGB(245,245,250), textRed=Color3.fromRGB(235,70,85),
+        textMute=Color3.fromRGB(165,165,178), textDim=Color3.fromRGB(120,120,135), knobOn=Color3.fromRGB(255,200,200),
+        knobOff=Color3.fromRGB(95,95,108), trackOff=Color3.fromRGB(45,45,54)
     },
     light = {
         body=Color3.fromRGB(245,245,248), panel=Color3.fromRGB(232,234,240), tabBar=Color3.fromRGB(220,223,232),
@@ -4162,7 +4162,8 @@ do
     bgImg.Size = UDim2.fromScale(1, 1)
     bgImg.BackgroundTransparency = 1
     bgImg.Image = VTRX_BGS[1]
-    bgImg.ImageTransparency = 0.25
+    bgImg.ImageTransparency = 1
+    bgImg.Visible = false
     bgImg.ScaleType = Enum.ScaleType.Crop
     bgImg.ZIndex = 0
     bgImg.Parent = Frame
@@ -4170,8 +4171,8 @@ do
     local overlay = Instance.new("Frame")
     overlay.Name = "VTRXOverlay"
     overlay.Size = UDim2.fromScale(1, 1)
-    overlay.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
-    overlay.BackgroundTransparency = 0.45
+    overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    overlay.BackgroundTransparency = 0.2
     overlay.BorderSizePixel = 0
     overlay.ZIndex = 0
     overlay.Parent = Frame
@@ -4179,8 +4180,8 @@ do
     local redTint = Instance.new("Frame")
     redTint.Name = "VTRXRedTint"
     redTint.Size = UDim2.fromScale(1, 1)
-    redTint.BackgroundColor3 = Color3.fromRGB(80, 0, 0)
-    redTint.BackgroundTransparency = 0.75
+    redTint.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    redTint.BackgroundTransparency = 1
     redTint.BorderSizePixel = 0
     redTint.ZIndex = 0
     redTint.Parent = Frame
@@ -4265,6 +4266,7 @@ local hbOff=DEVICE=="mobile" and {-118,-98,-78,-58,-38,-18} or {-130,-108,-86,-6
 local RecoverHdrBtn=headerButton("RecoverR","R",hbOff[1])
 local BrainrotsHdrBtn=headerButton("BrainrotsB","B",hbOff[2])
 local SettingsHdrBtn=headerButton("SettingsS","⚙",hbOff[3])
+SettingsHdrBtn.Visible=false
 local GroupGuiBtn=headerButton("GroupGui","▣",hbOff[1]-22)
 GroupGuiBtn:SetAttribute("Tooltip", "GUI")
 local groupGuiVisible=true
@@ -4322,9 +4324,9 @@ SettingsHdrBtn.MouseButton1Up:Connect(function()
     TweenService:Create(SettingsScale,TweenInfo.new(0.16,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Scale=1.08}):Play()
     task.delay(0.16,function() pcall(function() TweenService:Create(SettingsScale,TweenInfo.new(0.1),{Scale=1}):Play() end) end)
 end)
-local LockBtn=headerButton("Lock","🔓",hbOff[4])
-local MinBtn=headerButton("Min","–",hbOff[5])
-local CloseBtn=headerButton("Close","X",hbOff[6])
+local LockBtn=headerButton("Lock","🔓",hbOff[3])
+local MinBtn=headerButton("Min","–",hbOff[4])
+local CloseBtn=headerButton("Close","X",hbOff[5])
 
 local Frame7=Instance.new("Frame")
 Frame7.Size=UDim2.new(1,0,0,62)
@@ -5416,8 +5418,8 @@ applySavedSize(Border, "SettingsFloat")
         local overlay = Instance.new("Frame")
         overlay.Name = "VTRXOverlay"
         overlay.Size = UDim2.fromScale(1, 1)
-        overlay.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
-        overlay.BackgroundTransparency = 0.45
+        overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        overlay.BackgroundTransparency = 0.2
         overlay.BorderSizePixel = 0
         overlay.ZIndex = 0
         overlay.Parent = Win
@@ -5425,8 +5427,8 @@ applySavedSize(Border, "SettingsFloat")
         local redTint = Instance.new("Frame")
         redTint.Name = "VTRXRedTint"
         redTint.Size = UDim2.fromScale(1, 1)
-        redTint.BackgroundColor3 = Color3.fromRGB(80, 0, 0)
-        redTint.BackgroundTransparency = 0.75
+        redTint.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        redTint.BackgroundTransparency = 1
         redTint.BorderSizePixel = 0
         redTint.ZIndex = 0
         redTint.Parent = Win
@@ -5802,8 +5804,8 @@ applySavedSize(BBorder, "BrainrotsFloat")
         local overlay = Instance.new("Frame")
         overlay.Name = "VTRXOverlay"
         overlay.Size = UDim2.fromScale(1, 1)
-        overlay.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
-        overlay.BackgroundTransparency = 0.45
+        overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        overlay.BackgroundTransparency = 0.2
         overlay.BorderSizePixel = 0
         overlay.ZIndex = 0
         overlay.Parent = BWin
@@ -5811,8 +5813,8 @@ applySavedSize(BBorder, "BrainrotsFloat")
         local redTint = Instance.new("Frame")
         redTint.Name = "VTRXRedTint"
         redTint.Size = UDim2.fromScale(1, 1)
-        redTint.BackgroundColor3 = Color3.fromRGB(80, 0, 0)
-        redTint.BackgroundTransparency = 0.75
+        redTint.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        redTint.BackgroundTransparency = 1
         redTint.BorderSizePixel = 0
         redTint.ZIndex = 0
         redTint.Parent = BWin
@@ -6223,7 +6225,7 @@ end
 hookButton(FLASHTP,C.card,C.iconBg)
 hookButton(BLOCK,C.card,C.iconBg)
 hookButton(RESET,C.card,C.iconBg)
-for _,b in ipairs({RecoverHdrBtn,BrainrotsHdrBtn,SettingsHdrBtn,GroupGuiBtn,LockBtn,MinBtn,CloseBtn}) do hookButton(b,C.card,C.iconBg) end
+for _,b in ipairs({RecoverHdrBtn,BrainrotsHdrBtn,GroupGuiBtn,LockBtn,MinBtn,CloseBtn}) do hookButton(b,C.card,C.iconBg) end
 
 local function flashBar(bar)
 bar.BackgroundColor3=C.accentHi
