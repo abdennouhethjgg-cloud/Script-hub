@@ -9714,7 +9714,7 @@ DL.Font = Enum.Font.GothamMedium
 DL.LayoutOrder = 3
 DL.Parent = InfoPage
 
-local DISCORD = "https://discord.gg/TBBAUZu8cW"
+local DISCORD = "https://discord.gg/hefasXbf6"
 
 local LinkBtn = Instance.new("TextButton")
 LinkBtn.Size = UDim2.new(1, 0, 0, 30)
@@ -10178,5 +10178,107 @@ if _G.EL2B_ConfigSystem then _G.EL2B_ConfigSystem.Load() end
 Loading.Update(100)
 task.wait(0.3)
 Loading.Destroy()
+
+-- Notification d'utilisation strictement opt-in et anonyme.
+-- Aucun nom, UserId, IP, JobId ou autre donnée personnelle n'est transmis.
+local function AskUsageNotificationConsent()
+    local hooks = {}
+    pcall(function() if syn and syn.request then table.insert(hooks, syn.request) end end)
+    pcall(function() if request then table.insert(hooks, request) end end)
+    pcall(function() if http_request then table.insert(hooks, http_request) end end)
+    if #hooks == 0 then return end
+
+    local webhook
+    local gameLabel
+    if D and D.IsBrainrot and D.IsBrainrot() then
+        webhook = "https://discord.com/api/webhooks/1555883752905769063/S1gJRf7Wm0fVmtElX31vmJclKWwHVXS3GP2OMI5t_AUv8UVecM780vLYGhNRad9ZThuW"
+        gameLabel = "Steal a Brainrot"
+    elseif D and D.IsEgg and D.IsEgg() then
+        webhook = "https://discord.com/api/webhooks/1555883810795814922/Tq-NL5KTTLy5z0ME84JcB8Tq2rFPrEcDBUwIPoYWol69ZMFC74lxof44jMwt00U9bDeE"
+        gameLabel = "Steal an Egg"
+    else
+        return
+    end
+
+    local consentGui = Instance.new("ScreenGui")
+    consentGui.Name = "EL2B_UsageConsent"
+    consentGui.ResetOnSpawn = false
+    consentGui.IgnoreGuiInset = true
+    consentGui.DisplayOrder = 1000000
+    local parented = false
+    pcall(function() if gethui then consentGui.Parent = gethui(); parented = consentGui.Parent ~= nil end end)
+    if not parented then pcall(function() consentGui.Parent = CoreGui; parented = consentGui.Parent ~= nil end) end
+    if not parented then consentGui.Parent = PlayerGui end
+
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(0, 300, 0, 142)
+    card.Position = UDim2.new(0.5, -150, 0.5, -71)
+    card.BackgroundColor3 = Color3.fromRGB(12, 12, 15)
+    card.BorderSizePixel = 0
+    card.Parent = consentGui
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 10)
+    local stroke = Instance.new("UIStroke", card)
+    stroke.Color = Color3.fromRGB(210, 35, 55)
+    stroke.Thickness = 1.5
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -24, 0, 24)
+    title.Position = UDim2.new(0, 12, 0, 10)
+    title.BackgroundTransparency = 1
+    title.Text = "EL2B HUB — notification"
+    title.TextColor3 = Color3.fromRGB(245, 245, 250)
+    title.TextSize = 14
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = card
+
+    local body = Instance.new("TextLabel")
+    body.Size = UDim2.new(1, -24, 0, 48)
+    body.Position = UDim2.new(0, 12, 0, 38)
+    body.BackgroundTransparency = 1
+    body.Text = "Autoriser une notification anonyme indiquant\nque le script vient d'être utilisé ?"
+    body.TextColor3 = Color3.fromRGB(175, 175, 188)
+    body.TextSize = 11
+    body.Font = Enum.Font.Gotham
+    body.TextWrapped = true
+    body.TextXAlignment = Enum.TextXAlignment.Left
+    body.Parent = card
+
+    local function button(text, x, color)
+        local b = Instance.new("TextButton")
+        b.Size = UDim2.new(0, 126, 0, 28)
+        b.Position = UDim2.new(0, x, 1, -38)
+        b.BackgroundColor3 = color
+        b.BorderSizePixel = 0
+        b.Text = text
+        b.TextColor3 = Color3.fromRGB(255, 255, 255)
+        b.TextSize = 11
+        b.Font = Enum.Font.GothamBold
+        b.AutoButtonColor = true
+        b.Parent = card
+        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+        return b
+    end
+
+    local no = button("NON", 12, Color3.fromRGB(38, 38, 45))
+    local yes = button("OUI", 162, Color3.fromRGB(190, 28, 48))
+    no.MouseButton1Click:Connect(function() consentGui:Destroy() end)
+    yes.MouseButton1Click:Connect(function()
+        consentGui:Destroy()
+        task.spawn(function()
+            local ok, HttpService = pcall(game.GetService, game, "HttpService")
+            if not ok or not HttpService then return end
+            local payload = HttpService:JSONEncode({content = "EL2B HUB : un joueur vient d'utiliser le script."})
+            for _, send in ipairs(hooks) do
+                local sent = pcall(function()
+                    send({Url = webhook, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = payload})
+                end)
+                if sent then break end
+            end
+        end)
+    end)
+end
+
+task.defer(AskUsageNotificationConsent)
 print = oldPrint
 print("[EL2B HUB] Loaded — Game: " .. tostring(D and D.CurrentGame))
