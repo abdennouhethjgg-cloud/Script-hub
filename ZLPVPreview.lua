@@ -8,35 +8,32 @@ local HttpService      = game:GetService("HttpService")
 local LocalPlayer      = Players.LocalPlayer
 local PlayerGui        = LocalPlayer:WaitForChild("PlayerGui")
 
+-- Nettoyage ancienne GUI
 pcall(function()
-    for _, n in ipairs({"Space X Hook Anti Bat", "Space X Hook anti bat", "Space_X_Hook_Anti_Bat"}) do
+    for _, n in ipairs({"Space X Hook", "Space X Hook Anti Bat", "Space_X_Hook_Anti_Bat"}) do
         local old = PlayerGui:FindFirstChild(n)
         if old then old:Destroy() end
     end
 end)
 
-local CONFIG_FILE = "SpaceX_AntiBat_Config.json"
+local CONFIG_FILE = "SpaceX_Hook_Config.json"
 
-local InfiniteJumpEnabled     = false
-local InfiniteJumpHoldEnabled = false
-local IsJumpingHold           = false
-local CurrentKeybind          = Enum.KeyCode.N
-local WaitingForKeybind       = false
-local CurrentBG               = "rbxassetid://114138477258742"
-local minimized               = false
+local InfiniteJumpEnabled = false
+local CurrentKeybind      = Enum.KeyCode.N
+local WaitingForKeybind   = false
+local CurrentBG           = "rbxassetid://114138477258742"
+local minimized           = false
 
 local AntiRagdollConn = nil
-local JumpHoldConn    = nil
 
 -- ====== CONFIG ======
 local function saveConfig()
-    local data = {
-        Keybind    = CurrentKeybind.Name,
-        Background = CurrentBG,
-        InfJump    = InfiniteJumpEnabled,
-    }
     pcall(function()
-        writefile(CONFIG_FILE, HttpService:JSONEncode(data))
+        writefile(CONFIG_FILE, HttpService:JSONEncode({
+            Keybind    = CurrentKeybind.Name,
+            Background = CurrentBG,
+            InfJump    = InfiniteJumpEnabled,
+        }))
     end)
 end
 
@@ -55,46 +52,32 @@ local function loadConfig()
         end
         if result.InfJump ~= nil then
             InfiniteJumpEnabled = result.InfJump == true
-            InfiniteJumpHoldEnabled = InfiniteJumpEnabled
         end
     end
 end
 pcall(loadConfig)
 
--- ====== INF JUMP ======
-local function startJumpHoldLoop()
-    if JumpHoldConn then JumpHoldConn:Disconnect() end
-    JumpHoldConn = RunService.Heartbeat:Connect(function()
-        if not InfiniteJumpHoldEnabled or not IsJumpingHold then return end
-        local char = LocalPlayer.Character
-        if not char then return end
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if root then
-            root.Velocity = Vector3.new(root.Velocity.X, 55, root.Velocity.Z)
-        end
-    end)
+-- ====== INF JUMP (normal) ======
+local function doJump()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
 end
-
-UserInputService.InputBegan:Connect(function(input, gp)
-    if gp then return end
-    if input.KeyCode == Enum.KeyCode.Space or input.UserInputType == Enum.UserInputType.Touch then
-        IsJumpingHold = true
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.Space or input.UserInputType == Enum.UserInputType.Touch then
-        IsJumpingHold = false
-    end
-end)
 
 UserInputService.JumpRequest:Connect(function()
     if not InfiniteJumpEnabled then return end
-    local char = LocalPlayer.Character
-    if not char then return end
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if root then
-        root.Velocity = Vector3.new(root.Velocity.X, 55, root.Velocity.Z)
+    doJump()
+end)
+
+-- Support mobile : détecte l'appui sur le bouton jump mobile
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if not InfiniteJumpEnabled then return end
+    if input.KeyCode == Enum.KeyCode.Space then
+        doJump()
     end
 end)
 
@@ -104,15 +87,15 @@ local function startAntiRagdoll()
     AntiRagdollConn = RunService.Heartbeat:Connect(function()
         local char = LocalPlayer.Character
         if not char then return end
-        local hum2 = char:FindFirstChildOfClass("Humanoid")
+        local hum = char:FindFirstChildOfClass("Humanoid")
         local root = char:FindFirstChild("HumanoidRootPart")
-        if hum2 then
-            local st = hum2:GetState()
+        if hum then
+            local st = hum:GetState()
             if st == Enum.HumanoidStateType.Physics
                 or st == Enum.HumanoidStateType.Ragdoll
                 or st == Enum.HumanoidStateType.FallingDown then
-                hum2:ChangeState(Enum.HumanoidStateType.Running)
-                workspace.CurrentCamera.CameraSubject = hum2
+                hum:ChangeState(Enum.HumanoidStateType.Running)
+                workspace.CurrentCamera.CameraSubject = hum
                 pcall(function()
                     local pm = LocalPlayer.PlayerScripts:FindFirstChild("PlayerModule")
                     if pm then
@@ -121,8 +104,8 @@ local function startAntiRagdoll()
                     end
                 end)
                 if root then
-                    root.Velocity = Vector3.new(0, 0, 0)
-                    root.RotVelocity = Vector3.new(0, 0, 0)
+                    root.Velocity = Vector3.zero
+                    root.RotVelocity = Vector3.zero
                 end
             end
         end
@@ -139,28 +122,25 @@ LocalPlayer.CharacterAdded:Connect(function()
     startAntiRagdoll()
 end)
 
--- ====== UI ======
-local Space_X_Hook_Anti_Bat = Instance.new("ScreenGui")
-Space_X_Hook_Anti_Bat.Name = "Space X Hook Anti Bat"
-Space_X_Hook_Anti_Bat.IgnoreGuiInset = true
-Space_X_Hook_Anti_Bat.ResetOnSpawn = false
-Space_X_Hook_Anti_Bat.DisplayOrder = 10
-Space_X_Hook_Anti_Bat.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-Space_X_Hook_Anti_Bat.Parent = PlayerGui
+-- ====== GUI ======
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "Space X Hook"
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 10
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = PlayerGui
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Active = true
 Main.ClipsDescendants = true
-Main.Position = UDim2.new(0.5, -135, 0.5, -130)
-Main.Size = UDim2.new(0, 270, 0, 260)
+Main.Position = UDim2.new(0.5, -135, 0.5, -100)
+Main.Size = UDim2.new(0, 270, 0, 200)
 Main.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 Main.BorderSizePixel = 0
-Main.Parent = Space_X_Hook_Anti_Bat
-
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 16)
-UICorner.Parent = Main
+Main.Parent = ScreenGui
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 16)
 
 local SpaceBackground = Instance.new("ImageLabel")
 SpaceBackground.Name = "SpaceBackground"
@@ -170,10 +150,7 @@ SpaceBackground.BackgroundTransparency = 1
 SpaceBackground.Image = CurrentBG
 SpaceBackground.ScaleType = Enum.ScaleType.Crop
 SpaceBackground.Parent = Main
-
-local UICorner2 = Instance.new("UICorner")
-UICorner2.CornerRadius = UDim.new(0, 16)
-UICorner2.Parent = SpaceBackground
+Instance.new("UICorner", SpaceBackground).CornerRadius = UDim.new(0, 16)
 
 local Header = Instance.new("Frame")
 Header.Name = "Header"
@@ -271,6 +248,7 @@ Content.Size = UDim2.new(1, 0, 1, 0)
 Content.BackgroundTransparency = 1
 Content.Parent = ContentHolder
 
+-- STATUS ROW
 local StatusRow = Instance.new("Frame")
 StatusRow.Name = "StatusRow"
 StatusRow.ZIndex = 4
@@ -317,7 +295,7 @@ StatusValue.Font = Enum.Font.GothamBlack
 StatusValue.TextXAlignment = Enum.TextXAlignment.Right
 StatusValue.Parent = StatusRow
 
--- ====== INF JUMP ROW ======
+-- INF JUMP ROW
 local InfJumpRow = Instance.new("Frame")
 InfJumpRow.Name = "InfJumpRow"
 InfJumpRow.ZIndex = 4
@@ -370,7 +348,7 @@ InfJumpClick.BackgroundTransparency = 1
 InfJumpClick.Text = ""
 InfJumpClick.Parent = InfJumpRow
 
--- ====== KEYBIND ROW ======
+-- KEYBIND ROW
 local KeybindRow = Instance.new("Frame")
 KeybindRow.Name = "KeybindRow"
 KeybindRow.ZIndex = 4
@@ -410,7 +388,7 @@ KeybindBtn.AutoButtonColor = false
 KeybindBtn.Parent = KeybindRow
 Instance.new("UICorner", KeybindBtn).CornerRadius = UDim.new(0, 6)
 
--- ====== BACKGROUND PICKER ======
+-- BACKGROUND PICKER
 local BackgroundPicker = Instance.new("Frame")
 BackgroundPicker.Name = "BackgroundPicker"
 BackgroundPicker.Visible = false
@@ -420,7 +398,7 @@ BackgroundPicker.Position = UDim2.new(0.5, 0, 0.5, 0)
 BackgroundPicker.Size = UDim2.new(0, 260, 0, 180)
 BackgroundPicker.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 BackgroundPicker.BorderSizePixel = 0
-BackgroundPicker.Parent = Space_X_Hook_Anti_Bat
+BackgroundPicker.Parent = ScreenGui
 Instance.new("UICorner", BackgroundPicker).CornerRadius = UDim.new(0, 12)
 local BPStroke = Instance.new("UIStroke")
 BPStroke.Color = Color3.fromRGB(110, 110, 120)
@@ -535,8 +513,6 @@ end
 
 local function setInfJump(on)
     InfiniteJumpEnabled = on == true
-    InfiniteJumpHoldEnabled = InfiniteJumpEnabled
-    if not InfiniteJumpHoldEnabled then IsJumpingHold = false end
     setToggle(InfToggleDot, InfToggleBg, InfiniteJumpEnabled)
     updateStatus()
     saveConfig()
@@ -589,7 +565,7 @@ MinBtn.MouseButton1Click:Connect(function()
     else
         ContentHolder.Visible = true
         BgBtn.Visible = true
-        Main.Size = UDim2.new(0, 270, 0, 260)
+        Main.Size = UDim2.new(0, 270, 0, 200)
         MinBtn.Text = "-"
     end
 end)
@@ -625,7 +601,6 @@ end)
 
 -- ====== INIT ======
 startAntiRagdoll()
-startJumpHoldLoop()
 setToggle(InfToggleDot, InfToggleBg, InfiniteJumpEnabled)
 updateStatus()
 KeybindBtn.Text = CurrentKeybind.Name
