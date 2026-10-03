@@ -4,7 +4,6 @@ local Players          = game:GetService("Players")
 local RunService       = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService     = game:GetService("TweenService")
-local HttpService      = game:GetService("HttpService")
 local LocalPlayer      = Players.LocalPlayer
 local PlayerGui        = LocalPlayer:WaitForChild("PlayerGui")
 
@@ -16,49 +15,12 @@ pcall(function()
     end
 end)
 
-local CONFIG_FILE = "SpaceX_Hook_Config.json"
+local CurrentBG        = "rbxassetid://114138477258742"
+local minimized        = false
+local InfJumpEnabled   = false
 
-local InfiniteJumpEnabled = false
-local CurrentKeybind      = Enum.KeyCode.N
-local WaitingForKeybind   = false
-local CurrentBG           = "rbxassetid://114138477258742"
-local minimized           = false
-
-local AntiRagdollConn = nil
-
--- ====== CONFIG ======
-local function saveConfig()
-    pcall(function()
-        writefile(CONFIG_FILE, HttpService:JSONEncode({
-            Keybind    = CurrentKeybind.Name,
-            Background = CurrentBG,
-            InfJump    = InfiniteJumpEnabled,
-        }))
-    end)
-end
-
-local function loadConfig()
-    local ok, result = pcall(function()
-        if isfile and isfile(CONFIG_FILE) then
-            return HttpService:JSONDecode(readfile(CONFIG_FILE))
-        end
-    end)
-    if ok and type(result) == "table" then
-        if result.Keybind and Enum.KeyCode[result.Keybind] then
-            CurrentKeybind = Enum.KeyCode[result.Keybind]
-        end
-        if result.Background then
-            CurrentBG = result.Background
-        end
-        if result.InfJump ~= nil then
-            InfiniteJumpEnabled = result.InfJump == true
-        end
-    end
-end
-pcall(loadConfig)
-
--- ====== INF JUMP (normal) ======
-local function doJump()
+-- ====== NOUVELLE FONCTION INF JUMP ======
+local function doInfJump()
     local char = LocalPlayer.Character
     if not char then return end
     local hum = char:FindFirstChildOfClass("Humanoid")
@@ -67,59 +29,20 @@ local function doJump()
     end
 end
 
+-- Détecte chaque appui sur Espace / bouton mobile
 UserInputService.JumpRequest:Connect(function()
-    if not InfiniteJumpEnabled then return end
-    doJump()
-end)
-
--- Support mobile : détecte l'appui sur le bouton jump mobile
-UserInputService.InputBegan:Connect(function(input, gp)
-    if gp then return end
-    if not InfiniteJumpEnabled then return end
-    if input.KeyCode == Enum.KeyCode.Space then
-        doJump()
+    if InfJumpEnabled then
+        doInfJump()
     end
 end)
 
--- ====== ANTI RAGDOLL ======
-local function startAntiRagdoll()
-    if AntiRagdollConn then return end
-    AntiRagdollConn = RunService.Heartbeat:Connect(function()
-        local char = LocalPlayer.Character
-        if not char then return end
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if hum then
-            local st = hum:GetState()
-            if st == Enum.HumanoidStateType.Physics
-                or st == Enum.HumanoidStateType.Ragdoll
-                or st == Enum.HumanoidStateType.FallingDown then
-                hum:ChangeState(Enum.HumanoidStateType.Running)
-                workspace.CurrentCamera.CameraSubject = hum
-                pcall(function()
-                    local pm = LocalPlayer.PlayerScripts:FindFirstChild("PlayerModule")
-                    if pm then
-                        local cm = pm:FindFirstChild("ControlModule")
-                        if cm then require(cm):Enable() end
-                    end
-                end)
-                if root then
-                    root.Velocity = Vector3.zero
-                    root.RotVelocity = Vector3.zero
-                end
-            end
-        end
-        for _, obj in ipairs(char:GetDescendants()) do
-            if obj:IsA("Motor6D") and not obj.Enabled then
-                obj.Enabled = true
-            end
-        end
-    end)
-end
-
-LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(0.5)
-    startAntiRagdoll()
+-- Support clavier + mobile (espace + bouton tactile)
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if not InfJumpEnabled then return end
+    if input.KeyCode == Enum.KeyCode.Space then
+        doInfJump()
+    end
 end)
 
 -- ====== GUI ======
@@ -348,46 +271,6 @@ InfJumpClick.BackgroundTransparency = 1
 InfJumpClick.Text = ""
 InfJumpClick.Parent = InfJumpRow
 
--- KEYBIND ROW
-local KeybindRow = Instance.new("Frame")
-KeybindRow.Name = "KeybindRow"
-KeybindRow.ZIndex = 4
-KeybindRow.Position = UDim2.new(0, 12, 0, 104)
-KeybindRow.Size = UDim2.new(1, -24, 0, 32)
-KeybindRow.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-KeybindRow.BackgroundTransparency = 0.5
-KeybindRow.Parent = Content
-Instance.new("UICorner", KeybindRow).CornerRadius = UDim.new(0, 12)
-
-local KeybindLabel = Instance.new("TextLabel")
-KeybindLabel.Name = "KeybindLabel"
-KeybindLabel.ZIndex = 6
-KeybindLabel.Position = UDim2.new(0, 14, 0, 0)
-KeybindLabel.Size = UDim2.new(0, 80, 1, 0)
-KeybindLabel.BackgroundTransparency = 1
-KeybindLabel.Text = "Keybind"
-KeybindLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-KeybindLabel.TextSize = 12
-KeybindLabel.Font = Enum.Font.GothamBlack
-KeybindLabel.TextXAlignment = Enum.TextXAlignment.Left
-KeybindLabel.Parent = KeybindRow
-
-local KeybindBtn = Instance.new("TextButton")
-KeybindBtn.Name = "KeybindBtn"
-KeybindBtn.ZIndex = 10
-KeybindBtn.AnchorPoint = Vector2.new(1, 0.5)
-KeybindBtn.Position = UDim2.new(1, -14, 0.5, 0)
-KeybindBtn.Size = UDim2.new(0, 50, 0, 20)
-KeybindBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-KeybindBtn.BackgroundTransparency = 0.5
-KeybindBtn.Text = CurrentKeybind.Name
-KeybindBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-KeybindBtn.TextSize = 12
-KeybindBtn.Font = Enum.Font.GothamBlack
-KeybindBtn.AutoButtonColor = false
-KeybindBtn.Parent = KeybindRow
-Instance.new("UICorner", KeybindBtn).CornerRadius = UDim.new(0, 6)
-
 -- BACKGROUND PICKER
 local BackgroundPicker = Instance.new("Frame")
 BackgroundPicker.Name = "BackgroundPicker"
@@ -484,11 +367,10 @@ for i, id in ipairs(bgIds) do
         CurrentBG = id
         SpaceBackground.Image = id
         BackgroundPicker.Visible = false
-        saveConfig()
     end)
 end
 
--- ====== LOGIC ======
+-- ====== LOGIC INF JUMP ======
 local function setToggle(knob, bg, enabled)
     TweenService:Create(knob, TweenInfo.new(0.15), {
         Position = enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8),
@@ -500,7 +382,7 @@ local function setToggle(knob, bg, enabled)
 end
 
 local function updateStatus()
-    if InfiniteJumpEnabled then
+    if InfJumpEnabled then
         StatusValue.Text = "ACTIVE"
         StatusValue.TextColor3 = Color3.fromRGB(80, 255, 100)
         StatusDot.BackgroundColor3 = Color3.fromRGB(80, 255, 100)
@@ -512,40 +394,16 @@ local function updateStatus()
 end
 
 local function setInfJump(on)
-    InfiniteJumpEnabled = on == true
-    setToggle(InfToggleDot, InfToggleBg, InfiniteJumpEnabled)
+    InfJumpEnabled = on == true
+    setToggle(InfToggleDot, InfToggleBg, InfJumpEnabled)
     updateStatus()
-    saveConfig()
 end
 
 InfJumpClick.MouseButton1Click:Connect(function()
-    setInfJump(not InfiniteJumpEnabled)
+    setInfJump(not InfJumpEnabled)
 end)
 
-KeybindBtn.MouseButton1Click:Connect(function()
-    if WaitingForKeybind then return end
-    WaitingForKeybind = true
-    KeybindBtn.Text = "..."
-    KeybindBtn.TextColor3 = Color3.fromRGB(255, 200, 100)
-end)
-
-UserInputService.InputBegan:Connect(function(input, gp)
-    if gp then return end
-    if WaitingForKeybind then
-        if input.UserInputType == Enum.UserInputType.Keyboard then
-            CurrentKeybind = input.KeyCode
-            WaitingForKeybind = false
-            KeybindBtn.Text = CurrentKeybind.Name
-            KeybindBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            saveConfig()
-        end
-        return
-    end
-    if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == CurrentKeybind then
-        setInfJump(not InfiniteJumpEnabled)
-    end
-end)
-
+-- ====== BOUTONS UI ======
 BgBtn.MouseButton1Click:Connect(function()
     BackgroundPicker.Visible = not BackgroundPicker.Visible
 end)
@@ -600,9 +458,7 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 
 -- ====== INIT ======
-startAntiRagdoll()
-setToggle(InfToggleDot, InfToggleBg, InfiniteJumpEnabled)
+setToggle(InfToggleDot, InfToggleBg, InfJumpEnabled)
 updateStatus()
-KeybindBtn.Text = CurrentKeybind.Name
 
-print("[Space X Hook] Loaded ✅")
+print("[Space X Hook] Inf Jump loaded ✅")
