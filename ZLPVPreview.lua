@@ -704,69 +704,6 @@ _G.EL2B_AntiTrap = {
 }
 ]=]
 
-_MERGED["Features/GodMode.lua"] = [=[
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Player = Players.LocalPlayer
-local On = false
-local Conn = nil
-
-local function Run()
-    local Char = Player.Character
-    if not Char then return end
-    local OldH = Char:FindFirstChildOfClass("Humanoid")
-    if not OldH then return end
-    local NewH = OldH:Clone()
-    if not NewH then return end
-    NewH.Name = OldH.Name
-    for _, C in ipairs(OldH:GetChildren()) do
-        local ex = NewH:FindFirstChild(C.Name)
-        if ex then pcall(function() ex:Destroy() end) end
-        pcall(function() C.Parent = NewH end)
-    end
-    OldH:Destroy()
-    task.wait()
-    NewH.Parent = Char
-    task.wait()
-    if not NewH.Parent then return end
-    if not NewH:FindFirstChildOfClass("Animator") then
-        local a = Instance.new("Animator") a.Parent = NewH
-    end
-    pcall(function()
-        NewH:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-        NewH.BreakJointsOnDeath = false
-        NewH.RequiresNeck = false
-        NewH.MaxHealth = math.huge
-        NewH.Health = math.huge
-    end)
-    if Conn then Conn:Disconnect() end
-    Conn = RunService.Heartbeat:Connect(function()
-        if not On then return end
-        local c = Player.Character
-        if not c then return end
-        local h = c:FindFirstChildOfClass("Humanoid")
-        if not h then return end
-        pcall(function()
-            h.MaxHealth = math.huge
-            h.Health = math.huge
-            h:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-            h.BreakJointsOnDeath = false
-            h.RequiresNeck = false
-        end)
-    end)
-end
-
-_G.EL2B_GodMode = {
-    Enable = function() On = true task.spawn(Run) end,
-    Disable = function() On = false if Conn then Conn:Disconnect() Conn = nil end end,
-    Toggle = function()
-        if On then On = false if Conn then Conn:Disconnect() Conn = nil end
-        else On = true task.spawn(Run) end
-    end,
-    IsEnabled = function() return On end,
-}
-]=]
-
 _MERGED["Features/ManualFastClick.lua"] = [=[
 local PPS = game:GetService("ProximityPromptService")
 local RS = game:GetService("RunService")
@@ -1539,14 +1476,14 @@ _G.EL2B_ManagerDrone = {
 --[[
     ⚠️⚠️⚠️ PLACE LE SCRIPT PVP COMPLET ICI ⚠️⚠️⚠️
     Copie-colle TOUT le contenu du fichier EL2B_HUB_PVP-5.lua
-    depuis la ligne : print("[EL2B HUB PVP] Script loading...")
-    jusqu'à la ligne : print("EL2B HUB PVP chargé correctement !")
+    depuis la ligne : print("[EL2B HUB] Script loading...")
+    jusqu'à la ligne : print("EL2B HUB chargé correctement !")
 
     ⚠️ Attention : si le contenu contient "]=]" il faut changer le délimiteur
     du bloc en [==[ ... ]==]
 ]]
 _MERGED["Features/BrainrotPVP.lua"] = [==[
-print("[EL2B HUB PVP] Script loading...")
+print("[EL2B HUB] Script loading...")
 task.wait(0.05)
 local Players=game:GetService("Players")
 local CollectionService=game:GetService("CollectionService")
@@ -2177,6 +2114,7 @@ local function toggleDropGui(desired)
     end
     saveSettings()
 end
+_G._175_ToggleDropGui = toggleDropGui
 
 local SETTINGS_FILE = "flash_block_settings.json"
 local UI_LAYOUT_FILE = "flash_block_ui_layout.json"
@@ -4006,7 +3944,7 @@ end
 -- GUI en función aparte para no pasar el límite de 200 locals del chunk principal
 local function __build175GUI()
 
-local old=PlayerGui:FindFirstChild("EL2B HUB PVP")
+local old=PlayerGui:FindFirstChild("EL2B HUB")
 if old then old:Destroy() end
 local oldB=PlayerGui:FindFirstChild("EL2BHubBanner") or PlayerGui:FindFirstChild("DnkPvpBanner")
 if oldB then oldB:Destroy() end
@@ -4130,7 +4068,7 @@ mobile={winW=185,winH=88,posX=UDim2.new(0.5,0,0.5,0),bannerW=155,bannerH=46,bann
 local L=LAYOUT[DEVICE]
 
 local EL2B_SCRIPT_GUI=Instance.new("ScreenGui")
-EL2B_SCRIPT_GUI.Name="EL2B HUB PVP"
+EL2B_SCRIPT_GUI.Name="EL2B HUB"
 EL2B_SCRIPT_GUI.SelectionGroup=false
 EL2B_SCRIPT_GUI.ResetOnSpawn=false
 EL2B_SCRIPT_GUI.DisplayOrder=999999
@@ -4157,7 +4095,7 @@ do
         EL2B_SCRIPT_GUI.Parent = PlayerGui
     end
 end
-print("[EL2B HUB PVP] GUI parent:", tostring(EL2B_SCRIPT_GUI.Parent))
+print("[EL2B HUB] GUI parent:", tostring(EL2B_SCRIPT_GUI.Parent))
 
 local BorderFrame=Instance.new("Frame")
 BorderFrame.Name="BorderFrame"
@@ -4294,7 +4232,7 @@ TextLabel.Size=UDim2.new(1,-130,1,0)
 TextLabel.Position=UDim2.new(0,16,0,0)
 TextLabel.BackgroundTransparency=1
 TextLabel.ZIndex=5
-TextLabel.Text="EL2B HUB PVP"
+TextLabel.Text="EL2B HUB"
 TextLabel.TextColor3=C.textBright
 TextLabel.TextSize=11
 TextLabel.Font=Enum.Font.GothamBold
@@ -5808,7 +5746,7 @@ applySavedSize(Border, "SettingsFloat")
     end)
 
     addResizeHandle(Border, "SettingsFloat", 240, 230, 520, 640)
-    print("[EL2B HUB PVP] Fenêtre Settings prête (bouton S)")
+    print("[EL2B HUB] Fenêtre Settings prête (bouton S)")
 end
 
 
@@ -6014,7 +5952,7 @@ applySavedSize(BBorder, "BrainrotsFloat")
     end)
 
     addResizeHandle(BBorder, "BrainrotsFloat", 150, 100, 420, 420)
-    print("[EL2B HUB PVP] Fenêtre Brainrots prête (bouton B)")
+    print("[EL2B HUB] Fenêtre Brainrots prête (bouton B)")
 end
 
 
@@ -6409,7 +6347,7 @@ for _,conn in ipairs(ActiveConnections) do
 if conn then pcall(function() conn:Disconnect() end) end
 end
 pcall(function()
-    local g = PlayerGui:FindFirstChild("EL2B HUB PVP") or (gethui and gethui():FindFirstChild("EL2B HUB PVP"))
+    local g = PlayerGui:FindFirstChild("EL2B HUB") or (gethui and gethui():FindFirstChild("EL2B HUB"))
     if g then g:Destroy() end
 end)
 _G.Formega_Script_Purge=nil
@@ -6418,9 +6356,9 @@ end
 end -- fin __build175GUI
 local okGUI, errGUI = pcall(__build175GUI)
 if not okGUI then
-    warn("[EL2B HUB PVP] Erreur GUI :", errGUI)
+    warn("[EL2B HUB] Erreur GUI :", errGUI)
 else
-    print("[EL2B HUB PVP] Interface chargée correctement")
+    print("[EL2B HUB] Interface chargée correctement")
 end
 
 -- ===== ESP BEST MEJORADO =====
@@ -7777,9 +7715,9 @@ if _G.BackpackESP then _G._175_SetBackpackESP(true) end
 if _G.BrainrotHighlight then _G._175_SetBrainrotHL(true) end
 if _G.QuickAP then task.defer(function() _G._175_SetQuickAP(true) end) end
 
-        print("[EL2B HUB PVP] Extra features OK")
+        print("[EL2B HUB] Extra features OK")
 end)
-if not okExtra then warn("[EL2B HUB PVP] Extra error:", errExtra) end
+if not okExtra then warn("[EL2B HUB] Extra error:", errExtra) end
 end)
 
 -- Auto Turret
@@ -7898,7 +7836,7 @@ _G._175_AT = function(state)
     if autoTurretEnabled then startAutoTurret() else disconnectAll() end
 end
 if _G.AutoTurretEnabled == true then _G._175_AT(true) end
-        print("[EL2B HUB PVP] AutoTurret ready")
+        print("[EL2B HUB] AutoTurret ready")
 ]=]
     local fn, err = loadstring(src)
     if fn then pcall(fn) end
@@ -8123,9 +8061,9 @@ task.spawn(function()
     local function recoverAll()
         pcall(function()
             -- Main GUI
-            local main = PlayerGui:FindFirstChild("EL2B HUB PVP")
-                or (gethui and gethui():FindFirstChild("EL2B HUB PVP"))
-                or CoreGui:FindFirstChild("EL2B HUB PVP")
+            local main = PlayerGui:FindFirstChild("EL2B HUB")
+                or (gethui and gethui():FindFirstChild("EL2B HUB"))
+                or CoreGui:FindFirstChild("EL2B HUB")
             setGroupedGuiVisible(true)
             if main then
                 main.Enabled = true
@@ -8175,7 +8113,7 @@ task.spawn(function()
                 banner.Enabled = true
             end
         end)
-        print("[EL2B HUB PVP] GUIs restaurées à leur position d’origine (R)")
+        print("[EL2B HUB] GUIs restaurées à leur position d’origine (R)")
     end
 
     _G._175_RecoverGUIs = recoverAll
@@ -8345,7 +8283,7 @@ local function bloodDripAllPanels()
         pcall(function() if gethui then table.insert(parents, gethui()) end end)
         pcall(function() table.insert(parents, CoreGui) end)
         local names = {
-            "EL2B HUB PVP",
+            "EL2B HUB",
             "EL2BHubBanner",
             "EL2BHubSettingsFloat",
             "EL2BHubBrainrotsFloat",
@@ -9428,7 +9366,7 @@ task.spawn(function()
         end
     end)
     if not okFPS then
-        warn("[EL2B HUB PVP] FPS Boost error:", tostring(errFPS))
+        warn("[EL2B HUB] FPS Boost error:", tostring(errFPS))
     end
 end)
 
@@ -9740,7 +9678,7 @@ do
     end
 end
 
-print("EL2B HUB PVP chargé correctement !")
+print("EL2B HUB chargé correctement !")
 
 ]==]
 
@@ -9851,9 +9789,6 @@ EL2B_MakeToggle(SettingPage, "Manual Fast Click", "Click rapide prompts", 5, fun
     if _G.EL2B_ManualFastClick then _G.EL2B_ManualFastClick.Toggle() end
 end, function() return _G.EL2B_ManualFastClick and _G.EL2B_ManualFastClick.IsEnabled() or false end)
 
-EL2B_MakeToggle(SettingPage, "God Mode", "Active/désactive l’invincibilité", 6, function()
-    if _G.EL2B_GodMode then _G.EL2B_GodMode.Toggle() end
-end, function() return _G.EL2B_GodMode and _G.EL2B_GodMode.IsEnabled() or false end)
 ]=]
 
 _MERGED["Tabs/HopServer.lua"] = [=[
@@ -9965,12 +9900,12 @@ end, function() return _G.EL2B_ManagerDrone and _G.EL2B_ManagerDrone.IsEnabled()
 _MERGED["Tabs/Brainrot.lua"] = [=[
 local TM = _G.EL2B_TabsManager
 local BT, BP = TM:RegisterTab("Brainrot", 8, "BRAINROT")
-CreateSectionTitle(BP, "Steal a Brainrot — PVP Panel", 1)
+CreateSectionTitle(BP, "EL2B HUB — Steal a Brainrot", 1)
 
 local InfoLbl = Instance.new("TextLabel")
-InfoLbl.Size = UDim2.new(1, 0, 0, 50)
+InfoLbl.Size = UDim2.new(1, 0, 0, 38)
 InfoLbl.BackgroundTransparency = 1
-InfoLbl.Text = "🎮 Le panel PVP complet s'affiche séparément (toutes les features : Flash TP, Block, Reset, Anti-Steal, Aimbot, ESP, Lagger, Drop, Turret, FPS Boost, IP ESP, etc.)\n\nUtilise les boutons ci-dessous :"
+InfoLbl.Text = "Fonctions PVP intégrées dans EL2B HUB — même interface, mêmes couleurs et mêmes contrôles."
 InfoLbl.TextColor3 = Color3.fromRGB(200, 200, 220)
 InfoLbl.TextSize = 10
 InfoLbl.TextWrapped = true
@@ -9980,63 +9915,104 @@ InfoLbl.Font = Enum.Font.Gotham
 InfoLbl.LayoutOrder = 2
 InfoLbl.Parent = BP
 
-local function findPvpGui()
-    local parents = {}
-    pcall(function() if gethui then table.insert(parents, gethui()) end end)
-    pcall(function() table.insert(parents, game:GetService("CoreGui")) end)
-    pcall(function() table.insert(parents, game.Players.LocalPlayer:FindFirstChild("PlayerGui")) end)
-    for _, p in ipairs(parents) do
-        if p then
-            local g = p:FindFirstChild("EL2B HUB PVP")
-            if g then return g end
-        end
-    end
-    return nil
+local function call(name, ...)
+    local fn = _G[name]
+    if type(fn) == "function" then pcall(fn, ...) end
+end
+local function setFlag(name, value, setter, ...)
+    _G[name] = value
+    if setter then call(setter, value, ...) end
 end
 
-EL2B_MakeButton(BP, "Toggle PVP Panel", "Affiche/cache la GUI du PVP", 3, "Toggle", function()
-    local g = findPvpGui()
-    if g then g.Enabled = not g.Enabled end
-end)
-
-EL2B_MakeButton(BP, "Reset GUI Position", "Recentrer toutes les GUIs", 4, "Reset", function()
-    if _G._175_RecoverGUIs then pcall(_G._175_RecoverGUIs) end
-end)
-
-EL2B_MakeToggle(BP, "Anti Steal", "Protège ta base", 5, function()
-    _G.AntiSteal = not _G.AntiSteal
+EL2B_MakeToggle(BP, "Anti Steal", "Protège ta base", 3, function()
+    setFlag("AntiSteal", not (_G.AntiSteal == true))
 end, function() return _G.AntiSteal == true end)
 
-EL2B_MakeToggle(BP, "Quick Pickup", "Agarre tes brainrots vite", 6, function()
-    _G.QuickPickup = not _G.QuickPickup
-    if _G._175_QuickPickup then _G._175_QuickPickup.set(_G.QuickPickup) end
+EL2B_MakeToggle(BP, "Quick Pickup", "Ramasse les brainrots plus vite dans ta base", 4, function()
+    local v = not (_G.QuickPickup == true)
+    setFlag("QuickPickup", v)
+    if _G._175_QuickPickup then pcall(_G._175_QuickPickup.set, v) end
 end, function() return _G.QuickPickup == true end)
 
-EL2B_MakeToggle(BP, "ESP Base", "Timers bases adverses", 7, function()
-    _G.ESPBaseEnabled = not _G.ESPBaseEnabled
+EL2B_MakeToggle(BP, "Auto Block", "Bloque automatiquement le joueur proche", 5, function()
+    setFlag("AutoBlock", not (_G.AutoBlock == true))
+end, function() return _G.AutoBlock == true end)
+
+EL2B_MakeToggle(BP, "Auto Reset Balloon", "Reset automatique quand tu es ballonné", 6, function()
+    setFlag("AutoResetOnBalloon", not (_G.AutoResetOnBalloon == true))
+end, function() return _G.AutoResetOnBalloon == true end)
+
+EL2B_MakeToggle(BP, "Auto Return Base", "Retour automatique après un steal", 7, function()
+    local v = not (_G.AutoReturnBase == true)
+    setFlag("AutoReturnBase", v)
+    if v then call("_175_StartReturnBase") else call("_175_StopReturnBase") end
+end, function() return _G.AutoReturnBase == true end)
+
+EL2B_MakeToggle(BP, "Auto Giant", "Utilise la potion Giant après le flash", 8, function()
+    setFlag("AutoGiant", not (_G.AutoGiant == true))
+end, function() return _G.AutoGiant == true end)
+
+EL2B_MakeToggle(BP, "ESP Base", "Affiche les timers des bases", 9, function()
+    setFlag("ESPBaseEnabled", not (_G.ESPBaseEnabled == true))
 end, function() return _G.ESPBaseEnabled == true end)
 
-EL2B_MakeToggle(BP, "FPS Boost", "Anti-lag + Nuke", 8, function()
-    _G.FPSBoostEnabled = not _G.FPSBoostEnabled
-    pcall(function()
-        if _G.AceFPSBoost then
-            if _G.FPSBoostEnabled then _G.AceFPSBoost.EnableAll()
-            else _G.AceFPSBoost.DisableAll() end
-        end
-    end)
-end, function() return _G.FPSBoostEnabled == true end)
+EL2B_MakeToggle(BP, "ESP Best", "Affiche le meilleur brainrot du serveur", 10, function()
+    local v = not (_G.ESPBestEnabled == true)
+    setFlag("ESPBestEnabled", v)
+    if v then call("_175_UpdateBestESP") else call("_175_ClearBestNotify") end
+end, function() return _G.ESPBestEnabled == true end)
 
-local Tip = Instance.new("TextLabel")
-Tip.Size = UDim2.new(1, 0, 0, 70)
-Tip.BackgroundTransparency = 1
-Tip.Text = "💡 Astuce : Toutes les autres features (Flash TP, Block, Reset, Loot Brainrot, Auto Return Base, Lagger Bypass, Quick AP, Drop Brainrot, ESP Best, IP ESP, Auto Turret, etc.) sont dans le panel PVP complet."
-Tip.TextColor3 = Color3.fromRGB(255, 200, 100)
-Tip.TextSize = 10
-Tip.TextWrapped = true
-Tip.TextXAlignment = Enum.TextXAlignment.Left
-Tip.Font = Enum.Font.Gotham
-Tip.LayoutOrder = 20
-Tip.Parent = BP
+EL2B_MakeToggle(BP, "Backpack ESP", "Affiche Flash, Giant et Carpet", 11, function()
+    local v = not (_G.BackpackESP == true)
+    setFlag("BackpackESP", v, "_175_SetBackpackESP")
+end, function() return _G.BackpackESP == true end)
+
+EL2B_MakeToggle(BP, "Brainrot Highlight", "Surligne les brainrots", 12, function()
+    local v = not (_G.BrainrotHighlight == true)
+    setFlag("BrainrotHighlight", v, "_175_SetBrainrotHL")
+end, function() return _G.BrainrotHighlight == true end)
+
+EL2B_MakeToggle(BP, "IP ESP", "Affiche la ligne et l’avatar", 13, function()
+    local v = not (_G.IPESPEnabled == true)
+    setFlag("IPESPEnabled", v, "_175_SetIPESP")
+end, function() return _G.IPESPEnabled == true end)
+
+EL2B_MakeToggle(BP, "Quick AP", "Ouvre le panneau admin rapide", 14, function()
+    local v = not (_G.QuickAP == true)
+    setFlag("QuickAP", v, "_175_SetQuickAP")
+end, function() return _G.QuickAP == true end)
+
+EL2B_MakeToggle(BP, "Drop Brainrot", "Active le système de drop", 15, function()
+    local v = not (_G.DropBrainrotEnabled == true)
+    setFlag("DropBrainrotEnabled", v)
+    if type(_G._175_ToggleDropGui) == "function" then pcall(_G._175_ToggleDropGui, v) end
+end, function() return _G.DropBrainrotEnabled == true end)
+
+EL2B_MakeToggle(BP, "Lagger on Flash", "Bypass du protecteur pendant Flash TP", 16, function()
+    local v = not (_G.LaggerOnFlash == true)
+    setFlag("LaggerOnFlash", v)
+    if v then call("_175_StartFlashLagger") else call("_175_StopFlashLagger") end
+end, function() return _G.LaggerOnFlash == true end)
+
+EL2B_MakeToggle(BP, "Lagger Bypass", "Active le bypass lagger", 17, function()
+    local v = not (_G.LaggerBypass == true)
+    setFlag("LaggerBypass", v)
+    if v then call("_175_StartLagger", 60) else call("_175_StopLagger") end
+end, function() return _G.LaggerBypass == true end)
+
+EL2B_MakeToggle(BP, "Auto Destroy Turrets", "Détruit les tourelles ennemies", 18, function()
+    local v = not (_G.AutoTurretEnabled == true)
+    setFlag("AutoTurretEnabled", v)
+    call("_175_AT", v)
+end, function() return _G.AutoTurretEnabled == true end)
+
+EL2B_MakeButton(BP, "Reset GUI Position", "Recentre les interfaces EL2B HUB", 19, "Reset", function()
+    call("_175_RecoverGUIs")
+end)
+
+EL2B_MakeButton(BP, "Reset Player", "Réinitialise le personnage", 20, "Reset", function()
+    call("ResetPlayer")
+end)
 ]=]
 
 --============================================================
@@ -10154,7 +10130,6 @@ Loading.Update(30)
 LoadModule("Features/AntiAFK.lua")
 LoadModule("Features/WalkSpeed.lua")
 LoadModule("Features/AntiTrap.lua")
-LoadModule("Features/GodMode.lua")
 LoadModule("Features/ManualFastClick.lua")
 LoadModule("Features/AutoAttack.lua")
 LoadModule("Features/ConfigSystem.lua")
