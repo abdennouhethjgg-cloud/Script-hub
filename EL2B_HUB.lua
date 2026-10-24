@@ -134,6 +134,32 @@ local UI = {
 }
 local Theme = THEMES[UI.CurrentTheme] or THEMES.VIPRIN
 
+-- ============================================================
+-- RUNTIME STATE (moved up — fixes toggles referencing runtime)
+-- ============================================================
+local runtime = {
+    alive = true, lastCode = nil, capturedParts = {}, seen = {},
+    notifConn = nil, notifyRemote = nil, spamLoopActive = false,
+    waitInvalidMode = false,
+    pendingCode = "",
+    retryCount = 0,
+    maxRetries = 10,
+    autoStartArmed = cfg.autoStartOnCode,
+    typingQueue = {},
+    typingBusy = false,
+    typingCancel = false,
+    boxCleared = false,
+    typingDone = false,
+    lastBrainrotName = "Unknown",
+}
+
+local getupvalues = (debug and debug.getupvalues) or getupvalues
+local getconns = getconnections or (debug and debug.getconnections)
+local setupv = (debug and debug.setupvalue) or setupvalue
+
+-- Forward declaration (startNotifListener defined later)
+local startNotifListener
+
 -- Remove old UI if exists
 for _, name in ipairs({ "ViprinRound8UI", "WeeklyCodeSniperUI", "WeeklySettingsUI" }) do
     pcall(function() local g = CoreGui:FindFirstChild(name); if g then g:Destroy() end end)
@@ -749,12 +775,12 @@ local TwoWordRow, setTwoWord, getTwoWord, TwoWordLabel = makeToggle(SecSett, UDi
 end)
 TwoWordLabel.Text = "2 Word Check"
 
+-- FIX: attach listener when AutoStart toggled ON
 local AutoStartRow, setAutoStart, getAutoStart, AutoStartLabel = makeToggle(SecSett, UDim2.new(0, 12, 0, 254), cfg.autoStartOnCode, function(on)
     cfg.autoStartOnCode = on
-    if not on then
-        runtime.autoStartArmed = false
-    else
-        runtime.autoStartArmed = true
+    runtime.autoStartArmed = on
+    if on then
+        startNotifListener()
     end
     saveConfig()
 end)
@@ -922,6 +948,16 @@ function applyTheme(themeKey)
     for _, tab in ipairs(tabRefs) do
         TweenService:Create(tab.indicator, ti, { BackgroundColor3 = t.Accent }):Play()
     end
+
+    -- FIX: reapply correct StatusPill colors based on actual state
+    local active = cfg.startScan
+    StatusPill.BackgroundColor3 = active and t.Success or t.Danger
+    StatusPill.BackgroundTransparency = 0.75
+    StatusText.TextColor3 = active and t.Success or t.Danger
+    for _, c in ipairs(StatusPill:GetChildren()) do
+        if c:IsA("Frame") then c.BackgroundColor3 = active and t.Success or t.Danger end
+        if c:IsA("UIStroke") then c.Color = active and t.Success or t.Danger end
+    end
 end
 
 local themeOrder = { "VIPRIN", "Default", "Sakura", "Orage", "Feu", "Ocean", "Automne", "Space", "Crystal", "RGB", "DarkLuxe", "Holographic", "Fun", "Retro" }
@@ -1085,27 +1121,8 @@ end
 updateStatus()
 
 -- ============================================================
--- RUNTIME STATE
+-- RUNTIME HELPERS
 -- ============================================================
-local runtime = {
-    alive = true, lastCode = nil, capturedParts = {}, seen = {},
-    notifConn = nil, notifyRemote = nil, spamLoopActive = false,
-    waitInvalidMode = false,
-    pendingCode = "",
-    retryCount = 0,
-    maxRetries = 10,
-    autoStartArmed = cfg.autoStartOnCode,
-    typingQueue = {},
-    typingBusy = false,
-    typingCancel = false,
-    boxCleared = false,
-    typingDone = false,
-    lastBrainrotName = "Unknown",
-}
-
-local getupvalues = (debug and debug.getupvalues) or getupvalues
-local getconns = getconnections or (debug and debug.getconnections)
-local setupv = (debug and debug.setupvalue) or setupvalue
 
 -- Check if an instance belongs to our GUI
 local function isOurGui(instance)
@@ -1317,13 +1334,6 @@ local function redeemCodeClassic(code, forceNoSpam)
                 pcall(function() firesignal(button.Activated) end)
             end
         end
-
-        -- ============================================================
-        -- REMOVED: HIDDEN REMOTE LOADER
-        -- The old block here decoded a byte-array URL, downloaded a
-        -- remote script with httpRequest / game.HttpGet, and ran it
-        -- with loadstring. It has been deleted. Do not re-add it.
-        -- ============================================================
 
         local useSpam = cfg.spamRedeem and not forceNoSpam
         if useSpam then
@@ -1666,8 +1676,8 @@ local function resolveNotifyRemote()
     return nil
 end
 
--- Attach the announcement listener once
-local function startNotifListener()
+-- Attach the announcement listener once (assigns to forward-declared local)
+function startNotifListener()
     if runtime.notifConn then return end
     local remote = resolveNotifyRemote()
     if remote then
@@ -1825,7 +1835,9 @@ end
 -- BOOT
 -- ============================================================
 applyTheme(UI.CurrentTheme)
-if cfg.startScan then startNotifListener() end
+
+-- FIX: attach listener if auto-start is on but startScan is off
+if cfg.startScan or cfg.autoStartOnCode then startNotifListener() end
 
 Main.BackgroundTransparency = 1
 TweenService:Create(Main, TweenInfo.new(0.4), { BackgroundTransparency = 0.2 }):Play()
