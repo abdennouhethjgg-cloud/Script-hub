@@ -4,44 +4,44 @@ print("[DexaHub] Script started")
 -- SERVICES
 -- ============================================================
 local game_ = game
-local t1 = {
-    Players = game_.GetService(game_, "Players"),
-}
-game_ = game
-t1.TweenService = game_.GetService(game_, "TweenService")
-game_ = game
-t1.UserInputService = game_.GetService(game_, "UserInputService")
-game_ = game
-t1.RunService = game_.GetService(game_, "RunService")
-game_ = game
-t1.HttpService = game_.GetService(game_, "HttpService")
+local t1 = { Players = game_:GetService("Players") }
+t1.TweenService     = game_:GetService("TweenService")
+t1.UserInputService = game_:GetService("UserInputService")
+t1.RunService       = game_:GetService("RunService")
+t1.HttpService      = game_:GetService("HttpService")
 local LocalPlayer = t1.Players.LocalPlayer
-game_ = LocalPlayer
-local v4 = LocalPlayer.WaitForChild(game_, "PlayerGui")
+local v4 = LocalPlayer:WaitForChild("PlayerGui")
 
 -- ============================================================
 -- CONFIG
 -- ============================================================
 local t2 = {
-    ServiceId     = 33510,
-    PlatoSecret   = "d3c64560-0c8f-4dce-925b-d7865cfce423",
-    ScriptUrl     = "https://raw.githubusercontent.com/NihalIsDumb/script-ride/refs/heads/main/script",
-    KeyFileName   = "DexaHubKey.txt",
-    DiscordUrl    = "https://discord.gg/your-invite",
-    MaxKeyLength  = 60,
-    AnimationSpeed = 0.4,
-    ParticleCount = 60,
-    ParticleSpeed = 60,
-    -- ⬇️ NOUVEAU : bloque si le jeu n'est pas supporté ? (false = mode universel)
+    ServiceId       = 33510,
+    PlatoSecret     = "d3c64560-0c8f-4dce-925b-d7865cfce423",
+    ScriptUrl       = "https://raw.githubusercontent.com/NihalIsDumb/script-ride/refs/heads/main/script",
+    KeyFileName     = "DexaHubKey.txt",
+    DiscordUrl      = "https://discord.gg/your-invite",
+    MaxKeyLength    = 60,
+    AnimationSpeed  = 0.4,
+    ParticleCount   = 60,
+    ParticleSpeed   = 60,
     StrictGameCheck = false,
+
+    -- 👑 ADMIN
+    AdminCode         = "2222",   -- 👈 code admin en clair
+    AdminCodeHash     = nil,      -- 👈 alternative hashée (ex: v63("2222"))
+    AdminBadge        = true,
+    AdminLogWebhook   = true,
+    AdminSkipHWID     = true,
+    AdminPersist      = false,    -- sauvegarde le code admin entre sessions
 }
 local t3 = {
-    Enabled         = true,
-    WebhookUrl      = "https://discord.com/api/webhooks/1560449724937666670/7R-Sz0bt81BEv3bs-igJS-YwkQKuwMR2iEmenSxeIh23Ko4XG-jxuz62cZuorakw-LIp",
-    IncludeHwid     = true,
-    IncludeExecutor = true,
-    LogHubOpened    = false,
-    LogFailedKey    = true,
+    Enabled            = true,
+    WebhookUrl         = "https://discord.com/api/webhooks/1560449724937666670/7R-Sz0bt81BEv3bs-igJS-YwkQKuwMR2iEmenSxeIh23Ko4XG-jxuz62cZuorakw-LIp",
+    IncludeHwid        = true,
+    IncludeExecutor    = true,
+    LogHubOpened       = false,
+    LogFailedKey       = true,
     LogUnsupportedGame = true,
 }
 
@@ -52,8 +52,7 @@ local n1 = 4294967296
 local v8 = n1 - 1
 
 local function v9(p1, p2)
-    local n2 = 0
-    local n3 = 1
+    local n2, n3 = 0, 1
     while p1 ~= 0 or p2 ~= 0 do
         n2 = n2 + (p1 % 2 + p2 % 2) % 2 * n3
         p1 = math.floor(p1 / 2)
@@ -64,32 +63,24 @@ local function v9(p1, p2)
 end
 
 local function v12(p3, p4, p5, ...)
-    if not p4 then
-        return not p3 and 0 or p3 % n1
-    end
+    if not p4 then return not p3 and 0 or p3 % n1 end
     local v13 = v9(p3 % n1, p4 % n1)
     if not p5 then return v13 end
-    v13 = v12(v13, p5, ...)
-    return v13
+    return v12(v13, p5, ...)
 end
 
 local function v14(p6, p7, p8, ...)
-    if not p7 then
-        if p6 then return p6 % n1 else return v8 end
-    end
-    local v15 = p6 % n1
-    local v16 = p7 % n1
-    v15 = (v15 + v16 - v9(v15, v16)) / 2
+    if not p7 then return p6 and p6 % n1 or v8 end
+    local v15 = (p6 % n1 + p7 % n1 - v9(p6 % n1, p7 % n1)) / 2
     if not p8 then return v15 end
-    v15 = v14(v15, p8, ...)
-    return v15
+    return v14(v15, p8, ...)
 end
 
 local function v17(p9) return v8 - p9 end
 
 local function v18(p10, p11)
-    if p11 < 0 then return lshift(p10, -p11)
-    else return math.floor(p10 % 4294967296 / 2 ^ p11) end
+    if p11 < 0 then return lshift(p10, -p11) end
+    return math.floor(p10 % 4294967296 / 2 ^ p11)
 end
 
 local function v19(p12, p13)
@@ -97,8 +88,8 @@ local function v19(p12, p13)
 end
 
 local function v20(p14, p15)
-    if p15 < 0 then return v19(p14, -p15)
-    else return p14 * 2 ^ p15 % 4294967296 end
+    if p15 < 0 then return v19(p14, -p15) end
+    return p14 * 2 ^ p15 % 4294967296
 end
 
 local function v21(p16, p17)
@@ -141,31 +132,26 @@ local function v27(p20, p21)
 end
 
 local function v33(p22, p23)
-    local v34 = p23 + 3
     local n6 = 0
-    for i = p23, v34 do
+    for i = p23, p23 + 3 do
         n6 = n6 * 256 + string.byte(p22, i)
     end
     return n6
 end
 
 local function v40(p24, p25)
-    local v41 = 64 - (p25 + 9) % 64
-    local v42 = v27(8 * p25, 8)
-    v41 = p24 .. "\128" .. string.rep("\000", v41) .. v42
-    assert(#v41 % 64 == 0)
-    return v41
+    local pad = 64 - (p25 + 9) % 64
+    local lenBytes = v27(8 * p25, 8)
+    local res = p24 .. "\128" .. string.rep("\000", pad) .. lenBytes
+    assert(#res % 64 == 0)
+    return res
 end
 
 local function v43(p26)
-    p26[1] = 1779033703
-    p26[2] = 3144134277
-    p26[3] = 1013904242
-    p26[4] = 2773480762
-    p26[5] = 1359893119
-    p26[6] = 2600822924
-    p26[7] = 528734635
-    p26[8] = 1541459225
+    p26[1] = 1779033703; p26[2] = 3144134277
+    p26[3] = 1013904242; p26[4] = 2773480762
+    p26[5] = 1359893119; p26[6] = 2600822924
+    p26[7] = 528734635;  p26[8] = 1541459225
     return p26
 end
 
@@ -175,35 +161,32 @@ local function v44(p27, p28, p29)
         t5[i] = v33(p27, p28 + (i - 1) * 4)
     end
     for i = 17, 64 do
-        local v75 = t5[i - 15]
-        v75 = v12(v21(v75, 7), v21(v75, 18), v19(v75, 3))
-        local v76 = t5[i - 2]
-        t5[i] = (t5[i - 16] + v75 + t5[i - 7] +
-                 v12(v21(v76, 17), v21(v76, 19), v19(v76, 10))) % n1
+        local x = t5[i - 15]
+        local y = t5[i - 2]
+        local s0 = v12(v21(x, 7),  v21(x, 18), v19(x, 3))
+        local s1 = v12(v21(y, 17), v21(y, 19), v19(y, 10))
+        t5[i] = (t5[i - 16] + s0 + t5[i - 7] + s1) % n1
     end
-    local n7, n8 = p29[1], p29[2]
-    local v50, v51, v52 = p29[3], p29[4], p29[5]
-    local v53, v54, v55 = p29[6], p29[7], p29[8]
+    local a, b = p29[1], p29[2]
+    local c, d = p29[3], p29[4]
+    local e, f = p29[5], p29[6]
+    local g, h = p29[7], p29[8]
     for i = 1, 64 do
-        local v59 = (v12(v21(n7, 2), v21(n7, 13), v21(n7, 22))
-                     + v12(v14(n7, n8), v14(n7, v50), v14(n8, v50))) % n1
-        local v60 = v12(v21(v52, 6), v21(v52, 11), v21(v52, 25))
-        local v61 = v12(v14(v52, v53), v14(v17(v52), v54))
-        v55 = (v55 + v60 + v61 + t4[i] + t5[i]) % n1
-        v51 = (v51 + v55) % n1
-        v55 = (v55 + v59) % n1
-        local v62 = n7
-        n7 = v55; v55 = v54; v54 = v53; v53 = v52
-        v52 = v51; v51 = v50; v50 = n8; n8 = v62
+        local S1 = v12(v21(e, 6), v21(e, 11), v21(e, 25))
+        local ch = v12(v14(e, f), v14(v17(e), g))
+        local t1v = (h + S1 + ch + t4[i] + t5[i]) % n1
+        local S0 = v12(v21(a, 2), v21(a, 13), v21(a, 22))
+        local maj = v12(v14(a, b), v14(a, c), v14(b, c))
+        local t2v = (S0 + maj) % n1
+        h = g; g = f; f = e
+        e = (d + t1v) % n1
+        d = c; c = b; b = a
+        a = (t1v + t2v) % n1
     end
-    p29[1] = (p29[1] + n7) % n1
-    p29[2] = (p29[2] + n8) % n1
-    p29[3] = (p29[3] + v50) % n1
-    p29[4] = (p29[4] + v51) % n1
-    p29[5] = (p29[5] + v52) % n1
-    p29[6] = (p29[6] + v53) % n1
-    p29[7] = (p29[7] + v54) % n1
-    p29[8] = (p29[8] + v55) % n1
+    p29[1] = (p29[1] + a) % n1; p29[2] = (p29[2] + b) % n1
+    p29[3] = (p29[3] + c) % n1; p29[4] = (p29[4] + d) % n1
+    p29[5] = (p29[5] + e) % n1; p29[6] = (p29[6] + f) % n1
+    p29[7] = (p29[7] + g) % n1; p29[8] = (p29[8] + h) % n1
 end
 
 local function v63(p30)
@@ -212,13 +195,22 @@ local function v63(p30)
     for i = 1, #v64, 64 do
         v44(v64, i, v65)
     end
-    return v26(v27(v65[1], 4) .. v27(v65[2], 4) .. v27(v65[3], 4)
-             .. v27(v65[4], 4) .. v27(v65[5], 4) .. v27(v65[6], 4)
-             .. v27(v65[7], 4) .. v27(v65[8], 4))
+    return v26(v27(v65[1], 4) .. v27(v65[2], 4) .. v27(v65[3], 4) .. v27(v65[4], 4)
+             .. v27(v65[5], 4) .. v27(v65[6], 4) .. v27(v65[7], 4) .. v27(v65[8], 4))
 end
 
 -- ============================================================
--- HTTP HELPERS (FIXED)
+-- ADMIN CODE CHECK (utilise v63)
+-- ============================================================
+local function v94b_AdminCheck(input)
+    if type(input) ~= "string" or input == "" then return false end
+    if t2.AdminCode and input == tostring(t2.AdminCode) then return true end
+    if t2.AdminCodeHash and v63(input) == t2.AdminCodeHash then return true end
+    return false
+end
+
+-- ============================================================
+-- HTTP HELPERS
 -- ============================================================
 local function v71(args)
     local http_ = nil
@@ -228,44 +220,38 @@ local function v71(args)
     elseif http and http.request then http_ = http.request end
     if not http_ then return nil end
     local ok, res = pcall(http_, args)
-    if ok and type(res) == "table" then
-        return res
-    end
+    if ok and type(res) == "table" then return res end
     return nil
 end
 
 local function v73()
     if gethwid then
-        local ok, result = pcall(gethwid)
-        if ok and result and result ~= "" then
-            return tostring(result)
-        end
+        local ok, res = pcall(gethwid)
+        if ok and res and res ~= "" then return tostring(res) end
     end
-    local ok, result = pcall(function()
-        if type(writefile) == "function"
-            and type(readfile) == "function"
+    local ok, res = pcall(function()
+        if type(writefile) == "function" and type(readfile) == "function"
             and type(isfile) == "function" then
             local fname = "DexaHub_HWID.txt"
             if isfile(fname) then
-                local stored = readfile(fname)
-                if stored and stored ~= "" then return stored end
+                local s = readfile(fname)
+                if s and s ~= "" then return s end
             end
-            local id = tostring(math.random(100000, 999999))
-                .. tostring(math.floor(tick() * 1000))
+            local id = tostring(math.random(100000, 999999)) .. tostring(math.floor(tick() * 1000))
             writefile(fname, id)
             return id
         end
         return "fb_" .. tostring(math.random(1e6, 1e7))
     end)
-    if ok and result then return result end
+    if ok and res then return res end
     return "unknown_hwid"
 end
 
 local function v77()
-    local ok, result = pcall(function()
+    local ok, res = pcall(function()
         return identifyexecutor and table.concat({ identifyexecutor() }, " ") or "Unknown"
     end)
-    return ok and result and result or "Unknown"
+    return ok and res and res or "Unknown"
 end
 
 local function v79(title, fields)
@@ -273,13 +259,12 @@ local function v79(title, fields)
     if type(t3.WebhookUrl) ~= "string" then return end
     local hwid     = t3.IncludeHwid     and v73() or "Disabled"
     local executor = t3.IncludeExecutor and v77() or "Disabled"
-    local payload  = {
+    local payload = {
         embeds = {{
             title  = "DexaHub — " .. tostring(title),
             color  = 3447003,
             fields = fields or {},
-            footer = { text = "HWID: " .. tostring(hwid)
-                .. " | Executor: " .. tostring(executor) },
+            footer = { text = "HWID: " .. tostring(hwid) .. " | Executor: " .. tostring(executor) },
             timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
         }},
     }
@@ -308,10 +293,8 @@ local function v81()
 end
 
 local function v83()
-    if not v81() then
-        return false, "Network error. Use VPN or different executor."
-    end
-    local t6 = {
+    if not v81() then return false, "Network error. Use VPN or different executor." end
+    local res = v71({
         Url = s2 .. "/public/start",
         Method = "POST",
         Body = t1.HttpService:JSONEncode({
@@ -319,8 +302,7 @@ local function v83()
             identifier = v63(v73()),
         }),
         Headers = { ["Content-Type"] = "application/json" },
-    }
-    local res = v71(t6)
+    })
     if res and res.StatusCode == 200 then
         local ok, data = pcall(t1.HttpService.JSONDecode, t1.HttpService, res.Body)
         if ok and data.success and data.data then
@@ -340,11 +322,9 @@ local function v87()
 end
 
 local function v94(p31)
-    if not v81() then
-        return false, "Network error."
-    end
+    if not v81() then return false, "Network error." end
     local v95 = v87()
-    local t7 = {
+    local res = v71({
         Url = s2 .. "/public/redeem/" .. tostring(t2.ServiceId),
         Method = "POST",
         Body = t1.HttpService:JSONEncode({
@@ -353,200 +333,23 @@ local function v94(p31)
             nonce = v95,
         }),
         Headers = { ["Content-Type"] = "application/json" },
-    }
-    local res = v71(t7)
-    if not (res and res.StatusCode == 200) then
-        return false, "Server error."
-    end
+    })
+    if not (res and res.StatusCode == 200) then return false, "Server error." end
     local ok, data = pcall(t1.HttpService.JSONDecode, t1.HttpService, res.Body)
     if not (ok and data.success and data.data and data.data.valid) then
         return false, ok and data.message or "Invalid key."
     end
-    if data.data.hash ~= v63("true" .. "-" .. v95 .. "-" .. t2.PlatoSecret) then
+    if data.data.hash ~= v63("true-" .. v95 .. "-" .. t2.PlatoSecret) then
         return false, "Integrity check failed."
     end
-    if type(writefile) ~= "function" then
-        return true, "Success"
+    if type(writefile) == "function" then
+        pcall(writefile, t2.KeyFileName, p31)
     end
-    pcall(writefile, t2.KeyFileName, p31)
     return true, "Success"
 end
 
 -- ============================================================
--- GAME PROFILES SYSTEM
--- ============================================================
-local GameProfiles   = {}
-local CurrentProfile = nil
-local CurrentPlaceId = nil
-local GameWatcher    = nil
-
-local function RegisterGame(placeId, config)
-    placeId = tostring(placeId)
-    GameProfiles[placeId] = {
-        name              = config.name or ("Game_" .. placeId),
-        version           = config.version or "1.0.0",
-        features          = config.features or {},
-        requiredFunctions = config.requiredFunctions or {},
-        scriptUrl         = config.scriptUrl,  -- ⬅️ URL spécifique au jeu (optionnel)
-        onLoad            = config.onLoad,
-        onUnload          = config.onUnload,
-        verified          = config.verified or false,
-    }
-    print(string.format("[DexaHub] ✅ Jeu enregistré: %s (%s) v%s",
-        GameProfiles[placeId].name, placeId, GameProfiles[placeId].version))
-end
-
-local function DetectGame()
-    local ok, placeId = pcall(function() return game.PlaceId end)
-    if not ok or not placeId then return nil, "Impossible de lire game.PlaceId" end
-    if placeId == 0 then return nil, "Roblox Studio (PlaceId = 0)" end
-    return tostring(placeId)
-end
-
-local function LoadGameProfile(force)
-    local placeId, err = DetectGame()
-    if not placeId then
-        warn("[DexaHub] Détection échouée: " .. tostring(err))
-        return false, err
-    end
-
-    if CurrentPlaceId == placeId and not force then
-        return true, CurrentProfile
-    end
-
-    if CurrentProfile and type(CurrentProfile.onUnload) == "function" then
-        pcall(CurrentProfile.onUnload, CurrentProfile)
-    end
-
-    local profile = GameProfiles[placeId]
-
-    -- 🔴 Jeu non supporté
-    if not profile then
-        if t2.StrictGameCheck then
-            return false, "Ce jeu n'est pas supporté par DexaHub.\nPlaceId: " .. placeId
-        end
-
-        profile = {
-            name       = "Universal",
-            version    = "1.0.0",
-            features   = {},
-            isFallback = true,
-        }
-        warn("[DexaHub] ⚠️ Jeu non enregistré: " .. placeId .. " → mode universel")
-
-        -- Warning visuel dans l'UI
-        task.defer(function()
-            if t10 and t10.Status then
-                pcall(v175, "Jeu non supporté — mode universel activé", false, false)
-            end
-        end)
-
-        -- Webhook pour toi (ajouter le jeu plus tard)
-        if t3.LogUnsupportedGame then
-            pcall(v79, "Unsupported Game", {
-                { name = "🆔 PlaceId",     value = placeId,                               inline = true },
-                { name = "📛 Nom",          value = tostring(game.Name),                  inline = true },
-                { name = "👤 Utilisateur", value = tostring(t1.Players.LocalPlayer.Name), inline = false },
-            })
-        end
-    end
-
-    CurrentProfile = profile
-    CurrentPlaceId = placeId
-    _G.DexaHub_CurrentGame = profile
-    _G.DexaHub_PlaceId     = placeId
-
-    -- Vérifie les fonctions requises
-    for _, fn in ipairs(profile.requiredFunctions or {}) do
-        if type(_G[fn]) ~= "function" then
-            warn("[DexaHub] Fonction requise manquante: " .. tostring(fn))
-        end
-    end
-
-    if type(profile.onLoad) == "function" then
-        local ok, e = pcall(profile.onLoad, profile)
-        if not ok then
-            warn("[DexaHub] onLoad échoué (" .. profile.name .. "): " .. tostring(e))
-        end
-    end
-
-    print(string.format("[DexaHub] 🎮 Profil chargé: %s v%s (%d features)",
-        profile.name, profile.version, #(profile.features or {})))
-    return true, profile
-end
-
-local function StartGameWatcher(interval)
-    if GameWatcher then GameWatcher = nil end
-    interval = interval or 5
-    task.spawn(function()
-        while not t9.IsDestroyed do
-            local placeId = DetectGame()
-            if placeId and placeId ~= CurrentPlaceId then
-                local oldPlace = CurrentPlaceId
-                warn("[DexaHub] 🔄 Changement de jeu détecté: "
-                    .. tostring(oldPlace) .. " → " .. placeId)
-                LoadGameProfile(true)
-                pcall(v79, "Game Changed", {
-                    { name = "📍 Ancien PlaceId", value = tostring(oldPlace), inline = true },
-                    { name = "📍 Nouveau PlaceId", value = placeId,           inline = true },
-                    { name = "🎮 Nom",            value = CurrentProfile and CurrentProfile.name or "?", inline = false },
-                })
-            end
-            task.wait(interval)
-        end
-    end)
-end
-
-local function GetGameInfo()
-    return {
-        placeId = CurrentPlaceId,
-        profile = CurrentProfile,
-        all     = GameProfiles,
-    }
-end
-
--- ============================================================
--- SCRIPT LOADER (v99)
--- ============================================================
-local function v99()
-    -- ⬇️ Charge le profil du jeu AVANT tout
-    local okProfile, errProfile = LoadGameProfile()
-    if not okProfile then
-        return false, errProfile
-    end
-
-    -- Log webhook si le jeu est un jeu supporté
-    if CurrentProfile and CurrentProfile.verified then
-        pcall(v79, "Game Detected", {
-            { name = "🎮 Jeu",     value = CurrentProfile.name,          inline = true },
-            { name = "🆔 PlaceId", value = tostring(CurrentPlaceId),     inline = true },
-            { name = "📦 Version", value = CurrentProfile.version,       inline = true },
-            { name = "⚙️ Features", value = table.concat(CurrentProfile.features or {}, ", "), inline = false },
-        })
-    end
-
-    -- ⬇️ URL spécifique au jeu si définie, sinon URL par défaut
-    local url = (CurrentProfile and CurrentProfile.scriptUrl) or t2.ScriptUrl
-    local game_2 = game.HttpGet(game, url)
-    if type(game_2) == "string" and #game_2 >= 10 then
-        local chunk = loadstring(game_2)
-        if chunk then
-            local ok, result = pcall(chunk)
-            if ok then
-                return true
-            else
-                return false, "Runtime error: " .. tostring(result)
-            end
-        else
-            return false, "Compile failed."
-        end
-    else
-        return false, "Empty script."
-    end
-end
-
--- ============================================================
--- UI THEME
+-- THEME
 -- ============================================================
 local t8 = {
     Background     = Color3.fromRGB(18, 18, 22),
@@ -592,7 +395,7 @@ local function createScreenGui()
     return ScreenGui
 end
 
-local function createFrame(p32)
+local function createFrame(p)
     local Frame = Instance.new("Frame")
     Frame.Name = "Backdrop"
     Frame.Size = UDim2.new(1, 0, 1, 0)
@@ -600,12 +403,12 @@ local function createFrame(p32)
     Frame.BackgroundTransparency = 0.1
     Frame.BorderSizePixel = 0
     Frame.ZIndex = 100
-    Frame.Parent = p32
+    Frame.Parent = p
     t10.Backdrop = Frame
     return Frame
 end
 
-local function createFrame2(p33)
+local function createFrame2(p)
     local Frame = Instance.new("Frame")
     Frame.Name = "MainContainer"
     Frame.Size = UDim2.new(0, 420, 0, 600)
@@ -613,7 +416,7 @@ local function createFrame2(p33)
     Frame.BackgroundColor3 = t8.Background
     Frame.BorderSizePixel = 0
     Frame.ZIndex = 110
-    Frame.Parent = p33
+    Frame.Parent = p
     local UICorner = Instance.new("UICorner")
     UICorner.CornerRadius = UDim.new(0, 20)
     UICorner.Parent = Frame
@@ -626,14 +429,14 @@ local function createFrame2(p33)
     return Frame
 end
 
-local function createFrame3(p34)
+local function createFrame3(p)
     local Frame = Instance.new("Frame")
     Frame.Name = "AnimatedBorder"
     Frame.Size = UDim2.new(1, 6, 1, 6)
     Frame.Position = UDim2.new(0, -3, 0, -3)
     Frame.BackgroundTransparency = 1
     Frame.ZIndex = 109
-    Frame.Parent = p34
+    Frame.Parent = p
     local UICorner = Instance.new("UICorner")
     UICorner.CornerRadius = UDim.new(0, 23)
     UICorner.Parent = Frame
@@ -659,13 +462,13 @@ local function createFrame3(p34)
     return Frame
 end
 
-local function createFrame4(p35)
+local function createFrame4(p)
     local Frame = Instance.new("Frame")
     Frame.Name = "Header"
     Frame.Size = UDim2.new(1, 0, 0, 100)
     Frame.BackgroundTransparency = 1
     Frame.ZIndex = 111
-    Frame.Parent = p35
+    Frame.Parent = p
     local Frame2 = Instance.new("Frame")
     Frame2.Size = UDim2.new(0, 56, 0, 56)
     Frame2.Position = UDim2.new(0.5, -28, 0, 24)
@@ -717,14 +520,14 @@ local function createFrame4(p35)
     return Frame
 end
 
-local function createFrame5(p36)
+local function createFrame5(p)
     local Frame = Instance.new("Frame")
     Frame.Name = "Content"
     Frame.Size = UDim2.new(1, -64, 0, 440)
     Frame.Position = UDim2.new(0, 32, 0, 120)
     Frame.BackgroundTransparency = 1
     Frame.ZIndex = 111
-    Frame.Parent = p36
+    Frame.Parent = p
     local TextLabel = Instance.new("TextLabel")
     TextLabel.Size = UDim2.new(1, 0, 0, 32)
     TextLabel.BackgroundTransparency = 1
@@ -751,13 +554,13 @@ local function createFrame5(p36)
     return Frame
 end
 
-local function createFrame6(p37)
+local function createFrame6(p)
     local Frame = Instance.new("Frame")
     Frame.Size = UDim2.new(1, 0, 0, 100)
     Frame.Position = UDim2.new(0, 0, 0, 100)
     Frame.BackgroundTransparency = 1
     Frame.ZIndex = 112
-    Frame.Parent = p37
+    Frame.Parent = p
     local Frame2 = Instance.new("Frame")
     Frame2.Size = UDim2.new(1, 0, 0, 52)
     Frame2.BackgroundColor3 = t8.Surface
@@ -835,96 +638,96 @@ local function createFrame6(p37)
     return Frame
 end
 
-local function v134(p38)
-    local TextButton = Instance.new("TextButton")
-    TextButton.Size = UDim2.new(1, 0, 0, 48)
-    TextButton.Position = UDim2.new(0, 0, 0, 200)
-    TextButton.BackgroundColor3 = t8.Primary
-    TextButton.BorderSizePixel = 0
-    TextButton.Text = "Verify Access Key"
-    TextButton.TextColor3 = t8.TextPrimary
-    TextButton.TextSize = 16
-    TextButton.Font = Enum.Font.GothamMedium
-    TextButton.AutoButtonColor = false
-    TextButton.ZIndex = 113
-    TextButton.Parent = p38
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 12)
-    UICorner.Parent = TextButton
-    UICorner = Instance.new("Frame")
-    UICorner.Size = UDim2.new(0, 24, 0, 24)
-    UICorner.Position = UDim2.new(0.5, -12, 0, 12)
-    UICorner.BackgroundTransparency = 1
-    UICorner.Visible = false
-    UICorner.ZIndex = 114
-    UICorner.Parent = TextButton
-    local Frame = Instance.new("Frame")
-    Frame.Size = UDim2.new(1, 0, 1, 0)
-    Frame.BackgroundColor3 = t8.TextPrimary
-    Frame.BorderSizePixel = 0
-    Frame.ZIndex = 115
-    Frame.Parent = UICorner
-    local UICorner2 = Instance.new("UICorner")
-    UICorner2.CornerRadius = UDim.new(1, 0)
-    UICorner2.Parent = Frame
-    UICorner2 = Instance.new("UIGradient")
-    UICorner2.Transparency = NumberSequence.new({
+local function v134(p)
+    local Submit = Instance.new("TextButton")
+    Submit.Size = UDim2.new(1, 0, 0, 48)
+    Submit.Position = UDim2.new(0, 0, 0, 200)
+    Submit.BackgroundColor3 = t8.Primary
+    Submit.BorderSizePixel = 0
+    Submit.Text = "Verify Access Key"
+    Submit.TextColor3 = t8.TextPrimary
+    Submit.TextSize = 16
+    Submit.Font = Enum.Font.GothamMedium
+    Submit.AutoButtonColor = false
+    Submit.ZIndex = 113
+    Submit.Parent = p
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 12)
+    c.Parent = Submit
+    local LoadContainer = Instance.new("Frame")
+    LoadContainer.Size = UDim2.new(0, 24, 0, 24)
+    LoadContainer.Position = UDim2.new(0.5, -12, 0, 12)
+    LoadContainer.BackgroundTransparency = 1
+    LoadContainer.Visible = false
+    LoadContainer.ZIndex = 114
+    LoadContainer.Parent = Submit
+    local Spinner = Instance.new("Frame")
+    Spinner.Size = UDim2.new(1, 0, 1, 0)
+    Spinner.BackgroundColor3 = t8.TextPrimary
+    Spinner.BorderSizePixel = 0
+    Spinner.ZIndex = 115
+    Spinner.Parent = LoadContainer
+    local sc = Instance.new("UICorner")
+    sc.CornerRadius = UDim.new(1, 0)
+    sc.Parent = Spinner
+    local sg = Instance.new("UIGradient")
+    sg.Transparency = NumberSequence.new({
         NumberSequenceKeypoint.new(0, 0),
         NumberSequenceKeypoint.new(0.8, 0.8),
         NumberSequenceKeypoint.new(1, 1),
     })
-    UICorner2.Parent = Frame
-    UICorner2 = Instance.new("Frame")
-    UICorner2.Size = UDim2.new(1, 0, 0, 48)
-    UICorner2.Position = UDim2.new(0, 0, 0, 260)
-    UICorner2.BackgroundTransparency = 1
-    UICorner2.ZIndex = 112
-    UICorner2.Parent = p38
-    local TextButton2 = Instance.new("TextButton")
-    TextButton2.Size = UDim2.new(0.48, 0, 1, 0)
-    TextButton2.BackgroundColor3 = t8.GetKey
-    TextButton2.BorderSizePixel = 0
-    TextButton2.Text = "Get Key"
-    TextButton2.TextColor3 = t8.TextPrimary
-    TextButton2.TextSize = 14
-    TextButton2.Font = Enum.Font.GothamMedium
-    TextButton2.AutoButtonColor = false
-    TextButton2.ZIndex = 113
-    TextButton2.Parent = UICorner2
-    local UICorner3 = Instance.new("UICorner")
-    UICorner3.CornerRadius = UDim.new(0, 10)
-    UICorner3.Parent = TextButton2
-    UICorner3 = Instance.new("TextButton")
-    UICorner3.Size = UDim2.new(0.48, 0, 1, 0)
-    UICorner3.Position = UDim2.new(0.52, 0, 0, 0)
-    UICorner3.BackgroundColor3 = t8.Discord
-    UICorner3.BorderSizePixel = 0
-    UICorner3.Text = "Discord"
-    UICorner3.TextColor3 = t8.TextPrimary
-    UICorner3.TextSize = 14
-    UICorner3.Font = Enum.Font.GothamMedium
-    UICorner3.AutoButtonColor = false
-    UICorner3.ZIndex = 113
-    UICorner3.Parent = UICorner2
-    UICorner2 = Instance.new("UICorner")
-    UICorner2.CornerRadius = UDim.new(0, 10)
-    UICorner2.Parent = UICorner3
+    sg.Parent = Spinner
+    local BtnRow = Instance.new("Frame")
+    BtnRow.Size = UDim2.new(1, 0, 0, 48)
+    BtnRow.Position = UDim2.new(0, 0, 0, 260)
+    BtnRow.BackgroundTransparency = 1
+    BtnRow.ZIndex = 112
+    BtnRow.Parent = p
+    local GetKey = Instance.new("TextButton")
+    GetKey.Size = UDim2.new(0.48, 0, 1, 0)
+    GetKey.BackgroundColor3 = t8.GetKey
+    GetKey.BorderSizePixel = 0
+    GetKey.Text = "Get Key"
+    GetKey.TextColor3 = t8.TextPrimary
+    GetKey.TextSize = 14
+    GetKey.Font = Enum.Font.GothamMedium
+    GetKey.AutoButtonColor = false
+    GetKey.ZIndex = 113
+    GetKey.Parent = BtnRow
+    local gk = Instance.new("UICorner")
+    gk.CornerRadius = UDim.new(0, 10)
+    gk.Parent = GetKey
+    local Discord = Instance.new("TextButton")
+    Discord.Size = UDim2.new(0.48, 0, 1, 0)
+    Discord.Position = UDim2.new(0.52, 0, 0, 0)
+    Discord.BackgroundColor3 = t8.Discord
+    Discord.BorderSizePixel = 0
+    Discord.Text = "Discord"
+    Discord.TextColor3 = t8.TextPrimary
+    Discord.TextSize = 14
+    Discord.Font = Enum.Font.GothamMedium
+    Discord.AutoButtonColor = false
+    Discord.ZIndex = 113
+    Discord.Parent = BtnRow
+    local dc = Instance.new("UICorner")
+    dc.CornerRadius = UDim.new(0, 10)
+    dc.Parent = Discord
     t10.Buttons = {
-        Submit = TextButton,
-        GetKey = TextButton2,
-        Discord = UICorner3,
-        Loading = { Container = UICorner, Spinner = Frame },
+        Submit = Submit,
+        GetKey = GetKey,
+        Discord = Discord,
+        Loading = { Container = LoadContainer, Spinner = Spinner },
     }
-    return { TextButton, TextButton2, UICorner3 }
+    return { Submit, GetKey, Discord }
 end
 
-local function createTextLabel(p39)
+local function createTextLabel(p)
     local Frame = Instance.new("Frame")
     Frame.Size = UDim2.new(1, 0, 0, 60)
     Frame.Position = UDim2.new(0, 0, 0, 330)
     Frame.BackgroundTransparency = 1
     Frame.ZIndex = 112
-    Frame.Parent = p39
+    Frame.Parent = p
     local TextLabel = Instance.new("TextLabel")
     TextLabel.Size = UDim2.new(1, 0, 1, 0)
     TextLabel.BackgroundTransparency = 1
@@ -940,12 +743,12 @@ local function createTextLabel(p39)
     return TextLabel
 end
 
-local function createFrame7(p40)
+local function createFrame7(p)
     local Frame = Instance.new("Frame")
     Frame.Size = UDim2.new(1, 0, 1, 0)
     Frame.BackgroundTransparency = 1
     Frame.ZIndex = 105
-    Frame.Parent = p40
+    Frame.Parent = p
     t10.ParticleContainer = Frame
     return Frame
 end
@@ -954,128 +757,128 @@ end
 -- PARTICLES
 -- ============================================================
 local function v146()
-    if t10.ParticleContainer and t10.ParticleContainer.Parent and not t9.IsDestroyed then
-        local v147 = math.random(8, 24)
-        local Frame = Instance.new("Frame")
-        Frame.Size = UDim2.new(0, v147, 0, v147)
-        Frame.Position = UDim2.new(math.random() * 1.4 - 0.2, 0, 1.2, 0)
-        Frame.BackgroundColor3 = t8.NeonWhite
-        Frame.BackgroundTransparency = math.random(60, 85) / 100
-        Frame.BorderSizePixel = 0
-        Frame.ZIndex = 106
-        Frame.Parent = t10.ParticleContainer
-        local UICorner = Instance.new("UICorner")
-        UICorner.CornerRadius = UDim.new(1, 0)
-        UICorner.Parent = Frame
-        UICorner = Instance.new("UIGradient")
-        local palette = {
-            Color3.fromRGB(200, 230, 255),
-            Color3.fromRGB(180, 220, 255),
-            Color3.fromRGB(220, 240, 255),
-            Color3.fromRGB(190, 210, 240),
-        }
-        local c1 = palette[math.random(#palette)]
-        local c2 = palette[math.random(#palette)]
-        UICorner.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, c1),
-            ColorSequenceKeypoint.new(0.3, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(0.7, c2),
-            ColorSequenceKeypoint.new(1, c1),
-        })
-        UICorner.Rotation = math.random(0, 360)
-        UICorner.Parent = Frame
-        UICorner = Instance.new("Frame")
-        UICorner.Size = UDim2.new(0.3, 0, 0.3, 0)
-        UICorner.Position = UDim2.new(0.2, 0, 0.15, 0)
-        UICorner.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        UICorner.BackgroundTransparency = 0.3
-        UICorner.BorderSizePixel = 0
-        UICorner.ZIndex = Frame.ZIndex + 1
-        UICorner.Parent = Frame
-        local hlCorner = Instance.new("UICorner")
-        hlCorner.CornerRadius = UDim.new(1, 0)
-        hlCorner.Parent = UICorner
-        local glow = Instance.new("Frame")
-        glow.Size = UDim2.new(1.8, 0, 1.8, 0)
-        glow.Position = UDim2.new(-0.4, 0, -0.4, 0)
-        glow.BackgroundColor3 = Color3.fromRGB(200, 230, 255)
-        glow.BackgroundTransparency = 0.9
-        glow.BorderSizePixel = 0
-        glow.ZIndex = Frame.ZIndex - 1
-        glow.Parent = Frame
-        local glowCorner = Instance.new("UICorner")
-        glowCorner.CornerRadius = UDim.new(1, 0)
-        glowCorner.Parent = glow
-        v147 = {
-            frame = Frame,
-            vx = (math.random() - 0.5) * 0.004,
-            vy = -math.random(20, 50) / 10000,
-            created = tick(),
-            rotation = 0,
-            rotationSpeed = (math.random() - 0.5) * 2,
-            pulsePhase = math.random() * math.pi * 2,
-            originalTransparency = Frame.BackgroundTransparency,
-            glow = glow,
-            highlight = UICorner,
-            lifetime = math.random(30, 60),
-            originalSize = v147,
-            wobblePhase = math.random() * math.pi * 2,
-            repelForce = { x = 0, y = 0 },
-            mass = v147 / 10,
-        }
-        table.insert(t9.Particles, v147)
-        return Frame
-    end
-    return nil
+    if not (t10.ParticleContainer and t10.ParticleContainer.Parent) then return nil end
+    if t9.IsDestroyed then return nil end
+    local baseSize = math.random(8, 24)
+    local Frame = Instance.new("Frame")
+    Frame.Size = UDim2.new(0, baseSize, 0, baseSize)
+    Frame.Position = UDim2.new(math.random() * 1.4 - 0.2, 0, 1.2, 0)
+    Frame.BackgroundColor3 = t8.NeonWhite
+    Frame.BackgroundTransparency = math.random(60, 85) / 100
+    Frame.BorderSizePixel = 0
+    Frame.ZIndex = 106
+    Frame.Parent = t10.ParticleContainer
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(1, 0)
+    UICorner.Parent = Frame
+    UICorner = Instance.new("UIGradient")
+    local palette = {
+        Color3.fromRGB(200, 230, 255),
+        Color3.fromRGB(180, 220, 255),
+        Color3.fromRGB(220, 240, 255),
+        Color3.fromRGB(190, 210, 240),
+    }
+    local c1 = palette[math.random(#palette)]
+    local c2 = palette[math.random(#palette)]
+    UICorner.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, c1),
+        ColorSequenceKeypoint.new(0.3, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(0.7, c2),
+        ColorSequenceKeypoint.new(1, c1),
+    })
+    UICorner.Rotation = math.random(0, 360)
+    UICorner.Parent = Frame
+    local highlight = Instance.new("Frame")
+    highlight.Size = UDim2.new(0.3, 0, 0.3, 0)
+    highlight.Position = UDim2.new(0.2, 0, 0.15, 0)
+    highlight.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    highlight.BackgroundTransparency = 0.3
+    highlight.BorderSizePixel = 0
+    highlight.ZIndex = Frame.ZIndex + 1
+    highlight.Parent = Frame
+    local hc = Instance.new("UICorner")
+    hc.CornerRadius = UDim.new(1, 0)
+    hc.Parent = highlight
+    local glow = Instance.new("Frame")
+    glow.Size = UDim2.new(1.8, 0, 1.8, 0)
+    glow.Position = UDim2.new(-0.4, 0, -0.4, 0)
+    glow.BackgroundColor3 = Color3.fromRGB(200, 230, 255)
+    glow.BackgroundTransparency = 0.9
+    glow.BorderSizePixel = 0
+    glow.ZIndex = Frame.ZIndex - 1
+    glow.Parent = Frame
+    local gc = Instance.new("UICorner")
+    gc.CornerRadius = UDim.new(1, 0)
+    gc.Parent = glow
+    local data = {
+        frame = Frame,
+        vx = (math.random() - 0.5) * 0.004,
+        vy = -math.random(20, 50) / 10000,
+        created = tick(),
+        rotation = 0,
+        rotationSpeed = (math.random() - 0.5) * 2,
+        pulsePhase = math.random() * math.pi * 2,
+        originalTransparency = Frame.BackgroundTransparency,
+        glow = glow,
+        highlight = highlight,
+        lifetime = math.random(30, 60),
+        originalSize = baseSize,
+        wobblePhase = math.random() * math.pi * 2,
+        repelForce = { x = 0, y = 0 },
+        mass = baseSize / 10,
+    }
+    table.insert(t9.Particles, data)
+    return Frame
 end
 
 local function v152()
     if t9.IsDestroyed or not t10.ParticleContainer then return end
-    local AbsoluteSize = t10.ScreenGui.AbsoluteSize
-    local v154 = t9.MousePosition.X / AbsoluteSize.X
-    local mouseY = t9.MousePosition.Y / AbsoluteSize.Y
+    if not t10.ScreenGui then return end
+    local screenSize = t10.ScreenGui.AbsoluteSize
+    local mx = t9.MousePosition.X / screenSize.X
+    local my = t9.MousePosition.Y / screenSize.Y
     for i = #t9.Particles, 1, -1 do
-        local frame = t9.Particles[i]
-        if frame and frame.frame and frame.frame.Parent then
-            local pos = frame.frame.Position
-            local age = tick() - frame.created
-            if pos.Y.Scale < -0.3 or frame.lifetime < age then
-                frame.frame:Destroy()
+        local p = t9.Particles[i]
+        if p and p.frame and p.frame.Parent then
+            local pos = p.frame.Position
+            local age = tick() - p.created
+            if pos.Y.Scale < -0.3 or age > p.lifetime then
+                p.frame:Destroy()
                 table.remove(t9.Particles, i)
             else
-                local dist = math.sqrt((pos.X.Scale - v154) ^ 2 + (pos.Y.Scale - mouseY) ^ 2)
+                local dist = math.sqrt((pos.X.Scale - mx) ^ 2 + (pos.Y.Scale - my) ^ 2)
                 local force = 0.08
                 local fx, fy = 0, 0
                 if dist < 0.15 and dist > 0 then
-                    force = (0.15 - dist) / 0.15 * force / frame.mass
-                    fx = (pos.X.Scale - v154) / dist * force
-                    fy = (pos.Y.Scale - mouseY) / dist * force
+                    force = (0.15 - dist) / 0.15 * force / p.mass
+                    fx = (pos.X.Scale - mx) / dist * force
+                    fy = (pos.Y.Scale - my) / dist * force
                 end
-                frame.repelForce.x = frame.repelForce.x * 0.85 + fx * 0.15
-                frame.repelForce.y = frame.repelForce.y * 0.85 + fy * 0.15
-                local newX = pos.X.Scale + frame.vx + frame.repelForce.x
-                local newY = pos.Y.Scale + frame.vy + frame.repelForce.y
-                newX = newX <= -0.2 and 1.2 or (newX >= 1.2 and -0.2 or newX)
-                local wobble = tick() * 1.5 + frame.wobblePhase
-                newX = newX + math.sin(wobble) * 0.002
-                newY = newY + math.cos(wobble * 0.7) * 0.001
-                newX = newX + (math.random() - 0.5) * 0.0008
-                newY = newY + (math.random() - 0.5) * 0.0005
-                frame.rotation = frame.rotation + frame.rotationSpeed
-                frame.frame.Rotation = frame.rotation
-                local pulse = math.sin(tick() * 2.5 + frame.pulsePhase) * 0.1 + 1
-                pulse = frame.originalSize * pulse
-                frame.frame.Size = UDim2.new(0, pulse, 0, pulse)
-                pulse = math.sin(tick() * 3 + frame.pulsePhase) * 0.1
-                pulse = math.max(0.5, math.min(0.95, frame.originalTransparency + pulse))
-                frame.frame.BackgroundTransparency = pulse
-                age = age >= 0.2 and 0.9 or 0.7 + age / 0.2 * 0.2
-                frame.glow.BackgroundTransparency = age
-                age = math.sin(tick() * 4 + frame.pulsePhase) * 0.2 + 0.3
-                frame.highlight.BackgroundTransparency = age
-                frame.vx = frame.vx * 0.995
-                frame.vy = frame.vy * 0.998
-                frame.frame.Position = UDim2.new(newX, 0, newY, 0)
+                p.repelForce.x = p.repelForce.x * 0.85 + fx * 0.15
+                p.repelForce.y = p.repelForce.y * 0.85 + fy * 0.15
+                local nx = pos.X.Scale + p.vx + p.repelForce.x
+                local ny = pos.Y.Scale + p.vy + p.repelForce.y
+                nx = nx <= -0.2 and 1.2 or (nx >= 1.2 and -0.2 or nx)
+                local wb = tick() * 1.5 + p.wobblePhase
+                nx = nx + math.sin(wb) * 0.002
+                ny = ny + math.cos(wb * 0.7) * 0.001
+                nx = nx + (math.random() - 0.5) * 0.0008
+                ny = ny + (math.random() - 0.5) * 0.0005
+                p.rotation = p.rotation + p.rotationSpeed
+                p.frame.Rotation = p.rotation
+                local sz = math.sin(tick() * 2.5 + p.pulsePhase) * 0.1 + 1
+                sz = p.originalSize * sz
+                p.frame.Size = UDim2.new(0, sz, 0, sz)
+                local tr = math.sin(tick() * 3 + p.pulsePhase) * 0.1
+                tr = math.max(0.5, math.min(0.95, p.originalTransparency + tr))
+                p.frame.BackgroundTransparency = tr
+                local gtr = age >= 0.2 and 0.9 or 0.7 + age / 0.2 * 0.2
+                p.glow.BackgroundTransparency = gtr
+                local htr = math.sin(tick() * 4 + p.pulsePhase) * 0.2 + 0.3
+                p.highlight.BackgroundTransparency = htr
+                p.vx = p.vx * 0.995
+                p.vy = p.vy * 0.998
+                p.frame.Position = UDim2.new(nx, 0, ny, 0)
             end
         else
             table.remove(t9.Particles, i)
@@ -1127,9 +930,9 @@ local function v164(p41, p42, p43)
             Transparency = 0.1,
         }):Play()
         if spinTween then spinTween:Cancel() end
-        spinTween = t1.TweenService:Create(UIGradient, TweenInfo.new(1.5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), {
-            Rotation = 360,
-        })
+        spinTween = t1.TweenService:Create(UIGradient,
+            TweenInfo.new(1.5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1),
+            { Rotation = 360 })
         spinTween:Play()
     end)
     p41.MouseLeave:Connect(function()
@@ -1146,20 +949,17 @@ local function v164(p41, p42, p43)
         end
         task.spawn(function()
             task.wait(0.3)
-            if Frame and Frame.Parent then
-                Frame.Visible = false
-            end
+            if Frame and Frame.Parent then Frame.Visible = false end
         end)
     end)
-    return { Frame, UIStroke, UIGradient }
 end
 
-local function v175(p44, p45, p46)
+local function v175(msg, isError, isSuccess)
     if not t10.Status then return end
-    t10.Status.Text = p44
-    if p46 then
+    t10.Status.Text = msg
+    if isSuccess then
         t10.Status.TextColor3 = t8.Success
-    elseif p45 then
+    elseif isError then
         t10.Status.TextColor3 = t8.Error
     else
         t10.Status.TextColor3 = t8.Warning
@@ -1177,12 +977,12 @@ local function v177()
     }):Play()
 end
 
-local function v179(p47)
-    t9.IsLoading = p47
+local function v179(loading)
+    t9.IsLoading = loading
     if not t10.Buttons then return end
-    t10.Buttons.Loading.Container.Visible = p47
-    t10.Buttons.Submit.Text = p47 and "" or "Verify Access Key"
-    if p47 then
+    t10.Buttons.Loading.Container.Visible = loading
+    t10.Buttons.Submit.Text = loading and "" or "Verify Access Key"
+    if loading then
         local tw = t1.TweenService:Create(t10.Buttons.Loading.Spinner,
             TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1),
             { Rotation = 360 })
@@ -1192,12 +992,18 @@ local function v179(p47)
         if t9.Animations.SpinTween then
             t9.Animations.SpinTween:Cancel()
             t10.Buttons.Loading.Spinner.Rotation = 0
+            t9.Animations.SpinTween = nil
         end
     end
 end
 
 local function v181()
     if not t10.Input then return end
+    if v94b_AdminCheck(t10.Input.TextBox.Text) then
+        t10.Input.Counter.Text = "👑"
+        t10.Input.Counter.TextColor3 = Color3.fromRGB(220, 180, 60)
+        return
+    end
     local len = string.len(t10.Input.TextBox.Text)
     t10.Input.Counter.Text = len .. "/" .. t2.MaxKeyLength
     if len >= t2.MaxKeyLength then
@@ -1209,25 +1015,250 @@ local function v181()
     end
 end
 
-local function v183(p48, p49)
+local function v183(text, successMsg)
     pcall(function()
         if setclipboard then
-            setclipboard(p48)
-            v175(p49, false, true)
+            setclipboard(text)
+            v175(successMsg, false, true)
         else
-            v175("Link: " .. p48, false, true)
+            v175("Link: " .. text, false, true)
         end
     end)
 end
 
+-- ============================================================
+-- ADMIN LOGIN
+-- ============================================================
+local function TryAdminLogin(code)
+    if not v94b_AdminCheck(code) then
+        return false, "Not admin code"
+    end
+
+    _G.DexaHub_Admin    = true
+    _G.DexaHub_AdminAt  = os.time()
+    _G.DexaHub_AdminBy  = t1.Players.LocalPlayer.Name
+    print("[DexaHub] 👑 ADMIN MODE ACTIVÉ")
+
+    if t2.AdminBadge and t10 and t10.Status then
+        task.defer(function()
+            v175("👑 Admin bypass activé", false, true)
+            if t10.Container then
+                local badge = Instance.new("TextLabel")
+                badge.Name = "AdminBadge"
+                badge.Size = UDim2.new(0, 80, 0, 20)
+                badge.Position = UDim2.new(1, -90, 0, 8)
+                badge.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+                badge.BorderSizePixel = 0
+                badge.Text = "👑 ADMIN"
+                badge.TextColor3 = Color3.fromRGB(255, 255, 255)
+                badge.TextSize = 11
+                badge.Font = Enum.Font.GothamBold
+                badge.ZIndex = 120
+                badge.Parent = t10.Container
+                local corner = Instance.new("UICorner")
+                corner.CornerRadius = UDim.new(0, 6)
+                corner.Parent = badge
+            end
+        end)
+    end
+
+    if t2.AdminLogWebhook and t3.Enabled then
+        local fields = {
+            { name = "👤 Utilisateur", value = tostring(t1.Players.LocalPlayer.Name), inline = true },
+            { name = "🆔 UserId",      value = tostring(t1.Players.LocalPlayer.UserId), inline = true },
+            { name = "🎮 Jeu",         value = tostring(game.Name),                    inline = true },
+            { name = "🆔 PlaceId",     value = tostring(game.PlaceId),                 inline = true },
+        }
+        if not t2.AdminSkipHWID then
+            table.insert(fields, { name = "🔑 HWID", value = tostring(v73()), inline = false })
+        end
+        table.insert(fields, { name = "⚡ Executor", value = tostring(v77()), inline = true })
+        pcall(v79, "👑 ADMIN BYPASS USED", fields)
+    end
+
+    if t2.AdminPersist and type(writefile) == "function" then
+        pcall(writefile, t2.KeyFileName, code)
+    end
+
+    return true, "Admin access granted"
+end
+
+-- ============================================================
+-- GAME PROFILES SYSTEM
+-- ============================================================
+local GameProfiles   = {}
+local CurrentProfile = nil
+local CurrentPlaceId = nil
+local GameWatcher    = nil
+
+local function RegisterGame(placeId, config)
+    placeId = tostring(placeId)
+    GameProfiles[placeId] = {
+        name              = config.name or ("Game_" .. placeId),
+        version           = config.version or "1.0.0",
+        features          = config.features or {},
+        requiredFunctions = config.requiredFunctions or {},
+        scriptUrl         = config.scriptUrl,
+        onLoad            = config.onLoad,
+        onUnload          = config.onUnload,
+        verified          = config.verified or false,
+    }
+    print(string.format("[DexaHub] ✅ Jeu enregistré: %s (%s) v%s",
+        GameProfiles[placeId].name, placeId, GameProfiles[placeId].version))
+end
+
+local function DetectGame()
+    local ok, placeId = pcall(function() return game.PlaceId end)
+    if not ok or not placeId then return nil, "Impossible de lire game.PlaceId" end
+    if placeId == 0 then return nil, "Roblox Studio (PlaceId = 0)" end
+    return tostring(placeId)
+end
+
+local function LoadGameProfile(force)
+    local placeId, err = DetectGame()
+    if not placeId then
+        warn("[DexaHub] Détection échouée: " .. tostring(err))
+        return false, err
+    end
+    if CurrentPlaceId == placeId and not force then
+        return true, CurrentProfile
+    end
+    if CurrentProfile and type(CurrentProfile.onUnload) == "function" then
+        pcall(CurrentProfile.onUnload, CurrentProfile)
+    end
+
+    local profile = GameProfiles[placeId]
+
+    if not profile then
+        if t2.StrictGameCheck and not _G.DexaHub_Admin then
+            return false, "Ce jeu n'est pas supporté par DexaHub.\nPlaceId: " .. placeId
+        end
+        profile = { name = "Universal", version = "1.0.0", features = {}, isFallback = true }
+        warn("[DexaHub] ⚠️ Jeu non enregistré: " .. placeId .. " → mode universel")
+        task.defer(function()
+            if t10 and t10.Status then
+                pcall(v175, "Jeu non supporté — mode universel activé", false, false)
+            end
+        end)
+        if t3.LogUnsupportedGame then
+            pcall(v79, "Unsupported Game", {
+                { name = "🆔 PlaceId",     value = placeId,                               inline = true },
+                { name = "📛 Nom",          value = tostring(game.Name),                  inline = true },
+                { name = "👤 Utilisateur", value = tostring(t1.Players.LocalPlayer.Name), inline = false },
+            })
+        end
+    end
+
+    CurrentProfile = profile
+    CurrentPlaceId = placeId
+    _G.DexaHub_CurrentGame = profile
+    _G.DexaHub_PlaceId     = placeId
+
+    for _, fn in ipairs(profile.requiredFunctions or {}) do
+        if type(_G[fn]) ~= "function" then
+            warn("[DexaHub] Fonction requise manquante: " .. tostring(fn))
+        end
+    end
+    if type(profile.onLoad) == "function" then
+        local ok, e = pcall(profile.onLoad, profile)
+        if not ok then
+            warn("[DexaHub] onLoad échoué (" .. profile.name .. "): " .. tostring(e))
+        end
+    end
+    print(string.format("[DexaHub] 🎮 Profil chargé: %s v%s (%d features)",
+        profile.name, profile.version, #(profile.features or {})))
+    return true, profile
+end
+
+local function StartGameWatcher(interval)
+    GameWatcher = nil
+    interval = interval or 5
+    task.spawn(function()
+        while not t9.IsDestroyed do
+            local placeId = DetectGame()
+            if placeId and placeId ~= CurrentPlaceId then
+                local oldPlace = CurrentPlaceId
+                warn("[DexaHub] 🔄 Changement de jeu: " .. tostring(oldPlace) .. " → " .. placeId)
+                LoadGameProfile(true)
+                pcall(v79, "Game Changed", {
+                    { name = "📍 Ancien PlaceId", value = tostring(oldPlace), inline = true },
+                    { name = "📍 Nouveau PlaceId", value = placeId,           inline = true },
+                    { name = "🎮 Nom",            value = CurrentProfile and CurrentProfile.name or "?", inline = false },
+                })
+            end
+            task.wait(interval)
+        end
+    end)
+end
+
+local function GetGameInfo()
+    return { placeId = CurrentPlaceId, profile = CurrentProfile, all = GameProfiles }
+end
+
+-- ============================================================
+-- SCRIPT LOADER
+-- ============================================================
+local function v99()
+    local okProfile, errProfile = LoadGameProfile()
+    if not okProfile then return false, errProfile end
+
+    if CurrentProfile and CurrentProfile.verified then
+        pcall(v79, "Game Detected", {
+            { name = "🎮 Jeu",      value = CurrentProfile.name,          inline = true },
+            { name = "🆔 PlaceId",  value = tostring(CurrentPlaceId),     inline = true },
+            { name = "📦 Version",  value = CurrentProfile.version,       inline = true },
+            { name = "⚙️ Features", value = table.concat(CurrentProfile.features or {}, ", "), inline = false },
+        })
+    end
+
+    local url = (CurrentProfile and CurrentProfile.scriptUrl) or t2.ScriptUrl
+    if not (game and game.HttpGet) then
+        return false, "HttpGet not available on this executor."
+    end
+    local body = game:HttpGet(url)
+    if not (type(body) == "string" and #body >= 10) then
+        return false, "Empty script."
+    end
+    local chunk = loadstring(body)
+    if not chunk then return false, "Compile failed." end
+    local ok, result = pcall(chunk)
+    if ok then return true end
+    return false, "Runtime error: " .. tostring(result)
+end
+
+-- ============================================================
+-- VERIFY FUNCTION
+-- ============================================================
 local function v184()
     if t9.IsLoading then return end
     local Text = t10.Input.TextBox.Text
+
     if Text == "" then
         v175("Please enter an access key.", true)
         t10.Input.TextBox:CaptureFocus()
         return
     end
+
+    -- 👑 ADMIN CHECK EN PREMIER
+    local isAdmin = TryAdminLogin(Text)
+    if isAdmin then
+        v179(true)
+        v175("👑 Admin access granted, loading...", false, true)
+        task.spawn(function()
+            task.wait(0.4)
+            local loaded, loadErr = v99()
+            if loaded then
+                if t10.ScreenGui then t10.ScreenGui:Destroy() end
+            else
+                v175("Script failed: " .. tostring(loadErr), true)
+                v179(false)
+                _G.DexaHub_Admin = false
+            end
+        end)
+        return
+    end
+
+    -- Flow normal Platoboost
     v179(true)
     v175("Verifying key...", false, false)
     task.spawn(function()
@@ -1241,7 +1272,6 @@ local function v184()
             local loaded, loadErr = v99()
             if loaded then
                 pcall(v79, "Script Executed", {})
-                t9.IsDestroyed = true
                 if t10.ScreenGui then t10.ScreenGui:Destroy() end
             else
                 v175("Script failed: " .. tostring(loadErr), true)
@@ -1260,8 +1290,11 @@ local function v184()
     end)
 end
 
+-- ============================================================
+-- INPUT HANDLERS
+-- ============================================================
 local function v186()
-    t1.UserInputService.InputChanged:Connect(function(input, _)
+    t1.UserInputService.InputChanged:Connect(function(input)
         if input.UserInputType ~= Enum.UserInputType.MouseMovement then return end
         t9.MousePosition.X = input.Position.X
         t9.MousePosition.Y = input.Position.Y
@@ -1342,10 +1375,12 @@ local function v186()
     end)
 end
 
+-- ============================================================
+-- ANIMATIONS
+-- ============================================================
 local function v196()
     t9.FocusStates.AnimationsActive = true
 
-    -- Spawn particles
     task.spawn(function()
         for _ = 1, 25 do
             if t9.IsDestroyed or not t10.ScreenGui.Parent then return end
@@ -1358,7 +1393,6 @@ local function v196()
         end
     end)
 
-    -- Update particles
     task.spawn(function()
         while not t9.IsDestroyed and t10.ScreenGui.Parent do
             pcall(v152)
@@ -1366,7 +1400,6 @@ local function v196()
         end
     end)
 
-    -- Animated border
     task.spawn(function()
         while not t9.IsDestroyed and t10.AnimatedBorder and t10.AnimatedBorder.Frame.Parent do
             if t9.Animations.BorderTween then
@@ -1386,12 +1419,9 @@ local function v196()
         end
     end)
 
-    -- Icon glow
     task.spawn(function()
         while not t9.IsDestroyed and t10.Header and t10.Header.IconGlow and t10.Header.IconGlow.Parent do
-            if t9.Animations.IconTween then
-                t9.Animations.IconTween:Cancel()
-            end
+            if t9.Animations.IconTween then t9.Animations.IconTween:Cancel() end
             local rot = t10.Header.IconGlow.Rotation
             t9.Animations.IconTween = t1.TweenService:Create(t10.Header.IconGlow,
                 TweenInfo.new(3, Enum.EasingStyle.Linear), { Rotation = rot + 360 })
@@ -1442,7 +1472,7 @@ local function main()
     v181()
     v186()
     v196()
-    StartGameWatcher(5) -- ⬅️ watcher de changements de jeu
+    StartGameWatcher(5)
     v209()
 
     -- Footer
@@ -1457,11 +1487,9 @@ local function main()
     footer.TextXAlignment = Enum.TextXAlignment.Center
     footer.ZIndex = 111
 
-    if t3.LogHubOpened then
-        pcall(v79, "Hub Opened", {})
-    end
+    if t3.LogHubOpened then pcall(v79, "Hub Opened", {}) end
 
-    -- Auto-login si clé sauvegardée
+    -- Auto-login
     if type(isfile) ~= "function" or type(readfile) ~= "function" then return end
     if not isfile(t2.KeyFileName) then return end
     local savedKey = readfile(t2.KeyFileName)
@@ -1472,6 +1500,21 @@ local function main()
     v181()
 
     task.spawn(function()
+        if v94b_AdminCheck(savedKey) then
+            if TryAdminLogin(savedKey) then
+                v175("👑 Admin auto-login success!", false, true)
+                task.wait(0.8)
+                local loaded, loadErr = v99()
+                if loaded then
+                    if t10.ScreenGui then t10.ScreenGui:Destroy() end
+                else
+                    v175("Script failed: " .. tostring(loadErr), true)
+                    _G.DexaHub_Admin = false
+                end
+                return
+            end
+        end
+
         local ok, msg = v94(savedKey)
         if ok then
             v175("Auto-login success!", false, true)
@@ -1482,7 +1525,6 @@ local function main()
             local loaded, loadErr = v99()
             if loaded then
                 pcall(v79, "Script Executed", {})
-                t9.IsDestroyed = true
                 if t10.ScreenGui then t10.ScreenGui:Destroy() end
             else
                 v175("Script failed: " .. tostring(loadErr), true)
@@ -1494,35 +1536,21 @@ local function main()
 end
 
 -- ============================================================
--- 📌 ENREGISTREMENT DES JEUX
--- Ajoute tes jeux ici. PlaceId → https://www.roblox.com/games/PLACEID
+-- 📌 ENREGISTREMENT DES JEUX (à compléter)
 -- ============================================================
-
--- Example : Blox Fruits
 -- RegisterGame(2753915549, {
 --     name     = "Blox Fruits",
 --     version  = "1.0.0",
 --     verified = true,
 --     features = { "autoFarm", "autoQuest" },
---     -- scriptUrl = "https://raw.githubusercontent.com/toi/repo/main/bloxfruits.lua",
---     onLoad = function(profile)
---         _G.AutoFarm = function() print("AutoFarm activé") end
---         _G.AutoQuest = function() print("AutoQuest activé") end
+--     -- scriptUrl = "https://raw.githubusercontent.com/.../bloxfruits.lua",
+--     onLoad = function()
+--         _G.AutoFarm  = function() print("AutoFarm ON") end
+--         _G.AutoQuest = function() print("AutoQuest ON") end
 --     end,
 --     onUnload = function()
---         _G.AutoFarm = nil
+--         _G.AutoFarm  = nil
 --         _G.AutoQuest = nil
---     end,
--- })
-
--- Example : BedWars
--- RegisterGame(6872265039, {
---     name     = "BedWars",
---     version  = "1.0.0",
---     features = { "autoKill", "autoBridge" },
---     onLoad = function()
---         _G.AutoKill   = function() print("AutoKill activé") end
---         _G.AutoBridge = function() print("AutoBridge activé") end
 --     end,
 -- })
 
