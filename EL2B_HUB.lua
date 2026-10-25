@@ -4,71 +4,73 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
-local wasCarrying = false
-local countdownActive = false
+-- === Generation token ===
+-- Every execution bumps the generation; old callbacks become inert.
+_G.E01FixerGen = (_G.E01FixerGen or 0) + 1
+local myGen = _G.E01FixerGen
+local function isCurrent() return _G.E01FixerGen == myGen end
 
--- Persistent UI state (survives re-execute)
-local savedPosition = nil
-local savedLocked = false
+-- === Persistent state (survives re-execute) ===
+_G.E01FixerState = _G.E01FixerState or { position = nil, locked = false }
 
--- Try to read saved state from a global so re-execute preserves it
-if _G.E01FixerState then
-	savedPosition = _G.E01FixerState.position
-	savedLocked = _G.E01FixerState.locked or false
-end
-
-_G.E01FixerState = _G.E01FixerState or {}
-
--- Clean up old persistent UI if it exists
+-- === Tear down any previous execution ===
 if _G.E01FixerCleanup then
 	_G.E01FixerCleanup()
 end
 
--- 1. Check if player is carrying an item
+-- === Per-execution state ===
+local countdownActive = false
+local connections = {}   -- all non-character connections
+local charConns = {}     -- character-specific watchers
+
+local function track(conn)
+	table.insert(connections, conn)
+	return conn
+end
+
+-- === Carrying detection ===
+local function isCarryingName(name)
+	name = name:lower()
+	return name:find("brainrot") or name:find("brain") or name:find("animal") or
+		name:find("carry") or name:find("stolen") or name:find("held") or name:find("steal")
+end
+
+local function isCarryingAttr(name)
+	name = name:lower()
+	return name:find("carrying") or name:find("carry") or name:find("stealing") or
+		name:find("isstealing") or name:find("hasbrainrot")
+end
+
 local function isCarrying()
 	local char = LocalPlayer.Character
 	if not char then return false end
 
-	for _, child in pairs(char:GetChildren()) do
-		local name = child.Name:lower()
-		if name:find("brainrot") or name:find("brain") or name:find("animal") or 
-			name:find("carry") or name:find("stolen") or name:find("held") or name:find("steal") then
+	for _, child in ipairs(char:GetChildren()) do
+		if isCarryingName(child.Name) then
 			return true
 		end
 	end
 
 	for attrName, attrValue in pairs(char:GetAttributes()) do
-		local name = attrName:lower()
-		if (name:find("carrying") or name:find("carry") or name:find("stealing") or 
-			name:find("isstealing") or name:find("hasbrainrot")) and attrValue == true then
+		if attrValue == true and isCarryingAttr(attrName) then
 			return true
 		end
-	end
-
-	local humanoid = char:FindFirstChildOfClass("Humanoid")
-	if humanoid and humanoid.WalkSpeed > 0 and humanoid.WalkSpeed <= 25 and humanoid.WalkSpeed ~= 16 then
-		return true
 	end
 
 	return false
 end
 
--- 2. Sakura-themed E01 Fixer Countdown UI
+-- === Sakura-themed E01 Fixer Countdown UI ===
 local function startE01HeadCountdown()
 	if countdownActive then return end
-	countdownActive = true
 
 	local char = LocalPlayer.Character
-	if not char then
-		countdownActive = false
-		return
-	end
+	if not char then return end
 
 	local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-	if not playerGui then
-		countdownActive = false
-		return
-	end
+	if not playerGui then return end
+
+	countdownActive = true
 
 	-- Delete old countdown UI
 	local old = playerGui:FindFirstChild("E01FixerUI")
@@ -82,31 +84,29 @@ local function startE01HeadCountdown()
 	screenGui.DisplayOrder = 100
 	screenGui.Parent = playerGui
 
-	-- Container frame (380x128 — less tall)
+	-- Container
 	local container = Instance.new("Frame")
 	container.Name = "Container"
 	container.Size = UDim2.new(0, 380, 0, 128)
 	container.BackgroundTransparency = 1
 	container.Parent = screenGui
 
-	-- Use saved position (Offset-only) or default bottom-center
+	-- Position from saved state or default bottom-center
 	local defaultX = 0.5
 	local defaultXOffset = -190
 	local defaultY = 1
 	local defaultYOffset = -150
 
-	local currentSavedPosition = _G.E01FixerState and _G.E01FixerState.position or nil
-	if currentSavedPosition then
-		container.Position = currentSavedPosition
+	if _G.E01FixerState.position then
+		container.Position = _G.E01FixerState.position
 	else
 		container.Position = UDim2.new(defaultX, defaultXOffset, 1, 30)
-		-- Slide-in animation
 		task.spawn(function()
 			task.wait(0.05)
-			local slideIn = TweenService:Create(container, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+			if not screenGui.Parent then return end
+			TweenService:Create(container, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
 				Position = UDim2.new(defaultX, defaultXOffset, defaultY, defaultYOffset)
-			})
-			slideIn:Play()
+			}):Play()
 		end)
 	end
 
@@ -147,7 +147,6 @@ local function startE01HeadCountdown()
 	mainCorner.CornerRadius = UDim.new(0, 18)
 	mainCorner.Parent = mainFrame
 
-	-- Main gradient
 	local mainGradient = Instance.new("UIGradient")
 	mainGradient.Color = ColorSequence.new({
 		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 245, 250)),
@@ -157,22 +156,21 @@ local function startE01HeadCountdown()
 	mainGradient.Rotation = 90
 	mainGradient.Parent = mainFrame
 
-	-- === OUTLINE PROGRESS BAR ===
-	-- UIStroke that depletes in thickness + shifts color during countdown
+	-- Outline progress bar (depletes in thickness + shifts to red)
 	local outline = Instance.new("UIStroke")
 	outline.Color = Color3.fromRGB(255, 100, 140)
 	outline.Thickness = 7
 	outline.Transparency = 0
 	outline.Parent = mainFrame
 
-	-- Inner highlight stroke
+	-- Inner highlight
 	local innerStroke = Instance.new("UIStroke")
 	innerStroke.Color = Color3.fromRGB(255, 255, 255)
 	innerStroke.Thickness = 1
 	innerStroke.Transparency = 0.5
 	innerStroke.Parent = mainFrame
 
-	-- === BOTTOM PROGRESS BAR === (clearly visible depleting bar)
+	-- Bottom progress bar
 	local progressBg = Instance.new("Frame")
 	progressBg.Name = "ProgressBg"
 	progressBg.Size = UDim2.new(1, -24, 0, 6)
@@ -208,7 +206,7 @@ local function startE01HeadCountdown()
 	})
 	progressGradient.Parent = progressFill
 
-	-- Title bar background
+	-- Title bar
 	local titleBar = Instance.new("Frame")
 	titleBar.Name = "TitleBar"
 	titleBar.Size = UDim2.new(1, 0, 0, 34)
@@ -223,17 +221,17 @@ local function startE01HeadCountdown()
 	titleBarCorner.CornerRadius = UDim.new(0, 18)
 	titleBarCorner.Parent = titleBar
 
-	-- Clip the bottom of title bar so only top corners are rounded
+	-- Clip: squares off the bottom of the title bar (must render ON TOP of titleBar)
 	local titleBarClip = Instance.new("Frame")
 	titleBarClip.Size = UDim2.new(1, 0, 0, 16)
 	titleBarClip.Position = UDim2.new(0, 0, 0, 18)
 	titleBarClip.BackgroundColor3 = Color3.fromRGB(255, 235, 245)
 	titleBarClip.BackgroundTransparency = 0.02
 	titleBarClip.BorderSizePixel = 0
-	titleBarClip.ZIndex = 1
+	titleBarClip.ZIndex = 2  -- fixed: was 1 (rendered under titleBar)
 	titleBarClip.Parent = mainFrame
 
-	-- Title text with sakura icon
+	-- Title text
 	local titleLabel = Instance.new("TextLabel")
 	titleLabel.Name = "Title"
 	titleLabel.Size = UDim2.new(1, -60, 0, 34)
@@ -249,7 +247,7 @@ local function startE01HeadCountdown()
 	titleLabel.ZIndex = 3
 	titleLabel.Parent = mainFrame
 
-	-- Lock / Unlock button (pink/purple)
+	-- Lock button
 	local lockBtn = Instance.new("TextButton")
 	lockBtn.Name = "LockBtn"
 	lockBtn.Size = UDim2.new(0, 34, 0, 22)
@@ -280,18 +278,17 @@ local function startE01HeadCountdown()
 	lockBtnLabel.ZIndex = 5
 	lockBtnLabel.Parent = lockBtn
 
-	-- Dragging logic
-	local isLocked = savedLocked
+	-- === Drag + lock logic ===
+	local isLocked = _G.E01FixerState.locked or false
 	local isDragging = false
-	local dragStart = nil
-	local startPos = nil
+	local dragStart, startPos
 
 	local function updateLockVisual()
 		if isLocked then
-			lockBtn.BackgroundColor3 = Color3.fromRGB(200, 140, 220) -- purple (locked)
+			lockBtn.BackgroundColor3 = Color3.fromRGB(200, 140, 220)
 			lockBtnLabel.Text = "🔒"
 		else
-			lockBtn.BackgroundColor3 = Color3.fromRGB(255, 130, 180) -- pink (unlocked)
+			lockBtn.BackgroundColor3 = Color3.fromRGB(255, 130, 180)
 			lockBtnLabel.Text = "🔓"
 		end
 		_G.E01FixerState.locked = isLocked
@@ -299,45 +296,38 @@ local function startE01HeadCountdown()
 
 	updateLockVisual()
 
-	lockBtn.MouseButton1Click:Connect(function()
+	track(lockBtn.MouseButton1Click:Connect(function()
 		isLocked = not isLocked
 		updateLockVisual()
-	end)
+	end))
 
-	-- Make the title bar the drag handle
-	titleBar.InputBegan:Connect(function(input)
-		if not isLocked and (
-			input.UserInputType == Enum.UserInputType.MouseButton1 or
-				input.UserInputType == Enum.UserInputType.Touch
-			) then
+	track(titleBar.InputBegan:Connect(function(input)
+		if not isLocked and (input.UserInputType == Enum.UserInputType.MouseButton1 or
+			input.UserInputType == Enum.UserInputType.Touch) then
 			isDragging = true
 			dragStart = input.Position
 			startPos = container.AbsolutePosition
 		end
-	end)
+	end))
 
-	titleBar.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1
-			or input.UserInputType == Enum.UserInputType.Touch then
+	track(titleBar.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or
+			input.UserInputType == Enum.UserInputType.Touch then
 			isDragging = false
 		end
-	end)
+	end))
 
-	local dragConn
-	dragConn = UserInputService.InputChanged:Connect(function(input)
-		if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement
-			or input.UserInputType == Enum.UserInputType.Touch) then
+	track(UserInputService.InputChanged:Connect(function(input)
+		if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or
+			input.UserInputType == Enum.UserInputType.Touch) then
 			local delta = input.Position - dragStart
-			-- Use AbsolutePosition so Scale-based initial positions are handled correctly
-			local newPosX = startPos.X + delta.X
-			local newPosY = startPos.Y + delta.Y
-			local newPos = UDim2.new(0, newPosX, 0, newPosY)
+			local newPos = UDim2.new(0, startPos.X + delta.X, 0, startPos.Y + delta.Y)
 			container.Position = newPos
 			_G.E01FixerState.position = newPos
 		end
-	end)
+	end))
 
-	-- Status label ("Don't pass" / "Pass")
+	-- Status label
 	local statusLabel = Instance.new("TextLabel")
 	statusLabel.Name = "Status"
 	statusLabel.Size = UDim2.new(1, -24, 0, 32)
@@ -352,7 +342,7 @@ local function startE01HeadCountdown()
 	statusLabel.ZIndex = 3
 	statusLabel.Parent = mainFrame
 
-	-- Countdown timer label
+	-- Timer label
 	local timerLabel = Instance.new("TextLabel")
 	timerLabel.Name = "Timer"
 	timerLabel.Size = UDim2.new(1, -24, 0, 18)
@@ -365,7 +355,7 @@ local function startE01HeadCountdown()
 	timerLabel.ZIndex = 3
 	timerLabel.Parent = mainFrame
 
-	-- Decorative sakura petals
+	-- Decorative petals
 	local function createPetal(parent, posX, posY, size, color, z)
 		local petal = Instance.new("Frame")
 		petal.Size = UDim2.new(0, size, 0, size)
@@ -387,120 +377,157 @@ local function startE01HeadCountdown()
 	createPetal(mainFrame, 8, 114, 6, Color3.fromRGB(255, 180, 200))
 	createPetal(mainFrame, 366, 114, 6, Color3.fromRGB(255, 180, 200))
 
-	-- === COUNTDOWN LOGIC ===
+	-- === Countdown logic ===
 	local duration = 3.0
-	local startTime = tick()
+	local startTime = os.clock()
 	local finished = false
-	local connection
-
 	local maxThickness = 7
 	local minThickness = 1.5
 
+	local connection
 	connection = RunService.RenderStepped:Connect(function()
-		if finished then return end
+		if finished or not isCurrent() then return end
+		if not mainFrame or not mainFrame.Parent then
+			finished = true
+			if connection then connection:Disconnect() end
+			return
+		end
 
-		local elapsed = tick() - startTime
+		local elapsed = os.clock() - startTime
 		local remaining = math.max(0, duration - elapsed)
-		local progress = remaining / duration -- 1 = full, 0 = empty
+		local progress = remaining / duration
 
-		if mainFrame and mainFrame.Parent then
-			if remaining > 0 then
-				statusLabel.Text = "Don't pass"
-				statusLabel.TextColor3 = Color3.fromRGB(210, 40, 70)
-				timerLabel.Text = string.format("%.1fs remaining", remaining)
-				timerLabel.TextColor3 = Color3.fromRGB(120, 80, 100)
+		if remaining > 0 then
+			statusLabel.Text = "Don't pass"
+			statusLabel.TextColor3 = Color3.fromRGB(210, 40, 70)
+			timerLabel.Text = string.format("%.1fs remaining", remaining)
+			timerLabel.TextColor3 = Color3.fromRGB(120, 80, 100)
 
-				-- Outline depletes: thickness shrinks + color shifts from pink to red
-				outline.Thickness = minThickness + (maxThickness - minThickness) * progress
-				local r = math.floor(255 * progress + 230 * (1 - progress))
-				local g = math.floor(100 * progress + 50 * (1 - progress))
-				local b = math.floor(140 * progress + 60 * (1 - progress))
-				outline.Color = Color3.fromRGB(r, g, b)
+			outline.Thickness = minThickness + (maxThickness - minThickness) * progress
+			local r = math.floor(255 * progress + 230 * (1 - progress))
+			local g = math.floor(100 * progress + 50 * (1 - progress))
+			local b = math.floor(140 * progress + 60 * (1 - progress))
+			outline.Color = Color3.fromRGB(r, g, b)
 
-				-- Bottom progress bar depletes (width shrinks from right)
-				progressFill.Size = UDim2.new(progress, 0, 1, 0)
-				-- Shift progress bar color from pink to red
-				progressGradient.Color = ColorSequence.new({
-					ColorSequenceKeypoint.new(0, Color3.fromRGB(255, math.floor(130 * progress + 80 * (1 - progress)), math.floor(170 * progress + 90 * (1 - progress)))),
-					ColorSequenceKeypoint.new(1, Color3.fromRGB(230, math.floor(80 * progress + 40 * (1 - progress)), math.floor(120 * progress + 60 * (1 - progress)))),
-				})
-			else
-				finished = true
-				connection:Disconnect()
+			progressFill.Size = UDim2.new(progress, 0, 1, 0)
+			progressGradient.Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(255, math.floor(130 * progress + 80 * (1 - progress)), math.floor(170 * progress + 90 * (1 - progress)))),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(230, math.floor(80 * progress + 40 * (1 - progress)), math.floor(120 * progress + 60 * (1 - progress)))),
+			})
+		else
+			finished = true
+			connection:Disconnect()
 
-				statusLabel.Text = "✓ Pass"
-				statusLabel.TextColor3 = Color3.fromRGB(40, 180, 90)
-				timerLabel.Text = "All clear!"
-				timerLabel.TextColor3 = Color3.fromRGB(40, 160, 80)
+			statusLabel.Text = "✓ Pass"
+			statusLabel.TextColor3 = Color3.fromRGB(40, 180, 90)
+			timerLabel.Text = "All clear!"
+			timerLabel.TextColor3 = Color3.fromRGB(40, 160, 80)
 
-				-- Outline becomes full thickness green
-				outline.Thickness = maxThickness
-				outline.Color = Color3.fromRGB(80, 200, 120)
+			outline.Thickness = maxThickness
+			outline.Color = Color3.fromRGB(80, 200, 120)
 
-				-- Progress bar fills to full green
-				progressFill.Size = UDim2.new(1, 0, 1, 0)
-				progressGradient.Color = ColorSequence.new({
-					ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 220, 140)),
-					ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 190, 100)),
-				})
+			progressFill.Size = UDim2.new(1, 0, 1, 0)
+			progressGradient.Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 220, 140)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 190, 100)),
+			})
 
-				-- Fade and destroy
-				task.spawn(function()
-					task.wait(2.5)
+			-- Fade & destroy after a short hold
+			task.spawn(function()
+				task.wait(2.5)
+				if not isCurrent() then return end
+				if not (screenGui and screenGui.Parent) then
+					countdownActive = false
+					return
+				end
+
+				local fadeTweens = {
+					TweenService:Create(mainFrame, TweenInfo.new(0.5), { BackgroundTransparency = 1 }),
+					TweenService:Create(titleBar, TweenInfo.new(0.5), { BackgroundTransparency = 1 }),
+					TweenService:Create(titleBarClip, TweenInfo.new(0.5), { BackgroundTransparency = 1 }),
+					TweenService:Create(titleLabel, TweenInfo.new(0.5), { TextTransparency = 1, TextStrokeTransparency = 1 }),
+					TweenService:Create(statusLabel, TweenInfo.new(0.5), { TextTransparency = 1, TextStrokeTransparency = 1 }),
+					TweenService:Create(timerLabel, TweenInfo.new(0.5), { TextTransparency = 1 }),
+					TweenService:Create(outline, TweenInfo.new(0.5), { Transparency = 1 }),
+					TweenService:Create(innerStroke, TweenInfo.new(0.5), { Transparency = 1 }),
+					TweenService:Create(shadow, TweenInfo.new(0.5), { BackgroundTransparency = 1 }),
+					TweenService:Create(lockBtn, TweenInfo.new(0.5), { BackgroundTransparency = 1 }),
+					TweenService:Create(lockBtnLabel, TweenInfo.new(0.5), { TextTransparency = 1 }),
+					TweenService:Create(lockBtnStroke, TweenInfo.new(0.5), { Transparency = 1 }),
+					TweenService:Create(progressBg, TweenInfo.new(0.5), { BackgroundTransparency = 1 }),
+					TweenService:Create(progressFill, TweenInfo.new(0.5), { BackgroundTransparency = 1 }),
+				}
+
+				track(fadeTweens[1].Completed:Connect(function()
 					if screenGui and screenGui.Parent then
-						local fadeTweens = {
-							TweenService:Create(mainFrame, TweenInfo.new(0.5), { BackgroundTransparency = 1 }),
-							TweenService:Create(titleBar, TweenInfo.new(0.5), { BackgroundTransparency = 1 }),
-							TweenService:Create(titleBarClip, TweenInfo.new(0.5), { BackgroundTransparency = 1 }),
-							TweenService:Create(titleLabel, TweenInfo.new(0.5), { TextTransparency = 1, TextStrokeTransparency = 1 }),
-							TweenService:Create(statusLabel, TweenInfo.new(0.5), { TextTransparency = 1, TextStrokeTransparency = 1 }),
-							TweenService:Create(timerLabel, TweenInfo.new(0.5), { TextTransparency = 1 }),
-							TweenService:Create(outline, TweenInfo.new(0.5), { Transparency = 1 }),
-							TweenService:Create(innerStroke, TweenInfo.new(0.5), { Transparency = 1 }),
-							TweenService:Create(shadow, TweenInfo.new(0.5), { BackgroundTransparency = 1 }),
-							TweenService:Create(lockBtn, TweenInfo.new(0.5), { BackgroundTransparency = 1 }),
-							TweenService:Create(lockBtnLabel, TweenInfo.new(0.5), { TextTransparency = 1 }),
-							TweenService:Create(lockBtnStroke, TweenInfo.new(0.5), { Transparency = 1 }),
-							TweenService:Create(progressBg, TweenInfo.new(0.5), { BackgroundTransparency = 1 }),
-							TweenService:Create(progressFill, TweenInfo.new(0.5), { BackgroundTransparency = 1 }),
-						}
-						for _, tween in ipairs(fadeTweens) do
-							tween:Play()
-						end
-						fadeTweens[1].Completed:Connect(function()
-							screenGui:Destroy()
-							countdownActive = false
-						end)
+						screenGui:Destroy()
 					end
-				end)
-			end
+					if isCurrent() then
+						countdownActive = false
+					end
+				end))
+
+				for _, tween in ipairs(fadeTweens) do
+					tween:Play()
+				end
+			end)
 		end
 	end)
+
+	track(connection)
 end
 
--- 3. Automatic Detection
-task.spawn(function()
-	while task.wait(0.1) do
-		local currentlyCarrying = isCarrying()
+-- === Signal-based detection (no polling) ===
+local function watchCharacter(char)
+	-- Drop previous character's watchers
+	for _, conn in ipairs(charConns) do
+		if conn.Connected then conn:Disconnect() end
+	end
+	charConns = {}
 
-		if not wasCarrying and currentlyCarrying then
+	if not char then return end
+
+	table.insert(charConns, char.ChildAdded:Connect(function(child)
+		if not isCurrent() then return end
+		if countdownActive then return end
+		if isCarryingName(child.Name) and isCarrying() then
 			startE01HeadCountdown()
 		end
+	end))
 
-		-- Only reset wasCarrying when countdown is NOT active,
-		-- so flickering detection won't restart the countdown
-		if not countdownActive then
-			wasCarrying = currentlyCarrying
+	table.insert(charConns, char.AttributeChanged:Connect(function(attrName)
+		if not isCurrent() then return end
+		if countdownActive then return end
+		if char:GetAttribute(attrName) == true and isCarryingAttr(attrName) and isCarrying() then
+			startE01HeadCountdown()
 		end
-	end
-end)
+	end))
 
--- Cleanup function for re-execute
+	-- Initial check for this character (handles "already carrying on load/respawn")
+	if isCarrying() and not countdownActive then
+		startE01HeadCountdown()
+	end
+end
+
+track(LocalPlayer.CharacterAdded:Connect(watchCharacter))
+if LocalPlayer.Character then
+	watchCharacter(LocalPlayer.Character)
+end
+
+-- === Cleanup for re-execute ===
 _G.E01FixerCleanup = function()
+	countdownActive = false
+	for _, conn in ipairs(connections) do
+		if conn.Connected then conn:Disconnect() end
+	end
+	connections = {}
+	for _, conn in ipairs(charConns) do
+		if conn.Connected then conn:Disconnect() end
+	end
+	charConns = {}
+
 	local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
 	if playerGui and playerGui:FindFirstChild("E01FixerUI") then
 		playerGui.E01FixerUI:Destroy()
 	end
-	countdownActive = false
-	wasCarrying = false
 end
