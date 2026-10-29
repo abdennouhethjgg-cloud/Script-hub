@@ -1,7 +1,7 @@
 -- ======================================================
---  Auto-Digging + Anti-Kick - Steal a Brainrot
---  Compatible Delta Executor
---  Remotes: RE/EventService/Digging/Dig + RE/UseItem
+--  STEAL A BRAINROT - AUTO DIG (ULTRA SAFE VERSION)
+--  Compatible : Delta Executor
+--  Remotes : Dig, Carve, SpawnFacing, DropPiece, UseItem
 -- ======================================================
 
 if not game:IsLoaded() then game.Loaded:Wait() end
@@ -15,12 +15,8 @@ local player    = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 -- ======================================================
---  1. ANTI-KICK (Hook de la métaméthode __namecall)
+--  1. ANTI-KICK (Bypass local)
 -- ======================================================
--- Cette section intercepte les appels à `Kick` et les bloque.
--- Note : Un anti-kick ne peut pas bloquer un kick décidé côté serveur,
--- mais il empêche l'exécution locale de la fonction Kick.
-
 local antiKickEnabled = true
 local oldNamecall
 
@@ -32,90 +28,75 @@ local function setupAntiKick()
         
         mt.__namecall = newcclosure(function(self, ...)
             local method = getnamecallmethod()
-            
-            -- Bloquer les kicks
+            -- Bloquer les kicks locaux
             if antiKickEnabled and (method == "Kick" or tostring(method):lower() == "kick") then
-                warn("[Anti-Kick] Tentative de kick interceptée :", self, ...)
-                return nil -- On bloque l'appel
+                warn("[Anti-Kick] Tentative de kick bloquée !")
+                return nil
             end
-            
             return oldNamecall(self, ...)
         end)
     end)
-    
-    if not success then
-        warn("[Anti-Kick] Impossible d'installer le hook :", err)
-    end
+    if not success then warn("[Anti-Kick] Erreur d'installation :", err) end
 end
 
 setupAntiKick()
 
--- Fonction pour désactiver/réactiver l'anti-kick si besoin
-local function toggleAntiKick(state)
-    antiKickEnabled = state
-    print("[Anti-Kick] État :", state and "Activé" or "Désactivé")
-end
-
 -- ======================================================
---  2. RÉFÉRENCE AUX REMOTES (avec gestion d'erreur)
+--  2. RÉCUPÉRATION SÉCURISÉE DES REMOTES
 -- ======================================================
-
-local Net, DigRemote, UseItem
+local remotes = {}
+local remotesReady = false
 
 local function initRemotes()
     local success, err = pcall(function()
-        local packages = ReplicatedStorage:WaitForChild("Packages", 10)
-        if not packages then error("Packages introuvable") end
+        local Net = ReplicatedStorage:WaitForChild("Packages", 10):WaitForChild("Net", 10)
         
-        Net = packages:WaitForChild("Net", 10)
-        if not Net then error("Net introuvable") end
+        -- RE (RemoteEvents) -> FireServer
+        remotes.Dig         = Net:WaitForChild("RE/EventService/Digging/Dig", 10)
+        remotes.Carve       = Net:WaitForChild("RE/EventService/Digging/Carve", 10)
+        remotes.SpawnFacing = Net:WaitForChild("RE/EventService/Digging/SpawnFacing", 10)
+        remotes.UseItem     = Net:WaitForChild("RE/UseItem", 10)
         
-        DigRemote = Net:WaitForChild("RE/EventService/Digging/Dig", 10)
-        UseItem   = Net:WaitForChild("RE/UseItem", 10)
-        
-        if not DigRemote then error("DigRemote introuvable") end
-        if not UseItem then error("UseItem introuvable") end
+        -- RF (RemoteFunction) -> InvokeServer (TRÈS IMPORTANT)
+        remotes.DropPiece   = Net:WaitForChild("RF/EventService/Digging/DropPiece", 10)
     end)
     
-    if not success then
+    if success then
+        remotesReady = true
+        return true
+    else
         warn("[Init] Erreur lors de la récupération des remotes :", err)
+        remotesReady = false
         return false
     end
-    return true
 end
 
-local remotesReady = initRemotes()
+initRemotes()
 
 -- ======================================================
 --  3. CONFIGURATION
 -- ======================================================
-
 local CONFIG = {
-    DIG_DELAY       = 0.25,   -- Intervalle entre les coups (secondes). Augmenter si kick.
-    DIG_OFFSET      = Vector3.new(0, -3, 0),
-    ANTI_KICK       = true,
-    AUTO_RECONNECT  = true,
-    MAX_ERRORS      = 5,      -- Nombre d'erreurs consécutives avant pause
-    RECONNECT_DELAY = 5,      -- Secondes avant de tenter de se reconnecter
+    DIG_DELAY  = 0.5, -- Délai entre chaque coup (0.5 = safe, 0.3 = risqué)
+    DIG_OFFSET = Vector3.new(0, -3, 0) -- Point de frappe au sol
 }
 
 _G.AutoDigging = false
 local hitCount = 0
 local errorCount = 0
+local maxErrors = 5
 
 -- ======================================================
---  4. INTERFACE GRAPHIQUE
+--  4. CRÉATION DE L'INTERFACE (GUI)
 -- ======================================================
-
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AutoDig_GUI_Pro"
 screenGui.ResetOnSpawn = false
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = playerGui
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 260, 0, 180)
-mainFrame.Position = UDim2.new(0.5, -130, 0.5, -90)
+mainFrame.Size = UDim2.new(0, 260, 0, 160)
+mainFrame.Position = UDim2.new(0.5, -130, 0.5, -80)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
@@ -123,17 +104,14 @@ mainFrame.Draggable = true
 mainFrame.Parent = screenGui
 
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
-
-local stroke = Instance.new("UIStroke")
+local stroke = Instance.new("UIStroke", mainFrame)
 stroke.Color = Color3.fromRGB(90, 90, 120)
-stroke.Thickness = 1
-stroke.Parent = mainFrame
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 32)
 title.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
 title.BorderSizePixel = 0
-title.Text = "⚒ Auto Digging Pro"
+title.Text = "⚒ Auto Digging Safe"
 title.TextColor3 = Color3.fromRGB(220, 220, 255)
 title.TextSize = 16
 title.Font = Enum.Font.GothamBold
@@ -172,33 +150,22 @@ hitsLabel.TextSize = 12
 hitsLabel.Font = Enum.Font.Gotham
 hitsLabel.Parent = mainFrame
 
-local antiKickLabel = Instance.new("TextLabel")
-antiKickLabel.Size = UDim2.new(1, 0, 0, 18)
-antiKickLabel.Position = UDim2.new(0, 0, 1, -15)
-antiKickLabel.BackgroundTransparency = 1
-antiKickLabel.Text = "Anti-Kick: " .. (antiKickEnabled and "ON" or "OFF")
-antiKickLabel.TextColor3 = antiKickEnabled and Color3.fromRGB(100, 220, 120) or Color3.fromRGB(200, 100, 100)
-antiKickLabel.TextSize = 11
-antiKickLabel.Font = Enum.Font.Gotham
-antiKickLabel.Parent = mainFrame
-
 -- ======================================================
 --  5. FONCTIONS UTILITAIRES
 -- ======================================================
-
 local function getPickaxe()
     local char = player.Character
     if not char then return nil end
     local bp = player:FindFirstChild("Backpack")
-
+    
     for _, t in ipairs(char:GetChildren()) do
         if t:IsA("Tool") then return t end
     end
     if bp then
         for _, t in ipairs(bp:GetChildren()) do
             if t:IsA("Tool") then
-                local success = pcall(function() t.Parent = char end)
-                if success then return t end
+                pcall(function() t.Parent = char end)
+                return t
             end
         end
     end
@@ -211,9 +178,8 @@ local function updateStatus(msg, isError)
 end
 
 -- ======================================================
---  6. BOUCLE D'AUTO-DIG (avec gestion d'erreurs)
+--  6. BOUCLE D'AUTO-DIG (SÉCURISÉE)
 -- ======================================================
-
 task.spawn(function()
     while true do
         task.wait(CONFIG.DIG_DELAY)
@@ -224,9 +190,8 @@ task.spawn(function()
         end
         
         if not remotesReady then
-            updateStatus("Remotes indisponibles", true)
-            task.wait(2)
-            remotesReady = initRemotes()
+            updateStatus("Reconnexion aux remotes...", true)
+            initRemotes()
             continue
         end
         
@@ -238,15 +203,27 @@ task.spawn(function()
             continue
         end
         
-        -- Équiper la pioche
+        -- Équiper l'outil
         getPickaxe()
         
-        local hitPos = hrp.Position + CONFIG.DIG_OFFSET
+        local targetPos = hrp.Position + CONFIG.DIG_OFFSET
         
-        -- Appel sécurisé des remotes
+        -- Exécution sécurisée (pcall)
         local success, err = pcall(function()
-            UseItem:FireServer()
-            DigRemote:FireServer(hitPos)
+            -- 1. Utiliser l'item (si nécessaire)
+            remotes.UseItem:FireServer()
+            
+            -- 2. Frapper
+            remotes.Dig:FireServer(targetPos)
+            
+            -- 3. Creuser le terrain
+            remotes.Carve:FireServer(targetPos)
+            
+            -- 4. Orientation
+            remotes.SpawnFacing:FireServer(targetPos)
+            
+            -- 5. Récupérer la pièce (C'EST UN RF ! On utilise InvokeServer)
+            remotes.DropPiece:InvokeServer()
         end)
         
         if success then
@@ -256,27 +233,27 @@ task.spawn(function()
         else
             errorCount = errorCount + 1
             hitsLabel.Text = string.format("Coups: %d | Erreurs: %d", hitCount, errorCount)
-            warn("[Auto-Dig] Erreur d'appel remote :", err)
+            warn("[Auto-Dig] Erreur remote :", err)
             
-            if errorCount >= CONFIG.MAX_ERRORS then
-                updateStatus("Trop d'erreurs, pause de 3s...", true)
+            -- Si trop d'erreurs consécutives, on met en pause pour éviter le kick
+            if errorCount >= maxErrors then
+                updateStatus("Trop d'erreurs ! Pause de 3s...", true)
                 task.wait(3)
                 errorCount = 0
-                remotesReady = initRemotes() -- Retenter d'initialiser
+                initRemotes() -- On réinitialise les remotes au cas où
             end
         end
     end
 end)
 
 -- ======================================================
---  7. BOUTON & RACCOURCI
+--  7. GESTION DU BOUTON
 -- ======================================================
-
 local function updateButton()
     if _G.AutoDigging then
         toggleBtn.Text = "ACTIVÉ"
         toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 170, 65)
-        updateStatus("Auto-Dig en cours...", false)
+        updateStatus("Minage en cours...", false)
     else
         toggleBtn.Text = "DÉSACTIVÉ"
         toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
@@ -289,6 +266,7 @@ toggleBtn.MouseButton1Click:Connect(function()
     updateButton()
 end)
 
+-- Raccourci clavier (Touche R)
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
     if input.KeyCode == Enum.KeyCode.R then
@@ -298,4 +276,4 @@ UserInputService.InputBegan:Connect(function(input, gp)
 end)
 
 updateButton()
-print("[Auto-Dig Pro] GUI chargée. Anti-Kick:", antiKickEnabled and "ON" or "OFF")
+print("[Auto-Dig] Script chargé avec succès !")
